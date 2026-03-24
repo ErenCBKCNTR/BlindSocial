@@ -68,7 +68,10 @@ class _ChatScreenState extends State<ChatScreen> {
             debugPrint('Agora error: $err - $msg');
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Hata: $err')),
+                const SnackBar(
+                  content: Text('Bağlantı kurulamadı, lütfen kanal ayarlarını kontrol edin'),
+                  backgroundColor: Colors.redAccent,
+                ),
               );
             }
           },
@@ -99,9 +102,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       await _engine!.joinChannel(
-        token: "", // Required to be empty or null for APP ID ONLY mode
+        token: null, // Fixed: explicitly null for APP ID ONLY mode
         channelId: widget.roomId,
-        uid: 0,
+        uid: 0, // Fixed: 0 for automatic UID assignment
         options: const ChannelMediaOptions(
           clientRoleType: ClientRoleType.clientRoleBroadcaster,
           publishMicrophoneTrack: true,
@@ -296,9 +299,13 @@ class _ChatScreenState extends State<ChatScreen> {
                     final text = messageData['text'] ?? '';
                     final senderEmail = messageData['senderEmail'] ?? 'Bilinmeyen';
                     final isMe = messageData['senderId'] == _auth.currentUser?.uid;
+                    final timestamp = messageData['timestamp'] as Timestamp?;
+                    final timeString = timestamp != null
+                        ? "${timestamp.toDate().hour.toString().padLeft(2, '0')}:${timestamp.toDate().minute.toString().padLeft(2, '0')}"
+                        : "";
 
                     return Semantics(
-                      label: 'Gönderen: $senderEmail, Mesaj: $text',
+                      label: 'Gönderen: $senderEmail, Mesaj: $text, Saat: $timeString',
                       liveRegion: index == 0,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -312,22 +319,35 @@ class _ChatScreenState extends State<ChatScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text(
-                                  senderEmail,
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      senderEmail,
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      text,
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 20,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  text,
+                                  timeString,
                                   style: const TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 20,
+                                    color: Colors.black54,
+                                    fontSize: 14,
                                   ),
                                 ),
                               ],
