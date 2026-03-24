@@ -102,9 +102,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       await _engine!.joinChannel(
-        token: null, // Fixed: explicitly null for APP ID ONLY mode
+        token: "", // Changed from null to "" to fix type error while keeping App ID mode
         channelId: widget.roomId,
-        uid: 0, // Fixed: 0 for automatic UID assignment
+        uid: 0,
         options: const ChannelMediaOptions(
           clientRoleType: ClientRoleType.clientRoleBroadcaster,
           publishMicrophoneTrack: true,

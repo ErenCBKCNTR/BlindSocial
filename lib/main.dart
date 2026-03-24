@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_rooms_screen.dart';
@@ -32,6 +33,13 @@ class FirebaseErrorApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.highContrastTheme,
+      locale: const Locale('tr', 'TR'),
+      supportedLocales: const [Locale('tr', 'TR')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: Scaffold(
         body: Center(
           child: Padding(
@@ -64,6 +72,13 @@ class BlindSocialApp extends StatelessWidget {
       title: 'Blind Social',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.highContrastTheme,
+      locale: const Locale('tr', 'TR'),
+      supportedLocales: const [Locale('tr', 'TR')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginScreen(),
