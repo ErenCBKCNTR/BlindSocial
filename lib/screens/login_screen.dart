@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +14,36 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _auth = FirebaseAuth.instance;
   bool _isLoading = false;
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkRememberMe();
+  }
+
+  Future<void> _checkRememberMe() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _rememberMe = prefs.getBool('remember_me') ?? false;
+    });
+
+    if (_rememberMe && _auth.currentUser != null) {
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/chat_rooms');
+      }
+    } else if (!_rememberMe) {
+      await _auth.signOut();
+    }
+  }
+
+  Future<void> _updateRememberMe(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('remember_me', value);
+    setState(() {
+      _rememberMe = value;
+    });
+  }
 
   @override
   void dispose() {
@@ -152,6 +183,27 @@ class _LoginScreenState extends State<LoginScreen> {
                         labelText: 'Şifre',
                         hintText: 'Şifreniz',
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Semantics(
+                    label: 'Beni Hatırla',
+                    hint: _rememberMe
+                        ? 'Beni hatırla seçili. Otomatik giriş yapmak için işaretli tutun.'
+                        : 'Beni hatırla seçili değil. Otomatik giriş yapmak için işaretleyin.',
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: _rememberMe,
+                          onChanged: (val) => _updateRememberMe(val ?? false),
+                          activeColor: Colors.yellow,
+                          checkColor: Colors.black,
+                        ),
+                        Text(
+                          'Beni Hatırla',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 40),

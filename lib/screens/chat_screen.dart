@@ -47,6 +47,11 @@ class _ChatScreenState extends State<ChatScreen> {
               _isJoined = true;
               _statusMessage = "Sesli kanala bağlanıldı.";
             });
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Kanala başarıyla bağlanıldı')),
+              );
+            }
           },
           onLeaveChannel: (RtcConnection connection, RtcStats stats) {
             setState(() {
@@ -58,6 +63,14 @@ class _ChatScreenState extends State<ChatScreen> {
             setState(() {
               _statusMessage = "Odaya yeni birisi katıldı.";
             });
+          },
+          onError: (ErrorCodeType err, String msg) {
+            debugPrint('Agora error: $err - $msg');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Hata: $err')),
+              );
+            }
           },
         ),
       );
@@ -86,7 +99,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       await _engine!.joinChannel(
-        token: "", // Use token if required by your project settings
+        token: "", // Required to be empty or null for APP ID ONLY mode
         channelId: widget.roomId,
         uid: 0,
         options: const ChannelMediaOptions(
@@ -97,6 +110,11 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     } catch (e) {
       debugPrint('Error joining channel: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Bağlantı hatası: ${e.toString()}')),
+        );
+      }
     }
   }
 
