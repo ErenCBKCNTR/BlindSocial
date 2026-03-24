@@ -24,6 +24,7 @@ class _ChatScreenState extends State<ChatScreen> {
   RtcEngine? _engine;
   bool _isJoined = false;
   bool _isMuted = false;
+  bool _isJoining = false;
   String _statusMessage = "";
 
   @override
@@ -45,6 +46,7 @@ class _ChatScreenState extends State<ChatScreen> {
           onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
             setState(() {
               _isJoined = true;
+              _isJoining = false;
               _statusMessage = "Sesli kanala bağlanıldı.";
             });
             if (mounted) {
@@ -56,6 +58,7 @@ class _ChatScreenState extends State<ChatScreen> {
           onLeaveChannel: (RtcConnection connection, RtcStats stats) {
             setState(() {
               _isJoined = false;
+              _isJoining = false;
               _statusMessage = "Sesli kanaldan ayrılındı.";
             });
           },
@@ -66,6 +69,9 @@ class _ChatScreenState extends State<ChatScreen> {
           },
           onError: (ErrorCodeType err, String msg) {
             debugPrint('Agora error: $err - $msg');
+            setState(() {
+              _isJoining = false;
+            });
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -83,6 +89,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _joinVoiceChannel() async {
+    if (_isJoining) return;
+
     final status = await Permission.microphone.request();
 
     if (status != PermissionStatus.granted) {
@@ -100,9 +108,16 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
+    setState(() {
+      _isJoining = true;
+    });
+
     try {
+      // Safety: leave previous channel if any
+      await _engine?.leaveChannel();
+
       await _engine!.joinChannel(
-        token: "", // Changed from null to "" to fix type error while keeping App ID mode
+        token: "",
         channelId: widget.roomId,
         uid: 0,
         options: const ChannelMediaOptions(
@@ -113,6 +128,9 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     } catch (e) {
       debugPrint('Error joining channel: $e');
+      setState(() {
+        _isJoining = false;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Bağlantı hatası: ${e.toString()}')),
@@ -137,6 +155,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _engine?.leaveChannel();
     _engine?.release();
     super.dispose();
   }
@@ -191,10 +210,13 @@ class _ChatScreenState extends State<ChatScreen> {
                     label: 'Sesli Kanala Katıl',
                     hint: 'Sesli sohbete katıl, odadaki diğer kullanıcılarla konuşmak için dokunun',
                     button: true,
+                    enabled: !_isJoining,
                     child: ElevatedButton.icon(
-                      onPressed: _joinVoiceChannel,
-                      icon: const Icon(Icons.volume_up, size: 30),
-                      label: const Text('Sesli Kanala Katıl'),
+                      onPressed: _isJoining ? null : _joinVoiceChannel,
+                      icon: _isJoining
+                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                        : const Icon(Icons.volume_up, size: 30),
+                      label: Text(_isJoining ? 'Katılınıyor...' : 'Sesli Kanala Katıl'),
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 60),
                         backgroundColor: Colors.cyan,
