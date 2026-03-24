@@ -7,15 +7,46 @@ import 'screens/chat_rooms_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Note: For a real app, FirebaseOptions should be provided here.
-  // In this sandbox environment, we initialize with default options if available.
   try {
+    // Note: For a real app, FirebaseOptions should be provided here.
+    // In this sandbox environment, we initialize with default options if available.
     await Firebase.initializeApp();
+    runApp(const BlindSocialApp());
   } catch (e) {
-    debugPrint('Firebase initialization warning: $e');
+    debugPrint('Firebase initialization error: $e');
+    runApp(const FirebaseErrorApp());
   }
+}
 
-  runApp(const BlindSocialApp());
+class FirebaseErrorApp extends StatelessWidget {
+  const FirebaseErrorApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.highContrastTheme,
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Semantics(
+              label: 'Bir sorun oluştu, lütfen internet bağlantınızı kontrol edin ve uygulamayı yeniden başlatın',
+              child: const Text(
+                'Bir sorun oluştu, lütfen internet bağlantınızı kontrol edin ve uygulamayı yeniden başlatın',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.yellow,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class BlindSocialApp extends StatelessWidget {
@@ -31,7 +62,6 @@ class BlindSocialApp extends StatelessWidget {
       routes: {
         '/': (context) => const LoginScreen(),
         '/chat_rooms': (context) => const ChatRoomsScreen(),
-        // Note: '/chat' is handled via MaterialPageRoute because it requires parameters
       },
     );
   }
