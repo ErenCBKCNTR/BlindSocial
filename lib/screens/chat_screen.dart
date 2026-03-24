@@ -74,8 +74,8 @@ class _ChatScreenState extends State<ChatScreen> {
             });
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Bağlantı kurulamadı, lütfen kanal ayarlarını kontrol edin'),
+                SnackBar(
+                  content: Text('Bağlantı kurulamadı, lütfen kanal ayarlarını kontrol edin. Hata: $err'),
                   backgroundColor: Colors.redAccent,
                 ),
               );
@@ -118,7 +118,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       await _engine!.joinChannel(
         token: "",
-        channelId: widget.roomId,
+        channelId: widget.roomId, // Correctly using roomId (document ID)
         uid: 0,
         options: const ChannelMediaOptions(
           clientRoleType: ClientRoleType.clientRoleBroadcaster,
@@ -133,7 +133,7 @@ class _ChatScreenState extends State<ChatScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Bağlantı hatası: ${e.toString()}')),
+          SnackBar(content: Text('Bağlantı hatası. Detay: ${e.toString()}')),
         );
       }
     }
