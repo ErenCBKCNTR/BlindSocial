@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-const String appId = "F38268f6936e44f39b67c8efc7b8e162";
+const String appId = "Bc4b25ebf04b4f84928e2b1e185025c7";
 
 class ChatScreen extends StatefulWidget {
   final String roomId;
@@ -147,7 +147,7 @@ class _ChatScreenState extends State<ChatScreen> {
     await _engine!.muteLocalAudioStream(!_isMuted);
     setState(() {
       _isMuted = !_isMuted;
-      _statusMessage = _isMuted ? "Mikrofon kapatıldı" : "Mikrofon açıldı";
+      _statusMessage = _isMuted ? "Mikrofon kapatıldı" : "Mikon açıldı";
     });
   }
 
