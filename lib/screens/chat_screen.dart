@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-const String appId = "BURAYA_AGORA_APP_ID_GELECEK";
+const String appId = "F38268f6936e44f39b67c8efc7b8e162";
 
 class ChatScreen extends StatefulWidget {
   final String roomId;
@@ -33,49 +33,71 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _initAgora() async {
-    // Basic setup, but won't join until button press
-    _engine = createAgoraRtcEngine();
-    await _engine!.initialize(const RtcEngineContext(
-      appId: appId,
-      channelProfile: ChannelProfileType.channelProfileCommunication,
-    ));
+    try {
+      _engine = createAgoraRtcEngine();
+      await _engine!.initialize(const RtcEngineContext(
+        appId: appId,
+        channelProfile: ChannelProfileType.channelProfileCommunication,
+      ));
 
-    _engine!.registerEventHandler(
-      RtcEngineEventHandler(
-        onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
-          setState(() {
-            _isJoined = true;
-            _statusMessage = "Sesli kanala bağlanıldı.";
-          });
-        },
-        onLeaveChannel: (RtcConnection connection, RtcStats stats) {
-          setState(() {
-            _isJoined = false;
-            _statusMessage = "Sesli kanaldan ayrılındı.";
-          });
-        },
-        onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
-          setState(() {
-            _statusMessage = "Odaya yeni birisi katıldı.";
-          });
-        },
-      ),
-    );
+      _engine!.registerEventHandler(
+        RtcEngineEventHandler(
+          onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
+            setState(() {
+              _isJoined = true;
+              _statusMessage = "Sesli kanala bağlanıldı.";
+            });
+          },
+          onLeaveChannel: (RtcConnection connection, RtcStats stats) {
+            setState(() {
+              _isJoined = false;
+              _statusMessage = "Sesli kanaldan ayrılındı.";
+            });
+          },
+          onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
+            setState(() {
+              _statusMessage = "Odaya yeni birisi katıldı.";
+            });
+          },
+        ),
+      );
+    } catch (e) {
+      debugPrint('Agora initialization error: $e');
+    }
   }
 
   Future<void> _joinVoiceChannel() async {
-    await [Permission.microphone].request();
+    final status = await Permission.microphone.request();
 
-    await _engine!.joinChannel(
-      token: "", // Use token if required by your project settings
-      channelId: widget.roomId,
-      uid: 0,
-      options: const ChannelMediaOptions(
-        clientRoleType: ClientRoleType.clientRoleBroadcaster,
-        publishMicrophoneTrack: true,
-        autoSubscribeAudio: true,
-      ),
-    );
+    if (status != PermissionStatus.granted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Semantics(
+              label: 'Mikrofon izni verilmedi. Sesli sohbete katılmak için lütfen izin verin.',
+              child: Text('Mikrofon izni verilmedi. Sesli sohbete katılmak için lütfen izin verin.'),
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      await _engine!.joinChannel(
+        token: "", // Use token if required by your project settings
+        channelId: widget.roomId,
+        uid: 0,
+        options: const ChannelMediaOptions(
+          clientRoleType: ClientRoleType.clientRoleBroadcaster,
+          publishMicrophoneTrack: true,
+          autoSubscribeAudio: true,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error joining channel: $e');
+    }
   }
 
   Future<void> _leaveVoiceChannel() async {
