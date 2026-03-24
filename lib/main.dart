@@ -31,6 +31,7 @@ class BlindSocialApp extends StatelessWidget {
       routes: {
         '/': (context) => const LoginScreen(),
         '/chat_rooms': (context) => const ChatRoomsScreen(),
+        // Note: '/chat' is handled via MaterialPageRoute because it requires parameters
       },
     );
   }

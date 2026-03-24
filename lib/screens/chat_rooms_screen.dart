@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'chat_screen.dart';
 
 class ChatRoomsScreen extends StatelessWidget {
   const ChatRoomsScreen({super.key});
@@ -81,6 +82,10 @@ class ChatRoomsScreen extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         // Logic to create a room
+                        FirebaseFirestore.instance.collection('chat_rooms').add({
+                          'name': 'Yeni Oda ${DateTime.now().millisecond}',
+                          'createdAt': FieldValue.serverTimestamp(),
+                        });
                       },
                       child: const Text('Yeni Oda Oluştur'),
                     ),
@@ -95,6 +100,8 @@ class ChatRoomsScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               var room = snapshot.data!.docs[index];
               var roomName = room['name'] ?? 'İsimsiz Oda';
+              var roomId = room.id;
+
               return Semantics(
                 label: '$roomName sohbet odası',
                 hint: 'Odaya girmek için iki kez dokunun',
@@ -108,7 +115,15 @@ class ChatRoomsScreen extends StatelessWidget {
                         fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   onTap: () {
-                    // Navigate to individual chat room
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(
+                          roomId: roomId,
+                          roomName: roomName,
+                        ),
+                      ),
+                    );
                   },
                 ),
               );
