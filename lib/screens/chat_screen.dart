@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+const String appId = "BURAYA_AGORA_APP_ID_GELECEK";
 
 class ChatScreen extends StatefulWidget {
   final String roomId;
@@ -17,10 +21,80 @@ class _ChatScreenState extends State<ChatScreen> {
   final _auth = FirebaseAuth.instance;
   final _scrollController = ScrollController();
 
+  RtcEngine? _engine;
+  bool _isJoined = false;
+  bool _isMuted = false;
+  String _statusMessage = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _initAgora();
+  }
+
+  Future<void> _initAgora() async {
+    // Basic setup, but won't join until button press
+    _engine = createAgoraRtcEngine();
+    await _engine!.initialize(const RtcEngineContext(
+      appId: appId,
+      channelProfile: ChannelProfileType.channelProfileCommunication,
+    ));
+
+    _engine!.registerEventHandler(
+      RtcEngineEventHandler(
+        onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
+          setState(() {
+            _isJoined = true;
+            _statusMessage = "Sesli kanala bağlanıldı.";
+          });
+        },
+        onLeaveChannel: (RtcConnection connection, RtcStats stats) {
+          setState(() {
+            _isJoined = false;
+            _statusMessage = "Sesli kanaldan ayrılındı.";
+          });
+        },
+        onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
+          setState(() {
+            _statusMessage = "Odaya yeni birisi katıldı.";
+          });
+        },
+      ),
+    );
+  }
+
+  Future<void> _joinVoiceChannel() async {
+    await [Permission.microphone].request();
+
+    await _engine!.joinChannel(
+      token: "", // Use token if required by your project settings
+      channelId: widget.roomId,
+      uid: 0,
+      options: const ChannelMediaOptions(
+        clientRoleType: ClientRoleType.clientRoleBroadcaster,
+        publishMicrophoneTrack: true,
+        autoSubscribeAudio: true,
+      ),
+    );
+  }
+
+  Future<void> _leaveVoiceChannel() async {
+    await _engine!.leaveChannel();
+  }
+
+  Future<void> _toggleMute() async {
+    await _engine!.muteLocalAudioStream(!_isMuted);
+    setState(() {
+      _isMuted = !_isMuted;
+      _statusMessage = _isMuted ? "Mikrofon kapatıldı" : "Mikrofon açıldı";
+    });
+  }
+
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _engine?.release();
     super.dispose();
   }
 
@@ -43,7 +117,6 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     _messageController.clear();
-    // Scroll to bottom
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         0.0,
@@ -64,6 +137,77 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
+          // Voice Chat Controls
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            color: Colors.black,
+            child: Column(
+              children: [
+                if (!_isJoined)
+                  Semantics(
+                    label: 'Sesli Kanala Katıl',
+                    hint: 'Sesli sohbete katıl, odadaki diğer kullanıcılarla konuşmak için dokunun',
+                    button: true,
+                    child: ElevatedButton.icon(
+                      onPressed: _joinVoiceChannel,
+                      icon: const Icon(Icons.volume_up, size: 30),
+                      label: const Text('Sesli Kanala Katıl'),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 60),
+                        backgroundColor: Colors.cyan,
+                        foregroundColor: Colors.black,
+                      ),
+                    ),
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Semantics(
+                          label: _isMuted ? 'Mikrofonu Aç' : 'Mikrofonu Sustur',
+                          hint: _isMuted ? 'Sesinizi iletmek için dokunun' : 'Sesinizi kapatmak için dokunun',
+                          button: true,
+                          child: ElevatedButton.icon(
+                            onPressed: _toggleMute,
+                            icon: Icon(_isMuted ? Icons.mic_off : Icons.mic, size: 30),
+                            label: Text(_isMuted ? 'Sesi Aç' : 'Sustur'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _isMuted ? Colors.red : Colors.yellow,
+                              foregroundColor: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Semantics(
+                          label: 'Sesli Kanaldan Ayrıl',
+                          hint: 'Sesli sohbetten çıkmak için dokunun',
+                          button: true,
+                          child: ElevatedButton.icon(
+                            onPressed: _leaveVoiceChannel,
+                            icon: const Icon(Icons.call_end, size: 30),
+                            label: const Text('Ayrıl'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent,
+                              foregroundColor: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                // Status message for screen readers
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    _statusMessage,
+                    style: const TextStyle(color: Colors.transparent, fontSize: 1),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -115,7 +259,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
                     return Semantics(
                       label: 'Gönderen: $senderEmail, Mesaj: $text',
-                      liveRegion: index == 0, // Focus on newest message if it's the first in the list (since reverse: true)
+                      liveRegion: index == 0,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                             vertical: 8.0, horizontal: 16.0),
