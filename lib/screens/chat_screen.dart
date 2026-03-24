@@ -72,10 +72,10 @@ class _ChatScreenState extends State<ChatScreen> {
     if (status != PermissionStatus.granted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Semantics(
               label: 'Mikrofon izni verilmedi. Sesli sohbete katılmak için lütfen izin verin.',
-              child: Text('Mikrofon izni verilmedi. Sesli sohbete katılmak için lütfen izin verin.'),
+              child: const Text('Mikrofon izni verilmedi. Sesli sohbete katılmak için lütfen izin verin.'),
             ),
             backgroundColor: Colors.redAccent,
           ),
