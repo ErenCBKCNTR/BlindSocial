@@ -8,9 +8,15 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Note: For a real app, FirebaseOptions should be provided here.
-    // In this sandbox environment, we initialize with default options if available.
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'AIzaSyDjVZZqS6EIxxjulS01zqAChH74DfLlf7E',
+        appId: '1:122600853691:web:7b215d6b1b8a5c946c999e',
+        messagingSenderId: '122600853691',
+        projectId: 'blind-social-a718c',
+        storageBucket: 'blind-social-a718c.firebasestorage.app',
+      ),
+    );
     runApp(const BlindSocialApp());
   } catch (e) {
     debugPrint('Firebase initialization error: $e');
