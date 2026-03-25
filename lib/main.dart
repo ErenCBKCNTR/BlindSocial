@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:pub_semver/pub_semver.dart' as semver;
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_rooms_screen.dart';
+import 'screens/update_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,26 +67,96 @@ class FirebaseErrorApp extends StatelessWidget {
   }
 }
 
-class BlindSocialApp extends StatelessWidget {
+class BlindSocialApp extends StatefulWidget {
   const BlindSocialApp({super.key});
 
   @override
+  State<BlindSocialApp> createState() => _BlindSocialAppState();
+}
+
+class _BlindSocialAppState extends State<BlindSocialApp> {
+  late Future<Map<String, dynamic>> _updateCheckFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateCheckFuture = _checkVersion();
+  }
+
+  Future<Map<String, dynamic>> _checkVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion = semver.Version.parse(packageInfo.version);
+
+      final doc = await FirebaseFirestore.instance
+          .collection('settings')
+          .doc('app_config')
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        final minVersionStr = data['min_version'] as String? ?? "1.0.0";
+        final updateUrl = data['update_url'] as String? ?? "";
+        final minVersion = semver.Version.parse(minVersionStr);
+
+        if (currentVersion < minVersion) {
+          return {'required': true, 'url': updateUrl};
+        }
+      }
+    } catch (e) {
+      debugPrint('Version check error: $e');
+    }
+    return {'required': false};
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Blind Social',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.highContrastTheme,
-      locale: const Locale('tr', 'TR'),
-      supportedLocales: const [Locale('tr', 'TR')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const LoginScreen(),
-        '/chat_rooms': (context) => const ChatRoomsScreen(),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _updateCheckFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.highContrastTheme,
+            home: const Scaffold(
+              backgroundColor: Colors.black,
+              body: Center(
+                child: Semantics(
+                  label: 'Sürüm kontrol ediliyor, lütfen bekleyin',
+                  child: CircularProgressIndicator(strokeWidth: 6, color: Colors.yellow),
+                ),
+              ),
+            ),
+          );
+        }
+
+        final updateData = snapshot.data ?? {'required': false};
+
+        if (updateData['required'] == true) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.highContrastTheme,
+            home: UpdateScreen(updateUrl: updateData['url'] ?? ""),
+          );
+        }
+
+        return MaterialApp(
+          title: 'Blind Social',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.highContrastTheme,
+          locale: const Locale('tr', 'TR'),
+          supportedLocales: const [Locale('tr', 'TR')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const LoginScreen(),
+            '/chat_rooms': (context) => const ChatRoomsScreen(),
+          },
+        );
       },
     );
   }
