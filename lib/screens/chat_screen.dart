@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:livekit_client/livekit_client.dart';
+import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:permission_handler/permission_handler.dart';
 
