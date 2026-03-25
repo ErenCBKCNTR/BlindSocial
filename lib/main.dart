@@ -14,44 +14,6 @@ void main() {
   runApp(const BlindSocialApp());
 }
 
-class FirebaseErrorApp extends StatelessWidget {
-  const FirebaseErrorApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.highContrastTheme,
-      locale: const Locale('tr', 'TR'),
-      supportedLocales: const [Locale('tr', 'TR')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Semantics(
-              label: 'Bir sorun oluştu, lütfen internet bağlantınızı kontrol edin ve uygulamayı yeniden başlatın',
-              child: const Text(
-                'Bir sorun oluştu, lütfen internet bağlantınızı kontrol edin ve uygulamayı yeniden başlatın',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.yellow,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class BlindSocialApp extends StatefulWidget {
   const BlindSocialApp({super.key});
 
@@ -70,6 +32,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
 
   Future<Map<String, dynamic>> _initialize() async {
     try {
+      // Step 1: Initialize Firebase with a 3-second timeout
       await Firebase.initializeApp(
         options: const FirebaseOptions(
           apiKey: 'AIzaSyDjVZZqS6EIxxjulS01zqAChH74DfLlf7E',
@@ -78,8 +41,9 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
           projectId: 'blind-social-a718c',
           storageBucket: 'blind-social-a718c.firebasestorage.app',
         ),
-      );
+      ).timeout(const Duration(seconds: 3));
 
+      // Step 2: Check for mandatory updates
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = semver.Version.parse(packageInfo.version);
 
@@ -87,7 +51,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
           .collection('settings')
           .doc('app_config')
           .get()
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 2));
 
       if (doc.exists) {
         final data = doc.data()!;
@@ -100,81 +64,81 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
         }
       }
     } catch (e) {
-      debugPrint('Initialization/Version check error: $e');
-      // If initialization fails, log and continue to allow app to start
+      debugPrint('Initialization/Version check error (Silent Fallback): $e');
+      // If initialization fails or times out, we continue to the app to avoid a blank screen
     }
     return {'required': false};
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _initFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.highContrastTheme,
-            home: Scaffold(
-              backgroundColor: Colors.black,
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Semantics(
-                      label: 'Yükleniyor, lütfen bekleyin',
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 10,
-                        color: Colors.yellow,
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    Semantics(
-                      label: 'Uygulama başlatılıyor içeriği',
-                      child: const Text(
-                        'Yükleniyor...',
-                        style: TextStyle(
-                          color: Colors.yellow,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
+    return MaterialApp(
+      title: 'Blind Social',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.highContrastTheme,
+      locale: const Locale('tr', 'TR'),
+      supportedLocales: const [Locale('tr', 'TR')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: FutureBuilder<Map<String, dynamic>>(
+        future: _initFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const SplashScreen();
+          }
+
+          final updateData = snapshot.data ?? {'required': false};
+          if (updateData['required'] == true) {
+            return UpdateScreen(updateUrl: updateData['url'] ?? "");
+          }
+
+          return const LoginScreen();
+        },
+      ),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/chat_rooms': (context) => const ChatRoomsScreen(),
+      },
+    );
+  }
+}
+
+class SplashScreen extends StatelessWidget {
+  const SplashScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Semantics(
+              label: 'Yükleniyor, lütfen bekleyin',
+              child: const CircularProgressIndicator(
+                strokeWidth: 10,
+                color: Colors.yellow,
+              ),
+            ),
+            const SizedBox(height: 40),
+            Semantics(
+              label: 'Uygulama başlatılıyor içeriği',
+              child: const Text(
+                'Yükleniyor...',
+                style: TextStyle(
+                  color: Colors.yellow,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-          );
-        }
-
-        final updateData = snapshot.data ?? {'required': false};
-
-        if (updateData['required'] == true) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.highContrastTheme,
-            home: UpdateScreen(updateUrl: updateData['url'] ?? ""),
-          );
-        }
-
-        return MaterialApp(
-          title: 'Blind Social',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.highContrastTheme,
-          locale: const Locale('tr', 'TR'),
-          supportedLocales: const [Locale('tr', 'TR')],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
           ],
-          initialRoute: '/',
-          routes: {
-            '/': (context) => const LoginScreen(),
-            '/chat_rooms': (context) => const ChatRoomsScreen(),
-          },
-        );
-      },
+        ),
+      ),
     );
   }
 }
