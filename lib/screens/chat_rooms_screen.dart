@@ -3,8 +3,182 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'chat_screen.dart';
 
-class ChatRoomsScreen extends StatelessWidget {
+class ChatRoomsScreen extends StatefulWidget {
   const ChatRoomsScreen({super.key});
+
+  @override
+  State<ChatRoomsScreen> createState() => _ChatRoomsScreenState();
+}
+
+class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
+  final _auth = FirebaseAuth.instance;
+
+  void _showEditRoomDialog(DocumentSnapshot roomDoc) {
+    final roomData = roomDoc.data() as Map<String, dynamic>;
+    final nameController = TextEditingController(text: roomData['name']);
+    final capacityController =
+        TextEditingController(text: roomData['maxCapacity']?.toString());
+    final passwordController = TextEditingController(text: roomData['password']);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('Odayı Düzenle', style: TextStyle(color: Colors.yellow)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                    labelText: 'Oda İsmi', labelStyle: TextStyle(color: Colors.cyan)),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: capacityController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                    labelText: 'Kapasite', labelStyle: TextStyle(color: Colors.cyan)),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                    labelText: 'Yeni Şifre (Boş = Şifresiz)',
+                    labelStyle: TextStyle(color: Colors.cyan)),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('İptal')),
+          ElevatedButton(
+            onPressed: () async {
+              await roomDoc.reference.update({
+                'name': nameController.text.trim(),
+                'maxCapacity': int.tryParse(capacityController.text) ?? 10,
+                'password': passwordController.text.isEmpty
+                    ? null
+                    : passwordController.text,
+              });
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Güncelle'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCreateRoomDialog() {
+    final nameController = TextEditingController();
+    final capacityController = TextEditingController(text: '10');
+    final passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: Semantics(
+          label: 'Yeni Oda Oluştur',
+          child: const Text('Yeni Oda Oluştur',
+              style: TextStyle(color: Colors.yellow)),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Semantics(
+                label: 'Oda İsmi Giriş Alanı',
+                child: TextField(
+                  controller: nameController,
+                  style: const TextStyle(color: Colors.white, fontSize: 20),
+                  decoration: const InputDecoration(
+                    labelText: 'Oda İsmi',
+                    labelStyle: TextStyle(color: Colors.cyan),
+                    enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.cyan)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Semantics(
+                label: 'Kapasite Giriş Alanı',
+                hint: 'Maksimum katılımcı sayısı',
+                child: TextField(
+                  controller: capacityController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white, fontSize: 20),
+                  decoration: const InputDecoration(
+                    labelText: 'Kapasite (Örn: 10)',
+                    labelStyle: TextStyle(color: Colors.cyan),
+                    enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.cyan)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Semantics(
+                label: 'Şifre Giriş Alanı',
+                hint: 'Oda şifreli olsun istiyorsanız doldurun, yoksa boş bırakın',
+                child: TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.white, fontSize: 20),
+                  decoration: const InputDecoration(
+                    labelText: 'Şifre (Opsiyonel)',
+                    labelStyle: TextStyle(color: Colors.cyan),
+                    enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.cyan)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Semantics(
+              label: 'Vazgeç butonu',
+              child: const Text('İptal',
+                  style: TextStyle(color: Colors.red, fontSize: 18)),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.trim().isEmpty) return;
+              final user = _auth.currentUser;
+              if (user == null) return;
+
+              await FirebaseFirestore.instance.collection('chat_rooms').add({
+                'name': nameController.text.trim(),
+                'maxCapacity': int.tryParse(capacityController.text) ?? 10,
+                'password': passwordController.text.isEmpty
+                    ? null
+                    : passwordController.text,
+                'creatorId': user.uid,
+                'currentParticipants': 0,
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+              if (context.mounted) Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
+            child: Semantics(
+              label: 'Oda Oluştur butonu',
+              child: const Text('Oluştur',
+                  style: TextStyle(color: Colors.black, fontSize: 18)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +205,26 @@ class ChatRoomsScreen extends StatelessWidget {
           ),
         ],
       ),
+      floatingActionButton: Semantics(
+        label: 'Yeni Oda Oluştur butonu',
+        hint: 'Yeni bir sohbet odası başlatmak için dokunun',
+        button: true,
+        child: FloatingActionButton.extended(
+          onPressed: _showCreateRoomDialog,
+          backgroundColor: Colors.yellow,
+          icon: const Icon(Icons.add, color: Colors.black, size: 30),
+          label: const Text('Oda Oluştur',
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold)),
+        ),
+      ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('chat_rooms').snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('chat_rooms')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
@@ -74,56 +266,128 @@ class ChatRoomsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 40),
-                  Semantics(
-                    label: 'Yeni Oda Oluştur butonu',
-                    hint: 'Yeni bir sohbet odası başlatmak için dokunun',
-                    button: true,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Logic to create a room
-                        FirebaseFirestore.instance.collection('chat_rooms').add({
-                          'name': 'Yeni Oda ${DateTime.now().millisecond}',
-                          'createdAt': FieldValue.serverTimestamp(),
-                        });
-                      },
-                      child: const Text('Yeni Oda Oluştur'),
-                    ),
-                  ),
                 ],
               ),
             );
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.only(bottom: 80),
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
               var room = snapshot.data!.docs[index];
-              var roomName = room['name'] ?? 'İsimsiz Oda';
+              var roomData = room.data() as Map<String, dynamic>;
+              var roomName = roomData['name'] ?? 'İsimsiz Oda';
               var roomId = room.id;
+              var maxCapacity = roomData['maxCapacity'] ?? 10;
+              var currentParticipants = roomData['currentParticipants'] ?? 0;
+              var isLocked = roomData['password'] != null;
+
+              String semanticLabel = '$roomName sohbet odası. '
+                  'Kapasite: $currentParticipants bölü $maxCapacity. '
+                  '${isLocked ? "Şifreli oda." : "Açık oda."} '
+                  'Odaya girmek için iki kez dokunun.';
 
               return Semantics(
-                label: '$roomName sohbet odası',
-                hint: 'Odaya girmek için iki kez dokunun',
+                label: semanticLabel,
                 button: true,
                 child: ListTile(
-                  leading: const Icon(Icons.meeting_room,
-                      color: Colors.cyan, size: 30),
+                  leading: Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      const Icon(Icons.meeting_room,
+                          color: Colors.cyan, size: 40),
+                      if (isLocked)
+                        const Icon(Icons.lock, color: Colors.yellow, size: 20),
+                    ],
+                  ),
                   title: Text(
                     roomName,
                     style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold),
+                        fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(
-                          roomId: roomId,
-                          roomName: roomName,
+                  subtitle: Text(
+                    'Kapasite: $currentParticipants / $maxCapacity',
+                    style: const TextStyle(color: Colors.cyan, fontSize: 18),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (roomData['creatorId'] == _auth.currentUser?.uid)
+                        Semantics(
+                          label: 'Odayı Düzenle',
+                          button: true,
+                          child: IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.cyan),
+                            onPressed: () => _showEditRoomDialog(room),
+                          ),
                         ),
-                      ),
-                    );
+                      const Icon(Icons.arrow_forward_ios, color: Colors.yellow),
+                    ],
+                  ),
+                  onTap: () async {
+                    // Check capacity
+                    if (currentParticipants >= maxCapacity) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Oda dolu, lütfen başka bir odayı deneyin.'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Handle password
+                    if (isLocked) {
+                      final passwordController = TextEditingController();
+                      final correctPassword = roomData['password'];
+
+                      bool? success = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: Colors.black,
+                          title: const Text('Şifre Gerekli', style: TextStyle(color: Colors.yellow)),
+                          content: TextField(
+                            controller: passwordController,
+                            obscureText: true,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: const InputDecoration(
+                              labelText: 'Oda Şifresi',
+                              labelStyle: TextStyle(color: Colors.cyan),
+                            ),
+                          ),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal')),
+                            ElevatedButton(
+                              onPressed: () {
+                                if (passwordController.text == correctPassword) {
+                                  Navigator.pop(context, true);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Hatalı Şifre')),
+                                  );
+                                }
+                              },
+                              child: const Text('Giriş'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (success != true) return;
+                    }
+
+                    if (context.mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatScreen(
+                            roomId: roomId,
+                            roomName: roomName,
+                          ),
+                        ),
+                      );
+                    }
                   },
                 ),
               );

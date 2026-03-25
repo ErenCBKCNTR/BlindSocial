@@ -34,6 +34,50 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    _addParticipant();
+  }
+
+  Future<void> _addParticipant() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final roomRef =
+        FirebaseFirestore.instance.collection('chat_rooms').doc(widget.roomId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(roomRef);
+      if (!snapshot.exists) return;
+
+      int current = snapshot.data()?['currentParticipants'] ?? 0;
+      transaction.update(roomRef, {'currentParticipants': current + 1});
+
+      final participantRef = roomRef.collection('participants').doc(user.uid);
+      transaction.set(participantRef, {
+        'uid': user.uid,
+        'email': user.email,
+        'joinedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Future<void> _removeParticipant() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final roomRef =
+        FirebaseFirestore.instance.collection('chat_rooms').doc(widget.roomId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(roomRef);
+      if (!snapshot.exists) return;
+
+      int current = snapshot.data()?['currentParticipants'] ?? 0;
+      transaction
+          .update(roomRef, {'currentParticipants': (current - 1).clamp(0, 999)});
+
+      final participantRef = roomRef.collection('participants').doc(user.uid);
+      transaction.delete(participantRef);
+    });
   }
 
   String _generateToken() {
@@ -143,6 +187,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _removeParticipant();
     _messageController.dispose();
     _scrollController.dispose();
     _room?.disconnect();
@@ -177,6 +222,74 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _showParticipantList() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.black,
+      builder: (context) => StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('chat_rooms')
+            .doc(widget.roomId)
+            .collection('participants')
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          final participants = snapshot.data!.docs;
+
+          return Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text('Katılımcılar', style: TextStyle(color: Colors.yellow, fontSize: 24, fontWeight: FontWeight.bold)),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: participants.length,
+                  itemBuilder: (context, index) {
+                    final p = participants[index].data() as Map<String, dynamic>;
+                    final email = p['email'] ?? 'Anonim';
+                    return Semantics(
+                      label: 'Katılımcı: $email',
+                      child: ListTile(
+                        leading: const Icon(Icons.person, color: Colors.cyan),
+                        title: Text(email, style: const TextStyle(color: Colors.white, fontSize: 18)),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _confirmDeleteRoom() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('Odayı Sil', style: TextStyle(color: Colors.red)),
+        content: const Text('Bu odayı kalıcı olarak silmek istediğinize emin misiniz?', style: TextStyle(color: Colors.white)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Vazgeç')),
+          ElevatedButton(
+            onPressed: () async {
+              await FirebaseFirestore.instance.collection('chat_rooms').doc(widget.roomId).delete();
+              if (context.mounted) {
+                Navigator.pop(context); // close dialog
+                Navigator.pop(context); // leave chat screen
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('SİL'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -185,6 +298,29 @@ class _ChatScreenState extends State<ChatScreen> {
           label: '${widget.roomName} odası sohbet ekranı',
           child: Text(widget.roomName),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.people, size: 30),
+            onPressed: _showParticipantList,
+            tooltip: 'Katılımcıları Gör',
+          ),
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance.collection('chat_rooms').doc(widget.roomId).snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data!.exists) {
+                final data = snapshot.data!.data() as Map<String, dynamic>;
+                if (data['creatorId'] == _auth.currentUser?.uid) {
+                  return IconButton(
+                    icon: const Icon(Icons.delete_forever, color: Colors.red, size: 30),
+                    onPressed: _confirmDeleteRoom,
+                    tooltip: 'Odayı Sil',
+                  );
+                }
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
