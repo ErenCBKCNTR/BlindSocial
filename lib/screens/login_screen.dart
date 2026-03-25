@@ -52,27 +52,43 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Semantics(
-        label: 'Hata Mesajı Penceresi',
-        focused: true,
-        child: AlertDialog(
-          title: const Text('Hata'),
-          content: Text(message),
-          actions: [
-            Semantics(
-              label: 'Tamam butonu',
-              hint: 'Pencereyi kapatmak için dokunun',
-              button: true,
-              child: TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Tamam'),
-              ),
+  String _translateAuthError(String code) {
+    switch (code) {
+      case 'weak-password':
+        return 'Şifreniz çok zayıf. En az 6 karakter olmalıdır.';
+      case 'invalid-email':
+        return 'Geçersiz bir e-posta adresi girdiniz.';
+      case 'email-already-in-use':
+        return 'Bu e-posta adresi zaten kullanımda.';
+      case 'user-not-found':
+        return 'Bu e-posta ile kayıtlı kullanıcı bulunamadı.';
+      case 'wrong-password':
+        return 'Hatalı şifre girdiniz.';
+      case 'invalid-credential':
+        return 'Giriş bilgileri hatalı veya süresi dolmuş.';
+      default:
+        return 'Bir hata oluştu, lütfen tekrar deneyin.';
+    }
+  }
+
+  void _showThemedError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Semantics(
+          label: 'Hata bildirimi: $message',
+          child: Text(
+            message,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-          ],
+          ),
         ),
+        backgroundColor: const Color(0xFF333333),
+        behavior: SnackBarBehavior.floating,
+        padding: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 4),
       ),
     );
   }
@@ -91,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        _showErrorDialog(e.message ?? 'Giriş yapılamadı.');
+        _showThemedError(_translateAuthError(e.code));
       }
     } finally {
       if (mounted) {
@@ -116,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        _showErrorDialog(e.message ?? 'Kayıt yapılamadı.');
+        _showThemedError(_translateAuthError(e.code));
       }
     } finally {
       if (mounted) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
@@ -97,12 +98,15 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         _isJoined = true;
         _isJoining = false;
-        _statusMessage = "LiveKit kanalına başarıyla bağlanıldı";
+        _statusMessage = "${widget.roomName} odasına başarıyla bağlanıldı";
       });
+
+      // Play audio cue
+      SystemSound.play(SystemSoundType.click);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('LiveKit kanalına başarıyla bağlanıldı')),
+          SnackBar(content: Text('${widget.roomName} odasına başarıyla bağlanıldı')),
         );
       }
     } catch (e) {
@@ -120,6 +124,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _leaveVoiceChannel() async {
     await _room?.disconnect();
+    // Play audio cue
+    SystemSound.play(SystemSoundType.click);
     setState(() {
       _isJoined = false;
       _statusMessage = "Sesli kanaldan ayrılındı.";
