@@ -9,24 +9,9 @@ import 'screens/login_screen.dart';
 import 'screens/chat_rooms_screen.dart';
 import 'screens/update_screen.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  try {
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: 'AIzaSyDjVZZqS6EIxxjulS01zqAChH74DfLlf7E',
-        appId: '1:122600853691:web:7b215d6b1b8a5c946c999e',
-        messagingSenderId: '122600853691',
-        projectId: 'blind-social-a718c',
-        storageBucket: 'blind-social-a718c.firebasestorage.app',
-      ),
-    );
-    runApp(const BlindSocialApp());
-  } catch (e) {
-    debugPrint('Firebase initialization error: $e');
-    runApp(const FirebaseErrorApp());
-  }
+  runApp(const BlindSocialApp());
 }
 
 class FirebaseErrorApp extends StatelessWidget {
@@ -75,23 +60,34 @@ class BlindSocialApp extends StatefulWidget {
 }
 
 class _BlindSocialAppState extends State<BlindSocialApp> {
-  late Future<Map<String, dynamic>> _updateCheckFuture;
+  late Future<Map<String, dynamic>> _initFuture;
 
   @override
   void initState() {
     super.initState();
-    _updateCheckFuture = _checkVersion();
+    _initFuture = _initialize();
   }
 
-  Future<Map<String, dynamic>> _checkVersion() async {
+  Future<Map<String, dynamic>> _initialize() async {
     try {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: 'AIzaSyDjVZZqS6EIxxjulS01zqAChH74DfLlf7E',
+          appId: '1:122600853691:web:7b215d6b1b8a5c946c999e',
+          messagingSenderId: '122600853691',
+          projectId: 'blind-social-a718c',
+          storageBucket: 'blind-social-a718c.firebasestorage.app',
+        ),
+      );
+
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = semver.Version.parse(packageInfo.version);
 
       final doc = await FirebaseFirestore.instance
           .collection('settings')
           .doc('app_config')
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 5));
 
       if (doc.exists) {
         final data = doc.data()!;
@@ -104,7 +100,8 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
         }
       }
     } catch (e) {
-      debugPrint('Version check error: $e');
+      debugPrint('Initialization/Version check error: $e');
+      // If initialization fails, log and continue to allow app to start
     }
     return {'required': false};
   }
@@ -112,7 +109,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>>(
-      future: _updateCheckFuture,
+      future: _initFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return MaterialApp(
@@ -121,9 +118,29 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
             home: Scaffold(
               backgroundColor: Colors.black,
               body: Center(
-                child: Semantics(
-                  label: 'Sürüm kontrol ediliyor, lütfen bekleyin',
-                  child: CircularProgressIndicator(strokeWidth: 6, color: Colors.yellow),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Semantics(
+                      label: 'Yükleniyor, lütfen bekleyin',
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 10,
+                        color: Colors.yellow,
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    Semantics(
+                      label: 'Uygulama başlatılıyor içeriği',
+                      child: const Text(
+                        'Yükleniyor...',
+                        style: TextStyle(
+                          color: Colors.yellow,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
