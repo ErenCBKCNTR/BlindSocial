@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:livekit_client/livekit_client.dart';
+import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-const String appId = "Bc4b25ebf04b4f84928e2b1e185025c7";
+const String liveKitUrl = 'wss://bs-app-l1mgfyed.livekit.cloud';
+const String liveKitApiKey = 'APINTM3AUHp6ftW';
+const String liveKitApiSecret = 'lQTO4G5gD9rGBFx94LoAl2bh0yaMBAaR6VgHN45ZeoO';
 
 class ChatScreen extends StatefulWidget {
   final String roomId;
@@ -21,7 +24,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _auth = FirebaseAuth.instance;
   final _scrollController = ScrollController();
 
-  RtcEngine? _engine;
+  Room? _room;
   bool _isJoined = false;
   bool _isMuted = false;
   bool _isJoining = false;
@@ -30,69 +33,35 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _initAgora();
   }
 
-  Future<void> _initAgora() async {
-    try {
-      _engine = createAgoraRtcEngine();
-      await _engine!.initialize(const RtcEngineContext(
-        appId: appId,
-        channelProfile: ChannelProfileType.channelProfileCommunication,
-      ));
+  String _generateToken() {
+    final user = _auth.currentUser;
+    final identity = user?.email ?? user?.uid ?? 'anonymous_${DateTime.now().millisecondsSinceEpoch}';
 
-      _engine!.registerEventHandler(
-        RtcEngineEventHandler(
-          onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
-            setState(() {
-              _isJoined = true;
-              _isJoining = false;
-              _statusMessage = "Sesli kanala bağlanıldı.";
-            });
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Kanala başarıyla bağlanıldı')),
-              );
-            }
-          },
-          onLeaveChannel: (RtcConnection connection, RtcStats stats) {
-            setState(() {
-              _isJoined = false;
-              _isJoining = false;
-              _statusMessage = "Sesli kanaldan ayrılındı.";
-            });
-          },
-          onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
-            setState(() {
-              _statusMessage = "Odaya yeni birisi katıldı.";
-            });
-          },
-          onError: (ErrorCodeType err, String msg) {
-            debugPrint('Agora error: $err - $msg');
-            setState(() {
-              _isJoining = false;
-            });
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Bağlantı kurulamadı, lütfen kanal ayarlarını kontrol edin. Hata: $err'),
-                  backgroundColor: Colors.redAccent,
-                ),
-              );
-            }
-          },
-        ),
-      );
-    } catch (e) {
-      debugPrint('Agora initialization error: $e');
-    }
+    final jwt = JWT(
+      {
+        'exp': (DateTime.now().add(const Duration(hours: 2)).millisecondsSinceEpoch / 1000).round(),
+        'iss': liveKitApiKey,
+        'sub': identity,
+        'video': {
+          'roomJoin': true,
+          'room': widget.roomId,
+        },
+      },
+      issuer: liveKitApiKey,
+    );
+
+    return jwt.sign(
+      SecretKey(liveKitApiSecret),
+      algorithm: JWTAlgorithm.HS256,
+    );
   }
 
   Future<void> _joinVoiceChannel() async {
     if (_isJoining) return;
 
     final status = await Permission.microphone.request();
-
     if (status != PermissionStatus.granted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -113,41 +82,56 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      // Safety: leave previous channel if any
-      await _engine?.leaveChannel();
+      if (_room != null) {
+        await _room!.disconnect();
+      }
 
-      await _engine!.joinChannel(
-        token: "",
-        channelId: widget.roomId, // Correctly using roomId (document ID)
-        uid: 0,
-        options: const ChannelMediaOptions(
-          clientRoleType: ClientRoleType.clientRoleBroadcaster,
-          publishMicrophoneTrack: true,
-          autoSubscribeAudio: true,
-        ),
-      );
+      final token = _generateToken();
+      _room = Room();
+
+      await _room!.connect(liveKitUrl, token);
+
+      // Enable microphone immediately
+      await _room!.localParticipant?.setMicrophoneEnabled(true);
+
+      setState(() {
+        _isJoined = true;
+        _isJoining = false;
+        _statusMessage = "LiveKit kanalına başarıyla bağlanıldı";
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('LiveKit kanalına başarıyla bağlanıldı')),
+        );
+      }
     } catch (e) {
-      debugPrint('Error joining channel: $e');
+      debugPrint('LiveKit connection error: $e');
       setState(() {
         _isJoining = false;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Bağlantı hatası. Detay: ${e.toString()}')),
+          SnackBar(content: Text('Bağlantı Hatası: ${e.toString()}')),
         );
       }
     }
   }
 
   Future<void> _leaveVoiceChannel() async {
-    await _engine!.leaveChannel();
+    await _room?.disconnect();
+    setState(() {
+      _isJoined = false;
+      _statusMessage = "Sesli kanaldan ayrılındı.";
+    });
   }
 
   Future<void> _toggleMute() async {
-    await _engine!.muteLocalAudioStream(!_isMuted);
+    final newMuted = !_isMuted;
+    await _room?.localParticipant?.setMicrophoneEnabled(!newMuted);
     setState(() {
-      _isMuted = !_isMuted;
-      _statusMessage = _isMuted ? "Mikrofon kapatıldı" : "Mikon açıldı";
+      _isMuted = newMuted;
+      _statusMessage = _isMuted ? "Mikrofon kapatıldı" : "Mikrofon açıldı";
     });
   }
 
@@ -155,8 +139,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
-    _engine?.leaveChannel();
-    _engine?.release();
+    _room?.disconnect();
     super.dispose();
   }
 
