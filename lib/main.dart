@@ -118,7 +118,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: AppTheme.highContrastTheme,
-            home: const Scaffold(
+            home: Scaffold(
               backgroundColor: Colors.black,
               body: Center(
                 child: Semantics(
