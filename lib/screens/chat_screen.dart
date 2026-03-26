@@ -44,6 +44,11 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isJoining = false;
   String _statusMessage = "";
 
+  // Cache user display name and room TTL to prevent redundant Firestore network reads
+  // on every sent message, improving message sending performance.
+  String? _cachedDisplayName;
+  String? _cachedTtl;
+
   @override
   void initState() {
     super.initState();
@@ -306,26 +311,30 @@ class _ChatScreenState extends State<ChatScreen> {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    final userDoc =
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    final userData = userDoc.data() as Map<String, dynamic>;
-    final displayName = userData['display_preference'] == 'fullName'
-        ? userData['fullName']
-        : userData['username'];
+    if (_cachedDisplayName == null) {
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final userData = userDoc.data() as Map<String, dynamic>;
+      _cachedDisplayName = userData['display_preference'] == 'fullName'
+          ? userData['fullName']
+          : userData['username'];
+    }
 
-    final roomDoc = await FirebaseFirestore.instance
-        .collection('chat_rooms')
-        .doc(widget.roomId)
-        .get();
-    final roomData = roomDoc.data() as Map<String, dynamic>;
-    final ttl = roomData['ttl'] ?? '24h';
+    if (_cachedTtl == null) {
+      final roomDoc = await FirebaseFirestore.instance
+          .collection('chat_rooms')
+          .doc(widget.roomId)
+          .get();
+      final roomData = roomDoc.data() as Map<String, dynamic>;
+      _cachedTtl = roomData['ttl'] ?? '24h';
+    }
 
     DateTime expiresAt = DateTime.now();
-    if (ttl == '24h') {
+    if (_cachedTtl == '24h') {
       expiresAt = expiresAt.add(const Duration(hours: 24));
-    } else if (ttl == '3d') {
+    } else if (_cachedTtl == '3d') {
       expiresAt = expiresAt.add(const Duration(days: 3));
-    } else if (ttl == '7d') {
+    } else if (_cachedTtl == '7d') {
       expiresAt = expiresAt.add(const Duration(days: 7));
     }
 
@@ -339,7 +348,7 @@ class _ChatScreenState extends State<ChatScreen> {
       'audioUrl': audioUrl,
       'duration': duration,
       'senderId': user.uid,
-      'senderName': displayName,
+      'senderName': _cachedDisplayName,
       'timestamp': FieldValue.serverTimestamp(),
       'expires_at': Timestamp.fromDate(expiresAt),
     });
