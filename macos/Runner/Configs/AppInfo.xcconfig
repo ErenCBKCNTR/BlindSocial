@@ -8,7 +8,7 @@
 PRODUCT_NAME = blind_social
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.blindSocial
+PRODUCT_BUNDLE_IDENTIFIER = com.blindsocial.app
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.blindsocial. All rights reserved.
