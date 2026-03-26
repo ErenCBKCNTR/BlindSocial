@@ -108,10 +108,10 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
               if (ScaffoldMessenger.maybeOf(context) != null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Semantics(
+                    content: Semantics(
                       label:
                           'Yeni bir sürüm mevcut, lütfen en iyi deneyim için uygulamayı güncelleyin',
-                      child: Text(
+                      child: const Text(
                           'Yeni bir sürüm mevcut, lütfen en iyi deneyim için uygulamayı güncelleyin'),
                     ),
                     backgroundColor: Colors.cyan,
