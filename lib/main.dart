@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pub_semver/pub_semver.dart' as semver;
+import 'package:url_launcher/url_launcher.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_rooms_screen.dart';
@@ -58,11 +59,15 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
       if (doc.exists) {
         final data = doc.data()!;
         final minVersionStr = data['min_version'] as String? ?? "1.0.0";
+        final currentVersionStr = data['current_version'] as String? ?? "1.0.0";
         final updateUrl = data['update_url'] as String? ?? "";
         final minVersion = semver.Version.parse(minVersionStr);
+        final latestVersion = semver.Version.parse(currentVersionStr);
 
         if (currentVersion < minVersion) {
           return {'required': true, 'url': updateUrl};
+        } else if (currentVersion < latestVersion) {
+          return {'recommended': true, 'url': updateUrl};
         }
       }
     } catch (e) {
@@ -95,6 +100,32 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
           final updateData = snapshot.data ?? {'required': false};
           if (updateData['required'] == true) {
             return UpdateScreen(updateUrl: updateData['url'] ?? "");
+          }
+
+          // Recommendation logic after auth or first load
+          if (updateData['recommended'] == true) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (ScaffoldMessenger.maybeOf(context) != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Semantics(
+                      label:
+                          'Yeni bir sürüm mevcut, lütfen en iyi deneyim için uygulamayı güncelleyin',
+                      child: Text(
+                          'Yeni bir sürüm mevcut, lütfen en iyi deneyim için uygulamayı güncelleyin'),
+                    ),
+                    backgroundColor: Colors.cyan,
+                    action: SnackBarAction(
+                        label: 'GÜNCELLE',
+                        textColor: Colors.black,
+                        onPressed: () {
+                          launchUrl(Uri.parse(updateData['url']),
+                              mode: LaunchMode.externalApplication);
+                        }),
+                  ),
+                );
+              }
+            });
           }
 
           return const LoginScreen();

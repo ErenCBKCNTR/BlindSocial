@@ -1,10 +1,16 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:record/record.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:path_provider/path_provider.dart';
 
 const String liveKitUrl = 'wss://bs-app-l1mgfyed.livekit.cloud';
 const String liveKitApiKey = 'APINTM3AUHp6ftW';
@@ -24,6 +30,12 @@ class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
   final _auth = FirebaseAuth.instance;
   final _scrollController = ScrollController();
+  final _audioRecorder = AudioRecorder();
+  final _audioPlayer = AudioPlayer();
+
+  bool _isRecording = false;
+  int _recordDuration = 0;
+  Timer? _recordTimer;
 
   Room? _room;
   bool _isJoined = false;
@@ -196,35 +208,141 @@ class _ChatScreenState extends State<ChatScreen> {
     _removeParticipant();
     _messageController.dispose();
     _scrollController.dispose();
+    _audioRecorder.dispose();
+    _audioPlayer.dispose();
+    _recordTimer?.cancel();
     _room?.disconnect();
     super.dispose();
   }
 
-  Future<void> _sendMessage() async {
+  Future<void> _startRecording() async {
+    try {
+      if (await _audioRecorder.hasPermission()) {
+        final dir = await getTemporaryDirectory();
+        final path =
+            '${dir.path}/record_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+        const config = RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 64000);
+
+        await _audioRecorder.start(config, path: path);
+
+        setState(() {
+          _isRecording = true;
+          _recordDuration = 0;
+        });
+
+        _recordTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          setState(() {
+            _recordDuration++;
+          });
+          if (_recordDuration >= 60) {
+            _stopRecording();
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Recording error: $e');
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    _recordTimer?.cancel();
+    final path = await _audioRecorder.stop();
+    setState(() {
+      _isRecording = false;
+    });
+
+    if (path != null) {
+      _uploadVoiceMessage(path);
+    }
+
+    if (_recordDuration >= 60) {
+      SemanticsService.announce(
+          'Maksimum kayıt süresi olan 60 saniyeye ulaşıldı. Kayıt durduruldu ve gönderiliyor.',
+          TextDirection.ltr);
+    }
+  }
+
+  Future<void> _uploadVoiceMessage(String path) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    setState(() {
+      _statusMessage = "Sesli mesaj yükleniyor...";
+    });
+
+    try {
+      final fileName =
+          'voice_${widget.roomId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('chat_voices')
+          .child(widget.roomId)
+          .child(fileName);
+
+      await ref.putFile(File(path));
+      final url = await ref.getDownloadURL();
+
+      await _sendMessage(type: 'audio', audioUrl: url, duration: _recordDuration);
+
+      setState(() {
+        _statusMessage = "Sesli mesaj gönderildi.";
+      });
+    } catch (e) {
+      debugPrint('Upload error: $e');
+      setState(() {
+        _statusMessage = "Sesli mesaj yüklenirken hata oluştu.";
+      });
+    }
+  }
+
+  Future<void> _sendMessage(
+      {String type = 'text', String? audioUrl, int? duration}) async {
     final messageText = _messageController.text.trim();
-    if (messageText.isEmpty) return;
+    if (type == 'text' && messageText.isEmpty) return;
 
     final user = _auth.currentUser;
     if (user == null) return;
 
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     final userData = userDoc.data() as Map<String, dynamic>;
     final displayName = userData['display_preference'] == 'fullName'
         ? userData['fullName']
         : userData['username'];
+
+    final roomDoc = await FirebaseFirestore.instance
+        .collection('chat_rooms')
+        .doc(widget.roomId)
+        .get();
+    final roomData = roomDoc.data() as Map<String, dynamic>;
+    final ttl = roomData['ttl'] ?? '24h';
+
+    DateTime expiresAt = DateTime.now();
+    if (ttl == '24h') {
+      expiresAt = expiresAt.add(const Duration(hours: 24));
+    } else if (ttl == '3d') {
+      expiresAt = expiresAt.add(const Duration(days: 3));
+    } else if (ttl == '7d') {
+      expiresAt = expiresAt.add(const Duration(days: 7));
+    }
 
     await FirebaseFirestore.instance
         .collection('chat_rooms')
         .doc(widget.roomId)
         .collection('messages')
         .add({
-      'text': messageText,
+      'text': type == 'text' ? messageText : '',
+      'type': type,
+      'audioUrl': audioUrl,
+      'duration': duration,
       'senderId': user.uid,
       'senderName': displayName,
       'timestamp': FieldValue.serverTimestamp(),
+      'expires_at': Timestamp.fromDate(expiresAt),
     });
 
-    _messageController.clear();
+    if (type == 'text') _messageController.clear();
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         0.0,
@@ -416,7 +534,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   .collection('chat_rooms')
                   .doc(widget.roomId)
                   .collection('messages')
-                  .orderBy('timestamp', descending: true)
+                  .where('expires_at', isGreaterThan: Timestamp.now())
+                  .orderBy('expires_at', descending: true)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -455,22 +574,31 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemBuilder: (context, index) {
                     final messageData =
                         messages[index].data() as Map<String, dynamic>;
+                    final type = messageData['type'] ?? 'text';
                     final text = messageData['text'] ?? '';
+                    final audioUrl = messageData['audioUrl'] as String?;
+                    final duration = messageData['duration'] as int?;
                     final senderName = messageData['senderName'] ?? 'Bilinmeyen';
-                    final isMe = messageData['senderId'] == _auth.currentUser?.uid;
+                    final isMe =
+                        messageData['senderId'] == _auth.currentUser?.uid;
                     final timestamp = messageData['timestamp'] as Timestamp?;
                     final timeString = timestamp != null
                         ? "${timestamp.toDate().hour.toString().padLeft(2, '0')}:${timestamp.toDate().minute.toString().padLeft(2, '0')}"
                         : "";
 
+                    final label = type == 'text'
+                        ? 'Gönderen: $senderName, Mesaj: $text, Saat: $timeString'
+                        : 'Gönderen: $senderName, Sesli Mesaj ($duration saniye), Saat: $timeString';
+
                     return Semantics(
-                      label: 'Gönderen: $senderName, Mesaj: $text, Saat: $timeString',
+                      label: label,
                       liveRegion: index == 0,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                             vertical: 8.0, horizontal: 16.0),
                         child: Align(
-                          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                          alignment:
+                              isMe ? Alignment.centerRight : Alignment.centerLeft,
                           child: Container(
                             padding: const EdgeInsets.all(12.0),
                             decoration: BoxDecoration(
@@ -492,13 +620,48 @@ class _ChatScreenState extends State<ChatScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: 4),
-                                    Text(
-                                      text,
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 20,
+                                    if (type == 'audio')
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Semantics(
+                                            label: 'Sesli Mesajı Oynat',
+                                            button: true,
+                                            child: IconButton(
+                                              icon: const Icon(Icons.play_arrow,
+                                                  color: Colors.black, size: 30),
+                                              onPressed: () {
+                                                if (audioUrl != null) {
+                                                  _audioPlayer.play(
+                                                      UrlSource(audioUrl));
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                          Text('$duration sn',
+                                              style: const TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 18)),
+                                          Semantics(
+                                            label: 'Sesli Mesajı Durdur',
+                                            button: true,
+                                            child: IconButton(
+                                              icon: const Icon(Icons.stop,
+                                                  color: Colors.black, size: 30),
+                                              onPressed: () =>
+                                                  _audioPlayer.stop(),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    else
+                                      Text(
+                                        text,
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 20,
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 4),
@@ -523,31 +686,62 @@ class _ChatScreenState extends State<ChatScreen> {
           Container(
             padding: const EdgeInsets.all(16.0),
             color: Colors.black,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Semantics(
-                    label: 'Mesajınızı buraya yazın',
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: const InputDecoration(
-                        hintText: 'Mesaj...',
-                      ),
-                      style: const TextStyle(color: Colors.white, fontSize: 20),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  Semantics(
+                    label: _isRecording
+                        ? 'Kaydı Durdur ve Gönder'
+                        : 'Sesli Mesaj Kaydet',
+                    hint: _isRecording
+                        ? 'Kaydı bitirmek için dokunun'
+                        : '60 saniyeye kadar ses kaydetmek için dokunun',
+                    button: true,
+                    child: IconButton(
+                      icon: Icon(_isRecording ? Icons.stop : Icons.mic,
+                          color: _isRecording ? Colors.red : Colors.cyan,
+                          size: 36),
+                      onPressed: _isRecording ? _stopRecording : _startRecording,
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Semantics(
-                  label: 'Mesajı Gönder butonu',
-                  hint: 'Yazdığınız mesajı odaya göndermek için dokunun',
-                  button: true,
-                  child: IconButton(
-                    icon: const Icon(Icons.send, color: Colors.yellow, size: 36),
-                    onPressed: _sendMessage,
-                  ),
-                ),
-              ],
+                  if (_isRecording)
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          'Kayıt Yapılıyor: $_recordDuration sn',
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 20),
+                        ),
+                      ),
+                    )
+                  else ...[
+                    Expanded(
+                      child: Semantics(
+                        label: 'Mesajınızı buraya yazın',
+                        child: TextField(
+                          controller: _messageController,
+                          decoration: const InputDecoration(
+                            hintText: 'Mesaj...',
+                          ),
+                          style:
+                              const TextStyle(color: Colors.white, fontSize: 20),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Semantics(
+                      label: 'Mesajı Gönder butonu',
+                      hint: 'Yazdığınız mesajı odaya göndermek için dokunun',
+                      button: true,
+                      child: IconButton(
+                        icon: const Icon(Icons.send,
+                            color: Colors.yellow, size: 36),
+                        onPressed: () => _sendMessage(),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ],

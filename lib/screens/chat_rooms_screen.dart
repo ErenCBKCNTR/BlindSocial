@@ -304,10 +304,12 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
     final nameController = TextEditingController();
     final capacityController = TextEditingController(text: '10');
     final passwordController = TextEditingController();
+    String ttlPreference = '24h';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
         backgroundColor: Colors.black,
         title: Semantics(
           label: 'Yeni Oda Oluştur',
@@ -363,6 +365,26 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
+              const Text('Mesaj Saklanma Süresi',
+                  style: TextStyle(color: Colors.cyan, fontSize: 18)),
+              Semantics(
+                label: 'Mesaj Saklanma Süresi seçimi',
+                child: DropdownButton<String>(
+                  value: ttlPreference,
+                  dropdownColor: Colors.black,
+                  isExpanded: true,
+                  style: const TextStyle(color: Colors.yellow, fontSize: 20),
+                  items: const [
+                    DropdownMenuItem(value: '24h', child: Text('24 Saat')),
+                    DropdownMenuItem(value: '3d', child: Text('3 Gün')),
+                    DropdownMenuItem(value: '7d', child: Text('7 Gün')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setState(() => ttlPreference = val);
+                  },
+                ),
+              ),
             ],
           ),
         ),
@@ -387,6 +409,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 'password': passwordController.text.isEmpty
                     ? null
                     : passwordController.text,
+                'ttl': ttlPreference,
                 'creatorId': user.uid,
                 'currentParticipants': 0,
                 'createdAt': FieldValue.serverTimestamp(),
@@ -553,7 +576,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
               var roomId = room.id;
               var maxCapacity = roomData['maxCapacity'] ?? 10;
               var currentParticipants = roomData['currentParticipants'] ?? 0;
-              var isLocked = roomData['password'] != null;
+              var isLocked =
+                  roomData['password'] != null && roomData['password'] != '';
+              var isCreator = roomData['creatorId'] == _auth.currentUser?.uid;
 
               String semanticLabel = '$roomName sohbet odası. '
                   'Kapasite: $currentParticipants bölü $maxCapacity. '
@@ -569,7 +594,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     children: [
                       const Icon(Icons.meeting_room,
                           color: Colors.cyan, size: 40),
-                      if (isLocked)
+                      if (isLocked && !isCreator)
                         const Icon(Icons.lock, color: Colors.yellow, size: 20),
                     ],
                   ),
@@ -610,7 +635,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     }
 
                     // Handle password
-                    if (isLocked) {
+                    if (isLocked && !isCreator) {
                       final passwordController = TextEditingController();
                       final correctPassword = roomData['password'];
 
