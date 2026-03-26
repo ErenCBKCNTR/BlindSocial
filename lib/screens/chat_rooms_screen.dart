@@ -281,7 +281,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('İptal')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('İptal')),
           ElevatedButton(
             onPressed: () async {
               await roomDoc.reference.update({
@@ -309,121 +311,124 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: Semantics(
-          label: 'Yeni Oda Oluştur',
-          child: const Text('Yeni Oda Oluştur',
-              style: TextStyle(color: Colors.yellow)),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Semantics(
-                label: 'Oda İsmi Giriş Alanı',
-                child: TextField(
-                  controller: nameController,
-                  style: const TextStyle(color: Colors.white, fontSize: 20),
-                  decoration: const InputDecoration(
-                    labelText: 'Oda İsmi',
-                    labelStyle: TextStyle(color: Colors.cyan),
-                    enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.cyan)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Semantics(
-                label: 'Kapasite Giriş Alanı',
-                hint: 'Maksimum katılımcı sayısı',
-                child: TextField(
-                  controller: capacityController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white, fontSize: 20),
-                  decoration: const InputDecoration(
-                    labelText: 'Kapasite (Örn: 10)',
-                    labelStyle: TextStyle(color: Colors.cyan),
-                    enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.cyan)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Semantics(
-                label: 'Şifre Giriş Alanı',
-                hint: 'Oda şifreli olsun istiyorsanız doldurun, yoksa boş bırakın',
-                child: TextField(
-                  controller: passwordController,
-                  obscureText: true,
-                  style: const TextStyle(color: Colors.white, fontSize: 20),
-                  decoration: const InputDecoration(
-                    labelText: 'Şifre (Opsiyonel)',
-                    labelStyle: TextStyle(color: Colors.cyan),
-                    enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.cyan)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text('Mesaj Saklanma Süresi',
-                  style: TextStyle(color: Colors.cyan, fontSize: 18)),
-              Semantics(
-                label: 'Mesaj Saklanma Süresi seçimi',
-                child: DropdownButton<String>(
-                  value: ttlPreference,
-                  dropdownColor: Colors.black,
-                  isExpanded: true,
-                  style: const TextStyle(color: Colors.yellow, fontSize: 20),
-                  items: const [
-                    DropdownMenuItem(value: '24h', child: Text('24 Saat')),
-                    DropdownMenuItem(value: '3d', child: Text('3 Gün')),
-                    DropdownMenuItem(value: '7d', child: Text('7 Gün')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setState(() => ttlPreference = val);
-                  },
-                ),
-              ),
-            ],
+        builder: (context, setModalState) => AlertDialog(
+          backgroundColor: Colors.black,
+          title: Semantics(
+            label: 'Yeni Oda Oluştur',
+            child: const Text('Yeni Oda Oluştur',
+                style: TextStyle(color: Colors.yellow)),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Semantics(
-              label: 'Vazgeç butonu',
-              child: const Text('İptal',
-                  style: TextStyle(color: Colors.red, fontSize: 18)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Semantics(
+                  label: 'Oda İsmi Giriş Alanı',
+                  child: TextField(
+                    controller: nameController,
+                    style: const TextStyle(color: Colors.white, fontSize: 20),
+                    decoration: const InputDecoration(
+                      labelText: 'Oda İsmi',
+                      labelStyle: TextStyle(color: Colors.cyan),
+                      enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.cyan)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Semantics(
+                  label: 'Kapasite Giriş Alanı',
+                  hint: 'Maksimum katılımcı sayısı',
+                  child: TextField(
+                    controller: capacityController,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(color: Colors.white, fontSize: 20),
+                    decoration: const InputDecoration(
+                      labelText: 'Kapasite (Örn: 10)',
+                      labelStyle: TextStyle(color: Colors.cyan),
+                      enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.cyan)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Semantics(
+                  label: 'Şifre Giriş Alanı',
+                  hint: 'Oda şifreli olsun istiyorsanız doldurun, yoksa boş bırakın',
+                  child: TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    style: const TextStyle(color: Colors.white, fontSize: 20),
+                    decoration: const InputDecoration(
+                      labelText: 'Şifre (Opsiyonel)',
+                      labelStyle: TextStyle(color: Colors.cyan),
+                      enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.cyan)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text('Mesaj Saklanma Süresi',
+                    style: TextStyle(color: Colors.cyan, fontSize: 18)),
+                Semantics(
+                  label: 'Mesaj Saklanma Süresi seçimi',
+                  child: DropdownButton<String>(
+                    value: ttlPreference,
+                    dropdownColor: Colors.black,
+                    isExpanded: true,
+                    style: const TextStyle(color: Colors.yellow, fontSize: 20),
+                    items: const [
+                      DropdownMenuItem(value: '24h', child: Text('24 Saat')),
+                      DropdownMenuItem(value: '3d', child: Text('3 Gün')),
+                      DropdownMenuItem(value: '7d', child: Text('7 Gün')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setModalState(() => ttlPreference = val);
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.trim().isEmpty) return;
-              final user = _auth.currentUser;
-              if (user == null) return;
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Semantics(
+                label: 'Vazgeç butonu',
+                child: const Text('İptal',
+                    style: TextStyle(color: Colors.red, fontSize: 18)),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (nameController.text.trim().isEmpty) return;
+                final user = _auth.currentUser;
+                if (user == null) return;
 
-              await FirebaseFirestore.instance.collection('chat_rooms').add({
-                'name': nameController.text.trim(),
-                'maxCapacity': int.tryParse(capacityController.text) ?? 10,
-                'password': passwordController.text.isEmpty
-                    ? null
-                    : passwordController.text,
-                'ttl': ttlPreference,
-                'creatorId': user.uid,
-                'currentParticipants': 0,
-                'createdAt': FieldValue.serverTimestamp(),
-              });
-              if (context.mounted) Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
-            child: Semantics(
-              label: 'Oda Oluştur butonu',
-              child: const Text('Oluştur',
-                  style: TextStyle(color: Colors.black, fontSize: 18)),
+                await FirebaseFirestore.instance.collection('chat_rooms').add({
+                  'name': nameController.text.trim(),
+                  'maxCapacity': int.tryParse(capacityController.text) ?? 10,
+                  'password': passwordController.text.isEmpty
+                      ? null
+                      : passwordController.text,
+                  'ttl': ttlPreference,
+                  'creatorId': user.uid,
+                  'currentParticipants': 0,
+                  'createdAt': FieldValue.serverTimestamp(),
+                });
+                if (context.mounted) Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
+              child: Semantics(
+                label: 'Oda Oluştur butonu',
+                child: const Text('Oluştur',
+                    style: TextStyle(color: Colors.black, fontSize: 18)),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
