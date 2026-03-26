@@ -52,9 +52,15 @@ class _ChatScreenState extends State<ChatScreen> {
       transaction.update(roomRef, {'currentParticipants': current + 1});
 
       final participantRef = roomRef.collection('participants').doc(user.uid);
+      final userDoc = await transaction.get(FirebaseFirestore.instance.collection('users').doc(user.uid));
+      final userData = userDoc.data() as Map<String, dynamic>;
+      final displayName = userData['display_preference'] == 'fullName'
+          ? userData['fullName']
+          : userData['username'];
+
       transaction.set(participantRef, {
         'uid': user.uid,
-        'email': user.email,
+        'displayName': displayName,
         'joinedAt': FieldValue.serverTimestamp(),
       });
     });
@@ -201,6 +207,12 @@ class _ChatScreenState extends State<ChatScreen> {
     final user = _auth.currentUser;
     if (user == null) return;
 
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final userData = userDoc.data() as Map<String, dynamic>;
+    final displayName = userData['display_preference'] == 'fullName'
+        ? userData['fullName']
+        : userData['username'];
+
     await FirebaseFirestore.instance
         .collection('chat_rooms')
         .doc(widget.roomId)
@@ -208,7 +220,7 @@ class _ChatScreenState extends State<ChatScreen> {
         .add({
       'text': messageText,
       'senderId': user.uid,
-      'senderEmail': user.email,
+      'senderName': displayName,
       'timestamp': FieldValue.serverTimestamp(),
     });
 
@@ -247,12 +259,12 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemCount: participants.length,
                   itemBuilder: (context, index) {
                     final p = participants[index].data() as Map<String, dynamic>;
-                    final email = p['email'] ?? 'Anonim';
+                    final name = p['displayName'] ?? 'Anonim';
                     return Semantics(
-                      label: 'Katılımcı: $email',
+                      label: 'Katılımcı: $name',
                       child: ListTile(
                         leading: const Icon(Icons.person, color: Colors.cyan),
-                        title: Text(email, style: const TextStyle(color: Colors.white, fontSize: 18)),
+                        title: Text(name, style: const TextStyle(color: Colors.white, fontSize: 18)),
                       ),
                     );
                   },
@@ -444,7 +456,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     final messageData =
                         messages[index].data() as Map<String, dynamic>;
                     final text = messageData['text'] ?? '';
-                    final senderEmail = messageData['senderEmail'] ?? 'Bilinmeyen';
+                    final senderName = messageData['senderName'] ?? 'Bilinmeyen';
                     final isMe = messageData['senderId'] == _auth.currentUser?.uid;
                     final timestamp = messageData['timestamp'] as Timestamp?;
                     final timeString = timestamp != null
@@ -452,7 +464,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         : "";
 
                     return Semantics(
-                      label: 'Gönderen: $senderEmail, Mesaj: $text, Saat: $timeString',
+                      label: 'Gönderen: $senderName, Mesaj: $text, Saat: $timeString',
                       liveRegion: index == 0,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -472,7 +484,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      senderEmail,
+                                      senderName,
                                       style: const TextStyle(
                                         color: Colors.black,
                                         fontSize: 16,

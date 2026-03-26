@@ -102,6 +102,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'email': user.email,
           'birthDate': Timestamp.fromDate(DateTime(year, month, day)),
           'role_id': 2, // Standard User
+          'display_preference': 'username',
           'createdAt': FieldValue.serverTimestamp(),
         });
 

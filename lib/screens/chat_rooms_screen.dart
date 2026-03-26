@@ -47,37 +47,191 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
   }
 
   void _showIncompleteProfileDialog() {
+    final nameController = TextEditingController();
+    final usernameController = TextEditingController();
+    final dayController = TextEditingController();
+    final monthController = TextEditingController();
+    final yearController = TextEditingController();
+    bool isSaving = false;
+
     showModalBottomSheet(
       context: context,
       isDismissible: false,
+      isScrollControlled: true,
       enableDrag: false,
       backgroundColor: Colors.black,
-      builder: (context) => WillPopScope(
-        onWillPop: () async => false,
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Profil Tamamlama Gerekli',
-                style: TextStyle(color: Colors.yellow, fontSize: 22, fontWeight: FontWeight.bold),
+      builder: (context) => PopScope(
+        canPop: false,
+        child: StatefulBuilder(
+          builder: (context, setModalState) => SafeArea(
+            child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 24,
+              right: 24,
+              top: 24,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Profil Tamamlama Gerekli',
+                    style: TextStyle(
+                        color: Colors.yellow,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+                  Semantics(
+                    label: 'İsim Soyisim giriş alanı',
+                    hint: 'Tam adınızı giriniz',
+                    child: TextField(
+                      controller: nameController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'İsim Soyisim'),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Semantics(
+                    label: 'Kullanıcı Adı giriş alanı',
+                    hint: 'Benzersiz bir kullanıcı adı seçiniz',
+                    child: TextField(
+                      controller: usernameController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'Kullanıcı Adı'),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Doğum Tarihi',
+                        style: TextStyle(color: Colors.cyan, fontSize: 18)),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Semantics(
+                          label: 'Doğum günü',
+                          hint: 'Gün giriniz (2 haneli)',
+                          child: TextField(
+                            controller: dayController,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: const InputDecoration(hintText: 'Gün'),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Semantics(
+                          label: 'Doğum ayı',
+                          hint: 'Ay giriniz (2 haneli)',
+                          child: TextField(
+                            controller: monthController,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: const InputDecoration(hintText: 'Ay'),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Semantics(
+                          label: 'Doğum yılı',
+                          hint: 'Yıl giriniz (4 haneli)',
+                          child: TextField(
+                            controller: yearController,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: const InputDecoration(hintText: 'Yıl'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  isSaving
+                      ? const CircularProgressIndicator()
+                      : Semantics(
+                          label: 'Bilgileri Kaydet butonu',
+                          button: true,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final name = nameController.text.trim();
+                              final username =
+                                  usernameController.text.trim().toLowerCase();
+                              final d = int.tryParse(dayController.text);
+                              final m = int.tryParse(monthController.text);
+                              final y = int.tryParse(yearController.text);
+
+                              if (name.isEmpty ||
+                                  username.isEmpty ||
+                                  d == null ||
+                                  m == null ||
+                                  y == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Lütfen tüm alanları doldurun.')),
+                                );
+                                return;
+                              }
+
+                              setModalState(() => isSaving = true);
+
+                              try {
+                                // Check username uniqueness
+                                final userQuery = await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .where('username', isEqualTo: username)
+                                    .get();
+
+                                if (userQuery.docs.isNotEmpty &&
+                                    userQuery.docs.first.id !=
+                                        _auth.currentUser?.uid) {
+                                  throw Exception('username-taken');
+                                }
+
+                                final birthDate = DateTime(y, m, d);
+
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(_auth.currentUser?.uid)
+                                    .set({
+                                  'fullName': name,
+                                  'username': username,
+                                  'birthDate': Timestamp.fromDate(birthDate),
+                                  'role_id': 2,
+                                  'display_preference': 'username',
+                                  'updatedAt': FieldValue.serverTimestamp(),
+                                }, SetOptions(merge: true));
+
+                                if (mounted) {
+                                  Navigator.pop(context);
+                                  setState(() => _isProfileIncomplete = false);
+                                }
+                              } catch (e) {
+                                String msg = 'Hata oluştu.';
+                                if (e.toString().contains('username-taken')) {
+                                  msg = 'Bu kullanıcı adı zaten alınmış.';
+                                } else if (e.toString().contains('network')) {
+                                  msg = 'Bağlantı hatası, lütfen internetinizi kontrol edin.';
+                                }
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(SnackBar(content: Text(msg)));
+                              } finally {
+                                if (mounted) setModalState(() => isSaving = false);
+                              }
+                            },
+                            child: const Text('Bilgileri Kaydet'),
+                          ),
+                        ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'Lütfen eksik bilgilerinizi doldurunuz. İsim, kullanıcı adı ve doğum tarihi alanları zorunludur.',
-                style: TextStyle(color: Colors.white, fontSize: 18),
-                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/profile');
-                },
-                child: const Text('Profilime Git'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
