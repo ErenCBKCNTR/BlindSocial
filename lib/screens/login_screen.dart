@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,6 +15,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   final _auth = FirebaseAuth.instance;
+  final _secureStorage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+  );
   bool _isLoading = false;
   bool _rememberMe = false;
 
@@ -24,9 +30,17 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _checkRememberMe() async {
+    // Migration from SharedPreferences to FlutterSecureStorage
     final prefs = await SharedPreferences.getInstance();
+    if (prefs.containsKey('remember_me')) {
+      final bool value = prefs.getBool('remember_me') ?? false;
+      await _secureStorage.write(key: 'remember_me', value: value.toString());
+      await prefs.remove('remember_me');
+    }
+
+    final String? rememberMeStr = await _secureStorage.read(key: 'remember_me');
     setState(() {
-      _rememberMe = prefs.getBool('remember_me') ?? false;
+      _rememberMe = rememberMeStr == 'true';
     });
 
     if (_rememberMe && _auth.currentUser != null) {
@@ -39,8 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _updateRememberMe(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('remember_me', value);
+    await _secureStorage.write(key: 'remember_me', value: value.toString());
     setState(() {
       _rememberMe = value;
     });
