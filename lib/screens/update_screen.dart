@@ -17,7 +17,7 @@ class UpdateScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (_) {},
+      onPopInvokedWithResult: (didPop, result) {},
       child: Scaffold(
         backgroundColor: Colors.black,
         body: SafeArea(

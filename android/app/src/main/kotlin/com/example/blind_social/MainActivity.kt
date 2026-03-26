@@ -1,4 +1,4 @@
-package com.blindsocial.app
+package com.example.blind_social
 
 import io.flutter.embedding.android.FlutterActivity
 

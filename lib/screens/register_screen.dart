@@ -107,15 +107,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
 
         if (mounted) {
+          // ignore: use_build_context_synchronously
           Navigator.pushReplacementNamed(context, '/chat_rooms');
         }
       }
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       String message = 'Bir hata oluştu.';
       if (e.code == 'username-already-in-use') message = e.message!;
       if (e.code == 'email-already-in-use') message = 'Bu e-posta adresi zaten kullanımda.';
       if (e.code == 'weak-password') message = 'Şifre çok zayıf.';
 
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) setState(() => _isLoading = false);

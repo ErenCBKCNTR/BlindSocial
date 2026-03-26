@@ -208,16 +208,19 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                                 }, SetOptions(merge: true));
 
                                 if (mounted) {
+                                  // ignore: use_build_context_synchronously
                                   Navigator.pop(context);
                                   setState(() => _isProfileIncomplete = false);
                                 }
                               } catch (e) {
+                                if (!mounted) return;
                                 String msg = 'Hata oluştu.';
                                 if (e.toString().contains('username-taken')) {
                                   msg = 'Bu kullanıcı adı zaten alınmış.';
                                 } else if (e.toString().contains('network')) {
                                   msg = 'Bağlantı hatası, lütfen internetinizi kontrol edin.';
                                 }
+                                // ignore: use_build_context_synchronously
                                 ScaffoldMessenger.of(context)
                                     .showSnackBar(SnackBar(content: Text(msg)));
                               } finally {
@@ -293,7 +296,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     ? null
                     : passwordController.text,
               });
-              if (context.mounted) Navigator.pop(context);
+              if (!mounted) return;
+              // ignore: use_build_context_synchronously
+              Navigator.pop(context);
             },
             child: const Text('Güncelle'),
           ),
@@ -418,7 +423,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   'currentParticipants': 0,
                   'createdAt': FieldValue.serverTimestamp(),
                 });
-                if (context.mounted) Navigator.pop(context);
+                if (!mounted) return;
+                // ignore: use_build_context_synchronously
+                Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
               child: Semantics(
@@ -459,9 +466,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
               icon: const Icon(Icons.logout, size: 30),
               onPressed: () async {
                 await FirebaseAuth.instance.signOut();
-                if (context.mounted) {
-                  Navigator.pushReplacementNamed(context, '/');
-                }
+                if (!mounted) return;
+                // ignore: use_build_context_synchronously
+                Navigator.pushReplacementNamed(context, '/');
               },
             ),
           ),

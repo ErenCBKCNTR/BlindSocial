@@ -117,6 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _loadUserData(); // Refresh local state
 
       if (mounted) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Profil güncellendi.')));
       }
@@ -133,6 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         msg = 'Bağlantı hatası, lütfen internetinizi kontrol edin.';
       }
       if (mounted) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       }
     } finally {
@@ -155,8 +157,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _auth.currentUser!.updatePassword(_newPasswordController.text);
       _newPasswordController.clear();
       _confirmPasswordController.clear();
+      if (!mounted) return;
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Şifre güncellendi.')));
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message ?? 'Hata oluştu.')));
     } finally {
       if (mounted) setState(() => _isLoading = false);

@@ -43,8 +43,6 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isMuted = false;
   bool _isJoining = false;
   String _statusMessage = "";
-  String? _cachedDisplayName;
-  String? _cachedTtl;
 
   @override
   void initState() {
@@ -64,13 +62,10 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!snapshot.exists) return;
 
       int current = snapshot.data()?['currentParticipants'] ?? 0;
-      final roomData = snapshot.data() as Map<String, dynamic>;
-      final ttl = roomData['ttl'] ?? '24h';
       transaction.update(roomRef, {'currentParticipants': current + 1});
 
       final participantRef = roomRef.collection('participants').doc(user.uid);
-      final userDoc = await transaction
-          .get(FirebaseFirestore.instance.collection('users').doc(user.uid));
+      final userDoc = await transaction.get(FirebaseFirestore.instance.collection('users').doc(user.uid));
       final userData = userDoc.data() as Map<String, dynamic>;
       final displayName = userData['display_preference'] == 'fullName'
           ? userData['fullName']
@@ -81,13 +76,6 @@ class _ChatScreenState extends State<ChatScreen> {
         'displayName': displayName,
         'joinedAt': FieldValue.serverTimestamp(),
       });
-
-      if (mounted) {
-        setState(() {
-          _cachedDisplayName = displayName;
-          _cachedTtl = ttl;
-        });
-      }
     });
   }
 
@@ -235,7 +223,7 @@ class _ChatScreenState extends State<ChatScreen> {
         final path =
             '${dir.path}/record_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
-        const config = RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 64000);
+        final config = RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 64000);
 
         await _audioRecorder.start(config, path: path);
 
@@ -270,6 +258,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     if (_recordDuration >= 60) {
+      // ignore: deprecated_member_use
       SemanticsService.announce(
           'Maksimum kayıt süresi olan 60 saniyeye ulaşıldı. Kayıt durduruldu ve gönderiliyor.',
           TextDirection.ltr);
@@ -317,35 +306,19 @@ class _ChatScreenState extends State<ChatScreen> {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    String? displayName = _cachedDisplayName;
-    if (displayName == null) {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      final userData = userDoc.data() as Map<String, dynamic>;
-      displayName = userData['display_preference'] == 'fullName'
-          ? userData['fullName']
-          : userData['username'];
-      _cachedDisplayName = displayName;
-      if (mounted) {
-        setState(() {});
-      }
-    }
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final userData = userDoc.data() as Map<String, dynamic>;
+    final displayName = userData['display_preference'] == 'fullName'
+        ? userData['fullName']
+        : userData['username'];
 
-    String? ttl = _cachedTtl;
-    if (ttl == null) {
-      final roomDoc = await FirebaseFirestore.instance
-          .collection('chat_rooms')
-          .doc(widget.roomId)
-          .get();
-      final roomData = roomDoc.data() as Map<String, dynamic>;
-      ttl = roomData['ttl'] ?? '24h';
-      _cachedTtl = ttl;
-      if (mounted) {
-        setState(() {});
-      }
-    }
+    final roomDoc = await FirebaseFirestore.instance
+        .collection('chat_rooms')
+        .doc(widget.roomId)
+        .get();
+    final roomData = roomDoc.data() as Map<String, dynamic>;
+    final ttl = roomData['ttl'] ?? '24h';
 
     DateTime expiresAt = DateTime.now();
     if (ttl == '24h') {

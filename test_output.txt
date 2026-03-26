@@ -1,3 +1,0 @@
-Resolving dependencies...
-Got socket error trying to find package flutter_secure_storage at https://pub.dev.
-Failed to update packages.
