@@ -10,7 +10,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   final _auth = FirebaseAuth.instance;
   bool _isLoading = false;
@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -94,14 +94,34 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    final identifier = _identifierController.text.trim();
+    if (identifier.isEmpty) return;
+
     setState(() {
       _isLoading = true;
     });
+
     try {
+      String email = identifier;
+
+      // If identifier doesn't contain '@', it's a username
+      if (!identifier.contains('@')) {
+        final userQuery = await FirebaseFirestore.instance
+            .collection('users')
+            .where('username', isEqualTo: identifier.toLowerCase())
+            .get();
+
+        if (userQuery.docs.isEmpty) {
+          throw FirebaseAuthException(code: 'user-not-found');
+        }
+        email = userQuery.docs.first.get('email');
+      }
+
       await _auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
+        email: email,
         password: _passwordController.text.trim(),
       );
+
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/chat_rooms');
       }
@@ -118,29 +138,24 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _handleRegister() async {
-    setState(() {
-      _isLoading = true;
-    });
-    try {
-      await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/chat_rooms');
-      }
-    } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        _showThemedError(_translateAuthError(e.code));
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+  void _handleForgotPassword() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('Şifremi Unuttum', style: TextStyle(color: Colors.yellow)),
+        content: const Text(
+          'Bu özellik şu anda devre dışıdır, lütfen yönetici ile irtibata geçiniz.',
+          style: TextStyle(color: Colors.white),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tamam', style: TextStyle(color: Colors.cyan)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -177,14 +192,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 40),
                   Semantics(
-                    label: 'E-posta adresi giriş alanı',
-                    hint: 'E-posta adresinizi buraya yazın. Örnek: ornek@email.com',
+                    label: 'E-posta veya Kullanıcı Adı giriş alanı',
+                    hint: 'E-posta adresinizi veya kullanıcı adınızı buraya yazın.',
                     child: TextField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
+                      controller: _identifierController,
                       decoration: const InputDecoration(
-                        labelText: 'E-posta',
-                        hintText: 'ornek@email.com',
+                        labelText: 'E-posta veya Kullanıcı Adı',
+                        hintText: 'ornek@email.com veya kullanıcıadı',
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: _handleForgotPassword,
+                      child: Semantics(
+                        label: 'Şifrenizi mi unuttunuz?',
+                        child: const Text(
+                          'Şifrenizi mi unuttunuz?',
+                          style: TextStyle(color: Colors.cyan, fontSize: 18),
+                        ),
                       ),
                     ),
                   ),
@@ -234,17 +261,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
                   Semantics(
-                    label: 'Kayıt Ol butonu',
+                    label: 'Blind Social Hesabı Oluştur butonu',
                     hint: 'Yeni bir hesap oluşturmak için dokunun',
                     button: true,
                     child: OutlinedButton(
-                      onPressed: _handleRegister,
+                      onPressed: () => Navigator.pushNamed(context, '/register'),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.cyan, width: 2),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: const Text(
-                        'Kayıt Ol',
+                        'Blind Social Hesabı Oluştur',
                         style: TextStyle(
                             color: Colors.cyan,
                             fontSize: 22,

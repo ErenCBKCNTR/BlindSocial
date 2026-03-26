@@ -12,6 +12,77 @@ class ChatRoomsScreen extends StatefulWidget {
 
 class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
   final _auth = FirebaseAuth.instance;
+  bool _isProfileIncomplete = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkProfileCompletion();
+  }
+
+  Future<void> _checkProfileCompletion() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+
+    bool isIncomplete = false;
+    if (!doc.exists) {
+      isIncomplete = true;
+    } else {
+      final data = doc.data() as Map<String, dynamic>;
+      if ((data['fullName'] ?? '').isEmpty ||
+          (data['username'] ?? '').isEmpty ||
+          data['birthDate'] == null) {
+        isIncomplete = true;
+      }
+    }
+
+    if (isIncomplete) {
+      setState(() => _isProfileIncomplete = true);
+      if (mounted) {
+        _showIncompleteProfileDialog();
+      }
+    }
+  }
+
+  void _showIncompleteProfileDialog() {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.black,
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Profil Tamamlama Gerekli',
+                style: TextStyle(color: Colors.yellow, fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Lütfen eksik bilgilerinizi doldurunuz. İsim, kullanıcı adı ve doğum tarihi alanları zorunludur.',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/profile');
+                },
+                child: const Text('Profilime Git'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   void _showEditRoomDialog(DocumentSnapshot roomDoc) {
     final roomData = roomDoc.data() as Map<String, dynamic>;
@@ -188,6 +259,15 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
           label: 'Sohbet Odaları Başlığı',
           child: const Text('Sohbet Odaları'),
         ),
+        leading: _isProfileIncomplete
+          ? null
+          : Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu, size: 30),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+                tooltip: 'Menüyü Aç',
+              ),
+            ),
         actions: [
           Semantics(
             label: 'Çıkış Yap butonu',
@@ -205,7 +285,43 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
           ),
         ],
       ),
-      floatingActionButton: Semantics(
+      drawer: _isProfileIncomplete ? null : Drawer(
+        backgroundColor: Colors.black,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.yellow),
+              child: Text(
+                'Blind Social Menü',
+                style: TextStyle(color: Colors.black, fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Semantics(
+              label: 'Sesli Odalar butonu',
+              button: true,
+              child: ListTile(
+                leading: const Icon(Icons.forum, color: Colors.cyan, size: 30),
+                title: const Text('Sesli Odalar', style: TextStyle(color: Colors.white, fontSize: 22)),
+                onTap: () => Navigator.pop(context),
+              ),
+            ),
+            Semantics(
+              label: 'Hesabım butonu',
+              button: true,
+              child: ListTile(
+                leading: const Icon(Icons.person, color: Colors.cyan, size: 30),
+                title: const Text('Hesabım', style: TextStyle(color: Colors.white, fontSize: 22)),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/profile');
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: _isProfileIncomplete ? null : Semantics(
         label: 'Yeni Oda Oluştur butonu',
         hint: 'Yeni bir sohbet odası başlatmak için dokunun',
         button: true,
@@ -220,7 +336,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   fontWeight: FontWeight.bold)),
         ),
       ),
-      body: StreamBuilder<QuerySnapshot>(
+      body: _isProfileIncomplete
+        ? Container(color: Colors.black, child: const Center(child: Text('Lütfen profilinizi tamamlayın', style: TextStyle(color: Colors.white, fontSize: 20))))
+        : StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('chat_rooms')
             .orderBy('createdAt', descending: true)

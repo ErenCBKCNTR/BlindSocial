@@ -8,6 +8,8 @@ import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_rooms_screen.dart';
 import 'screens/update_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/profile_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -101,6 +103,8 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/chat_rooms': (context) => const ChatRoomsScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/profile': (context) => const ProfileScreen(),
       },
     );
   }
