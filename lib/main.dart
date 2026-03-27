@@ -14,6 +14,7 @@ import 'screens/update_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/square_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -153,6 +154,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
         '/register': (context) => const RegisterScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/admin_panel': (context) => const AdminPanelScreen(),
+        '/square': (context) => const SquareScreen(),
       },
     );
   }

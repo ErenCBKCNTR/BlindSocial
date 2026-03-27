@@ -595,6 +595,18 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
               ),
             ),
             Semantics(
+              label: 'BS Meydan butonu',
+              button: true,
+              child: ListTile(
+                leading: const Icon(Icons.public, color: Colors.cyan, size: 30),
+                title: const Text('BS Meydan', style: TextStyle(color: Colors.white, fontSize: 22)),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/square');
+                },
+              ),
+            ),
+            Semantics(
               label: 'Hesabım butonu',
               button: true,
               child: ListTile(
