@@ -46,6 +46,9 @@ class _ChatScreenState extends State<ChatScreen> {
   late final _audioRecorder = widget.audioRecorder ?? AudioRecorder();
   final _audioPlayer = AudioPlayer();
 
+  String? _cachedDisplayName;
+  String? _cachedTtl;
+
   bool _isRecording = false;
   int _recordDuration = 0;
   Timer? _recordTimer;
@@ -76,10 +79,16 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!snapshot.exists) return;
 
       int current = snapshot.data()?['currentParticipants'] ?? 0;
-      final userData = userDoc.data() as Map<String, dynamic>? ?? {};
+      final userData = userDoc.data() ?? {};
       final displayName = userData['display_preference'] == 'fullName'
           ? userData['fullName'] ?? 'Anonim'
           : userData['username'] ?? 'Anonim';
+
+      if (mounted) {
+        setState(() {
+          _cachedDisplayName = displayName;
+        });
+      }
 
       transaction.update(roomRef, {'currentParticipants': current + 1});
 
@@ -320,19 +329,28 @@ class _ChatScreenState extends State<ChatScreen> {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    final userDoc =
-        await (widget.firestore ?? FirebaseFirestore.instance).collection('users').doc(user.uid).get();
-    final userData = userDoc.data() as Map<String, dynamic>;
-    final displayName = userData['display_preference'] == 'fullName'
-        ? userData['fullName']
-        : userData['username'];
+    if (_cachedDisplayName == null) {
+      final userDoc = await (widget.firestore ?? FirebaseFirestore.instance)
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      final userData = userDoc.data() as Map<String, dynamic>;
+      _cachedDisplayName = userData['display_preference'] == 'fullName'
+          ? userData['fullName']
+          : userData['username'];
+    }
 
-    final roomDoc = await (widget.firestore ?? FirebaseFirestore.instance)
-        .collection('chat_rooms')
-        .doc(widget.roomId)
-        .get();
-    final roomData = roomDoc.data() as Map<String, dynamic>;
-    final ttl = roomData['ttl'] ?? '24h';
+    if (_cachedTtl == null) {
+      final roomDoc = await (widget.firestore ?? FirebaseFirestore.instance)
+          .collection('chat_rooms')
+          .doc(widget.roomId)
+          .get();
+      final roomData = roomDoc.data() as Map<String, dynamic>;
+      _cachedTtl = roomData['ttl'] ?? '24h';
+    }
+
+    final displayName = _cachedDisplayName ?? 'Anonim';
+    final ttl = _cachedTtl ?? '24h';
 
     DateTime expiresAt = DateTime.now();
     if (ttl == '24h') {
