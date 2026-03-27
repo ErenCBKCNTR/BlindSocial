@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -13,6 +15,12 @@ class ChatRoomsScreen extends StatefulWidget {
 class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
   final _auth = FirebaseAuth.instance;
   bool _isProfileIncomplete = false;
+
+  String _hashPassword(String password) {
+    var bytes = utf8.encode(password);
+    var digest = sha256.convert(bytes);
+    return digest.toString();
+  }
 
   @override
   void initState() {
@@ -294,7 +302,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 'maxCapacity': int.tryParse(capacityController.text) ?? 10,
                 'password': passwordController.text.isEmpty
                     ? null
-                    : passwordController.text,
+                    : _hashPassword(passwordController.text),
               });
               if (!mounted) return;
               // ignore: use_build_context_synchronously
@@ -417,7 +425,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   'maxCapacity': int.tryParse(capacityController.text) ?? 10,
                   'password': passwordController.text.isEmpty
                       ? null
-                      : passwordController.text,
+                      : _hashPassword(passwordController.text),
                   'ttl': ttlPreference,
                   'creatorId': user.uid,
                   'currentParticipants': 0,
@@ -669,7 +677,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                             TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal')),
                             ElevatedButton(
                               onPressed: () {
-                                if (passwordController.text == correctPassword) {
+                                if (_hashPassword(passwordController.text) == correctPassword) {
                                   Navigator.pop(context, true);
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
