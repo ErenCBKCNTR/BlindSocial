@@ -5,12 +5,14 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pub_semver/pub_semver.dart' as semver;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_rooms_screen.dart';
 import 'screens/update_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/onboarding_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,6 +76,14 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
       debugPrint('Initialization/Version check error (Silent Fallback): $e');
       // If initialization fails or times out, we continue to the app to avoid a blank screen
     }
+
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+
+    if (!hasSeenOnboarding) {
+      return {'required': false, 'onboarding': true};
+    }
+
     return {'required': false};
   }
 
@@ -100,6 +110,10 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
           final updateData = snapshot.data ?? {'required': false};
           if (updateData['required'] == true) {
             return UpdateScreen(updateUrl: updateData['url'] ?? "");
+          }
+
+          if (updateData['onboarding'] == true) {
+            return const OnboardingScreen();
           }
 
           // Recommendation logic after auth or first load
@@ -132,6 +146,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
         },
       ),
       routes: {
+        '/onboarding': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/chat_rooms': (context) => const ChatRoomsScreen(),
         '/register': (context) => const RegisterScreen(),

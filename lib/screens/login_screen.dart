@@ -24,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   late final FirebaseFirestore _firestore;
   bool _isLoading = false;
   bool _rememberMe = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -232,10 +233,25 @@ class _LoginScreenState extends State<LoginScreen> {
                     hint: 'Şifrenizi buraya yazın. En az 6 karakter olmalıdır.',
                     child: TextField(
                       controller: _passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
                         labelText: 'Şifre',
                         hintText: 'Şifreniz',
+                        suffixIcon: Semantics(
+                          label: _obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
+                          button: true,
+                          child: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                              color: Colors.cyan,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
                       ),
                     ),
                   ),

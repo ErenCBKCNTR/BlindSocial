@@ -261,63 +261,117 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
     final capacityController =
         TextEditingController(text: roomData['maxCapacity']?.toString());
     final passwordController = TextEditingController(text: roomData['password']);
+    String ttlPreference = roomData['ttlPreference'] ?? '24h';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: const Text('Odayı Düzenle', style: TextStyle(color: Colors.yellow)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                    labelText: 'Oda İsmi', labelStyle: TextStyle(color: Colors.cyan)),
+      builder: (context) {
+        bool obscure = true;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.black,
+              title: const Text('Odayı Düzenle', style: TextStyle(color: Colors.yellow)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                          labelText: 'Oda İsmi', labelStyle: TextStyle(color: Colors.cyan)),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: capacityController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                          labelText: 'Kapasite', labelStyle: TextStyle(color: Colors.cyan)),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: passwordController,
+                      obscureText: obscure,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Yeni Şifre (Boş = Şifresiz)',
+                        labelStyle: const TextStyle(color: Colors.cyan),
+                        suffixIcon: Semantics(
+                          label: obscure ? 'Şifreyi göster' : 'Şifreyi gizle',
+                          button: true,
+                          child: IconButton(
+                            icon: Icon(
+                              obscure ? Icons.visibility : Icons.visibility_off,
+                              color: Colors.cyan,
+                            ),
+                            onPressed: () {
+                              setDialogState(() {
+                                obscure = !obscure;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text('Mesaj Saklanma Süresi',
+                        style: TextStyle(color: Colors.cyan, fontSize: 18)),
+                    Semantics(
+                      label: 'Mesaj Saklanma Süresi seçimi',
+                      child: DropdownButton<String>(
+                        value: ttlPreference,
+                        dropdownColor: Colors.black,
+                        isExpanded: true,
+                        style: const TextStyle(color: Colors.yellow, fontSize: 20),
+                        items: const [
+                          DropdownMenuItem(value: '24h', child: Text('24 Saat')),
+                          DropdownMenuItem(value: '3d', child: Text('3 Gün')),
+                          DropdownMenuItem(value: '7d', child: Text('7 Gün')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setDialogState(() => ttlPreference = val);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: capacityController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                    labelText: 'Kapasite', labelStyle: TextStyle(color: Colors.cyan)),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                    labelText: 'Yeni Şifre (Boş = Şifresiz)',
-                    labelStyle: TextStyle(color: Colors.cyan)),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('İptal')),
-          ElevatedButton(
-            onPressed: () async {
-              await roomDoc.reference.update({
-                'name': nameController.text.trim(),
-                'maxCapacity': int.tryParse(capacityController.text) ?? 10,
-                'password': passwordController.text.isEmpty
-                    ? null
-                    : _hashPassword(passwordController.text),
-              });
-              if (!mounted) return;
-              // ignore: use_build_context_synchronously
-              Navigator.pop(context);
-            },
-            child: const Text('Güncelle'),
-          ),
-        ],
-      ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('İptal')),
+                ElevatedButton(
+                  onPressed: () async {
+                    int maxCap = int.tryParse(capacityController.text) ?? 10;
+
+                    int ttlHours = 24;
+                    if (ttlPreference == '3d') ttlHours = 72;
+                    if (ttlPreference == '7d') ttlHours = 168;
+
+                    await roomDoc.reference.update({
+                      'name': nameController.text.trim(),
+                      'maxCapacity': maxCap,
+                      'password': passwordController.text.isEmpty
+                          ? null
+                          : _hashPassword(passwordController.text),
+                      'ttlPreference': ttlPreference,
+                      'ttl': ttlHours,
+                    });
+                    if (!mounted) return;
+                    // ignore: use_build_context_synchronously
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Güncelle'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -326,6 +380,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
     final capacityController = TextEditingController(text: '10');
     final passwordController = TextEditingController();
     String ttlPreference = '24h';
+    bool obscure = true;
 
     showDialog(
       context: context,
@@ -376,13 +431,28 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   hint: 'Oda şifreli olsun istiyorsanız doldurun, yoksa boş bırakın',
                   child: TextField(
                     controller: passwordController,
-                    obscureText: true,
+                    obscureText: obscure,
                     style: const TextStyle(color: Colors.white, fontSize: 20),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Şifre (Opsiyonel)',
-                      labelStyle: TextStyle(color: Colors.cyan),
-                      enabledBorder: UnderlineInputBorder(
+                      labelStyle: const TextStyle(color: Colors.cyan),
+                      enabledBorder: const UnderlineInputBorder(
                           borderSide: BorderSide(color: Colors.cyan)),
+                      suffixIcon: Semantics(
+                        label: obscure ? 'Şifreyi göster' : 'Şifreyi gizle',
+                        button: true,
+                        child: IconButton(
+                          icon: Icon(
+                            obscure ? Icons.visibility : Icons.visibility_off,
+                            color: Colors.cyan,
+                          ),
+                          onPressed: () {
+                            setModalState(() {
+                              obscure = !obscure;
+                            });
+                          },
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -473,7 +543,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
             ),
         actions: [
           Semantics(
-            label: 'Çıkış Yap butonu',
+            label: 'Oturumu kapat',
             hint: 'Giriş ekranına geri dönmek için dokunun',
             button: true,
             child: IconButton(
@@ -667,34 +737,56 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
 
                       bool? success = await showDialog<bool>(
                         context: context,
-                        builder: (context) => AlertDialog(
-                          backgroundColor: Colors.black,
-                          title: const Text('Şifre Gerekli', style: TextStyle(color: Colors.yellow)),
-                          content: TextField(
-                            controller: passwordController,
-                            obscureText: true,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                              labelText: 'Oda Şifresi',
-                              labelStyle: TextStyle(color: Colors.cyan),
-                            ),
-                          ),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal')),
-                            ElevatedButton(
-                              onPressed: () {
-                                if (_hashPassword(passwordController.text) == correctPassword) {
-                                  Navigator.pop(context, true);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Hatalı Şifre')),
-                                  );
-                                }
-                              },
-                              child: const Text('Giriş'),
-                            ),
-                          ],
-                        ),
+                        builder: (context) {
+                          bool obscure = true;
+                          return StatefulBuilder(
+                            builder: (context, setDialogState) {
+                              return AlertDialog(
+                                backgroundColor: Colors.black,
+                                title: const Text('Şifre Gerekli', style: TextStyle(color: Colors.yellow)),
+                                content: TextField(
+                                  controller: passwordController,
+                                  obscureText: obscure,
+                                  style: const TextStyle(color: Colors.white),
+                                  decoration: InputDecoration(
+                                    labelText: 'Oda Şifresi',
+                                    labelStyle: const TextStyle(color: Colors.cyan),
+                                    suffixIcon: Semantics(
+                                      label: obscure ? 'Şifreyi göster' : 'Şifreyi gizle',
+                                      button: true,
+                                      child: IconButton(
+                                        icon: Icon(
+                                          obscure ? Icons.visibility : Icons.visibility_off,
+                                          color: Colors.cyan,
+                                        ),
+                                        onPressed: () {
+                                          setDialogState(() {
+                                            obscure = !obscure;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal')),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      if (_hashPassword(passwordController.text) == correctPassword) {
+                                        Navigator.pop(context, true);
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Hatalı Şifre')),
+                                        );
+                                      }
+                                    },
+                                    child: const Text('Giriş'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
                       );
 
                       if (success != true) return;

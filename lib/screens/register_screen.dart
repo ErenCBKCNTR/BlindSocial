@@ -29,6 +29,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
   bool _isUnderage = false;
   bool _parentalConsent = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -185,8 +186,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       label: 'Şifre giriş alanı',
                       child: TextFormField(
                         controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(labelText: 'Şifre'),
+                          obscureText: _obscurePassword,
+                          decoration: InputDecoration(
+                            labelText: 'Şifre',
+                            suffixIcon: Semantics(
+                              label: _obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
+                              button: true,
+                              child: IconButton(
+                                icon: Icon(
+                                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                  color: Colors.cyan,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
                         validator: (v) => v!.length < 6 ? 'En az 6 karakter' : null,
                       ),
                     ),

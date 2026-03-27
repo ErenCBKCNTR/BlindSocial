@@ -377,6 +377,6 @@ void main() {
     await tester.pumpAndSettle();
 
     // 6. Verify the error handling in UI
-    expect(find.text('Sesli mesaj yüklenirken hata oluştu.'), findsOneWidget);
+    expect(find.text('Sesli mesaj gönderilemedi hata'), findsOneWidget);
   });
 }
