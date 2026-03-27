@@ -59,9 +59,30 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isJoining = false;
   String _statusMessage = "";
 
+  late final Stream<DocumentSnapshot> _roomStream;
+  late final Stream<QuerySnapshot> _messagesStream;
+
   @override
   void initState() {
     super.initState();
+    // ⚡ Bolt: Cache Firestore streams in initState rather than build() to prevent
+    // re-subscribing and fetching all historical documents on every widget rebuild
+    // (e.g., when typing a message).
+    _roomStream = (widget.firestore ?? FirebaseFirestore.instance)
+        .collection('chat_rooms')
+        .doc(widget.roomId)
+        .snapshots();
+
+    final now = Timestamp.now();
+    // Use `now` for the initial server query to prevent downloading the entire
+    // history of expired messages, saving significant read operations.
+    _messagesStream = (widget.firestore ?? FirebaseFirestore.instance)
+        .collection('chat_rooms')
+        .doc(widget.roomId)
+        .collection('messages')
+        .where('expires_at', isGreaterThan: now)
+        .orderBy('expires_at', descending: true)
+        .snapshots();
     _addParticipant();
   }
 
@@ -469,7 +490,7 @@ class _ChatScreenState extends State<ChatScreen> {
             tooltip: 'Katılımcıları Gör',
           ),
           StreamBuilder<DocumentSnapshot>(
-            stream: (widget.firestore ?? FirebaseFirestore.instance).collection('chat_rooms').doc(widget.roomId).snapshots(),
+            stream: _roomStream,
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data!.exists) {
                 final data = snapshot.data!.data() as Map<String, dynamic>;
@@ -564,13 +585,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: (widget.firestore ?? FirebaseFirestore.instance)
-                  .collection('chat_rooms')
-                  .doc(widget.roomId)
-                  .collection('messages')
-                  .where('expires_at', isGreaterThan: Timestamp.now())
-                  .orderBy('expires_at', descending: true)
-                  .snapshots(),
+              stream: _messagesStream,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
@@ -587,7 +602,14 @@ class _ChatScreenState extends State<ChatScreen> {
                   );
                 }
 
-                final messages = snapshot.data?.docs ?? [];
+                // ⚡ Bolt: Dynamically filter messages client-side that expire *while*
+                // the user is viewing the screen, without triggering new server reads.
+                final now = Timestamp.now();
+                final messages = (snapshot.data?.docs ?? []).where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final expiresAt = data['expires_at'] as Timestamp?;
+                  return expiresAt != null && expiresAt.compareTo(now) > 0;
+                }).toList();
 
                 if (messages.isEmpty) {
                   return Center(
