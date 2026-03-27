@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_rooms_screen.dart';
+import 'screens/admin_panel_screen.dart';
 import 'screens/update_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
@@ -151,6 +152,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
         '/chat_rooms': (context) => const ChatRoomsScreen(),
         '/register': (context) => const RegisterScreen(),
         '/profile': (context) => const ProfileScreen(),
+        '/admin_panel': (context) => const AdminPanelScreen(),
       },
     );
   }
