@@ -90,8 +90,8 @@ class _LoginScreenState extends State<LoginScreen> {
           label: 'Hata bildirimi: $message',
           child: Text(
             message,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -154,16 +154,16 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: const Text('Şifremi Unuttum', style: TextStyle(color: Colors.yellow)),
-        content: const Text(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        title: Text('Şifremi Unuttum', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+        content: Text(
           'Bu özellik şu anda devre dışıdır, lütfen yönetici ile irtibata geçiniz.',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Tamam', style: TextStyle(color: Colors.cyan)),
+            child: Text('Tamam', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
           ),
         ],
       ),
@@ -176,14 +176,14 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         title: Semantics(
           label: 'Giriş Ekranı Başlığı',
-          child: const Text('Blind Social - Giriş'),
+          child: Text('Blind Social - Giriş'),
         ),
       ),
       body: _isLoading
           ? Center(
               child: Semantics(
                 label: 'İşlem yapılıyor, lütfen bekleyin',
-                child: const CircularProgressIndicator(
+                child: CircularProgressIndicator(
                   strokeWidth: 6,
                 ),
               ),
@@ -193,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 40),
+                  SizedBox(height: 40),
                   Semantics(
                     label: 'Hoş geldiniz mesajı',
                     child: Text(
@@ -202,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  SizedBox(height: 40),
                   Semantics(
                     label: 'E-posta veya Kullanıcı Adı giriş alanı',
                     hint: 'E-posta adresinizi veya kullanıcı adınızı buraya yazın.',
@@ -220,14 +220,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _handleForgotPassword,
                       child: Semantics(
                         label: 'Şifrenizi mi unuttunuz?',
-                        child: const Text(
+                        child: Text(
                           'Şifrenizi mi unuttunuz?',
-                          style: TextStyle(color: Colors.cyan, fontSize: 18),
+                          style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   Semantics(
                     label: 'Şifre giriş alanı',
                     hint: 'Şifrenizi buraya yazın. En az 6 karakter olmalıdır.',
@@ -243,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: IconButton(
                             icon: Icon(
                               _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                              color: Colors.cyan,
+                              color: Theme.of(context).colorScheme.secondary,
                             ),
                             onPressed: () {
                               setState(() {
@@ -255,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   Semantics(
                     label: 'Beni Hatırla',
                     hint: _rememberMe
@@ -266,8 +266,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         Checkbox(
                           value: _rememberMe,
                           onChanged: (val) => _updateRememberMe(val ?? false),
-                          activeColor: Colors.yellow,
-                          checkColor: Colors.black,
+                          activeColor: Theme.of(context).colorScheme.primary,
+                          checkColor: Theme.of(context).colorScheme.onPrimary,
                         ),
                         Text(
                           'Beni Hatırla',
@@ -276,14 +276,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  SizedBox(height: 40),
                   Semantics(
                     label: 'Giriş Yap butonu',
                     hint: 'Sohbet odalarına gitmek için dokunun',
                     button: true,
                     child: ElevatedButton(
                       onPressed: _handleLogin,
-                      child: const Text('Giriş Yap'),
+                      child: Text('Giriş Yap'),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -294,13 +294,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pushNamed(context, '/register'),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.cyan, width: 2),
+                        side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 2),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Blind Social Hesabı Oluştur',
                         style: TextStyle(
-                            color: Colors.cyan,
+                            color: Theme.of(context).colorScheme.secondary,
                             fontSize: 22,
                             fontWeight: FontWeight.bold),
                       ),

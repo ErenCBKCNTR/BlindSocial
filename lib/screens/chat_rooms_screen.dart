@@ -82,7 +82,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
       isDismissible: false,
       isScrollControlled: true,
       enableDrag: false,
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       builder: (context) => PopScope(
         canPop: false,
         child: StatefulBuilder(
@@ -98,40 +98,40 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     'Profil Tamamlama Gerekli',
                     style: TextStyle(
-                        color: Colors.yellow,
+                        color: Theme.of(context).colorScheme.primary,
                         fontSize: 22,
                         fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   Semantics(
                     label: 'İsim Soyisim giriş alanı',
                     hint: 'Tam adınızı giriniz',
                     child: TextField(
                       controller: nameController,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                       decoration: const InputDecoration(labelText: 'İsim Soyisim'),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Semantics(
                     label: 'Kullanıcı Adı giriş alanı',
                     hint: 'Benzersiz bir kullanıcı adı seçiniz',
                     child: TextField(
                       controller: usernameController,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                       decoration: const InputDecoration(labelText: 'Kullanıcı Adı'),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  const Align(
+                  SizedBox(height: 20),
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text('Doğum Tarihi',
-                        style: TextStyle(color: Colors.cyan, fontSize: 18)),
+                        style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18)),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
@@ -141,12 +141,12 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                           child: TextField(
                             controller: dayController,
                             keyboardType: TextInputType.number,
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                             decoration: const InputDecoration(hintText: 'Gün'),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Semantics(
                           label: 'Doğum ayı',
@@ -154,12 +154,12 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                           child: TextField(
                             controller: monthController,
                             keyboardType: TextInputType.number,
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                             decoration: const InputDecoration(hintText: 'Ay'),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Semantics(
                           label: 'Doğum yılı',
@@ -167,16 +167,16 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                           child: TextField(
                             controller: yearController,
                             keyboardType: TextInputType.number,
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                             decoration: const InputDecoration(hintText: 'Yıl'),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 30),
+                  SizedBox(height: 30),
                   isSaving
-                      ? const CircularProgressIndicator()
+                      ? CircularProgressIndicator()
                       : Semantics(
                           label: 'Bilgileri Kaydet butonu',
                           button: true,
@@ -250,7 +250,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                                 if (mounted) setModalState(() => isSaving = false);
                               }
                             },
-                            child: const Text('Bilgileri Kaydet'),
+                            child: Text('Bilgileri Kaydet'),
                           ),
                         ),
                   const SizedBox(height: 20),
@@ -279,41 +279,41 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              backgroundColor: Colors.black,
-              title: const Text('Odayı Düzenle', style: TextStyle(color: Colors.yellow)),
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              title: Text('Odayı Düzenle', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
                       controller: nameController,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                          labelText: 'Oda İsmi', labelStyle: TextStyle(color: Colors.cyan)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                      decoration: InputDecoration(
+                          labelText: 'Oda İsmi', labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary)),
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     TextField(
                       controller: capacityController,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                          labelText: 'Kapasite', labelStyle: TextStyle(color: Colors.cyan)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                      decoration: InputDecoration(
+                          labelText: 'Kapasite', labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary)),
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     TextField(
                       controller: passwordController,
                       obscureText: obscure,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                       decoration: InputDecoration(
                         labelText: 'Yeni Şifre (Boş = Şifresiz)',
-                        labelStyle: const TextStyle(color: Colors.cyan),
+                        labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
                         suffixIcon: Semantics(
                           label: obscure ? 'Şifreyi göster' : 'Şifreyi gizle',
                           button: true,
                           child: IconButton(
                             icon: Icon(
                               obscure ? Icons.visibility : Icons.visibility_off,
-                              color: Colors.cyan,
+                              color: Theme.of(context).colorScheme.secondary,
                             ),
                             onPressed: () {
                               setDialogState(() {
@@ -324,16 +324,16 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    const Text('Mesaj Saklanma Süresi',
-                        style: TextStyle(color: Colors.cyan, fontSize: 18)),
+                    SizedBox(height: 20),
+                    Text('Mesaj Saklanma Süresi',
+                        style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18)),
                     Semantics(
                       label: 'Mesaj Saklanma Süresi seçimi',
                       child: DropdownButton<String>(
                         value: ttlPreference,
-                        dropdownColor: Colors.black,
+                        dropdownColor: Theme.of(context).colorScheme.surface,
                         isExpanded: true,
-                        style: const TextStyle(color: Colors.yellow, fontSize: 20),
+                        style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 20),
                         items: const [
                           DropdownMenuItem(value: '24h', child: Text('24 Saat')),
                           DropdownMenuItem(value: '3d', child: Text('3 Gün')),
@@ -352,7 +352,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('İptal')),
+                    child: Text('İptal')),
                 ElevatedButton(
                   onPressed: () async {
                     int maxCap = int.tryParse(capacityController.text) ?? 10;
@@ -395,11 +395,11 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => AlertDialog(
-          backgroundColor: Colors.black,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           title: Semantics(
             label: 'Yeni Oda Oluştur',
-            child: const Text('Yeni Oda Oluştur',
-                style: TextStyle(color: Colors.yellow)),
+            child: Text('Yeni Oda Oluştur',
+                style: TextStyle(color: Theme.of(context).colorScheme.primary)),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -409,51 +409,51 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   label: 'Oda İsmi Giriş Alanı',
                   child: TextField(
                     controller: nameController,
-                    style: const TextStyle(color: Colors.white, fontSize: 20),
-                    decoration: const InputDecoration(
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20),
+                    decoration: InputDecoration(
                       labelText: 'Oda İsmi',
-                      labelStyle: TextStyle(color: Colors.cyan),
+                      labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
                       enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.cyan)),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 Semantics(
                   label: 'Kapasite Giriş Alanı',
                   hint: 'Maksimum katılımcı sayısı',
                   child: TextField(
                     controller: capacityController,
                     keyboardType: TextInputType.number,
-                    style: const TextStyle(color: Colors.white, fontSize: 20),
-                    decoration: const InputDecoration(
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20),
+                    decoration: InputDecoration(
                       labelText: 'Kapasite (Örn: 10)',
-                      labelStyle: TextStyle(color: Colors.cyan),
+                      labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
                       enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.cyan)),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 Semantics(
                   label: 'Şifre Giriş Alanı',
                   hint: 'Oda şifreli olsun istiyorsanız doldurun, yoksa boş bırakın',
                   child: TextField(
                     controller: passwordController,
                     obscureText: obscure,
-                    style: const TextStyle(color: Colors.white, fontSize: 20),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20),
                     decoration: InputDecoration(
                       labelText: 'Şifre (Opsiyonel)',
-                      labelStyle: const TextStyle(color: Colors.cyan),
-                      enabledBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.cyan)),
+                      labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
+                      enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
                       suffixIcon: Semantics(
                         label: obscure ? 'Şifreyi göster' : 'Şifreyi gizle',
                         button: true,
                         child: IconButton(
                           icon: Icon(
                             obscure ? Icons.visibility : Icons.visibility_off,
-                            color: Colors.cyan,
+                            color: Theme.of(context).colorScheme.secondary,
                           ),
                           onPressed: () {
                             setModalState(() {
@@ -465,16 +465,16 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                const Text('Mesaj Saklanma Süresi',
-                    style: TextStyle(color: Colors.cyan, fontSize: 18)),
+                SizedBox(height: 20),
+                Text('Mesaj Saklanma Süresi',
+                    style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18)),
                 Semantics(
                   label: 'Mesaj Saklanma Süresi seçimi',
                   child: DropdownButton<String>(
                     value: ttlPreference,
-                    dropdownColor: Colors.black,
+                    dropdownColor: Theme.of(context).colorScheme.surface,
                     isExpanded: true,
-                    style: const TextStyle(color: Colors.yellow, fontSize: 20),
+                    style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 20),
                     items: const [
                       DropdownMenuItem(value: '24h', child: Text('24 Saat')),
                       DropdownMenuItem(value: '3d', child: Text('3 Gün')),
@@ -495,8 +495,8 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
               onPressed: () => Navigator.pop(context),
               child: Semantics(
                 label: 'Vazgeç butonu',
-                child: const Text('İptal',
-                    style: TextStyle(color: Colors.red, fontSize: 18)),
+                child: Text('İptal',
+                    style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 18)),
               ),
             ),
             ElevatedButton(
@@ -526,11 +526,11 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 // ignore: use_build_context_synchronously
                 Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
+              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
               child: Semantics(
                 label: 'Oda Oluştur butonu',
-                child: const Text('Oluştur',
-                    style: TextStyle(color: Colors.black, fontSize: 18)),
+                child: Text('Oluştur',
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 18)),
               ),
             ),
           ],
@@ -545,13 +545,13 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
       appBar: AppBar(
         title: Semantics(
           label: 'Sohbet Odaları Başlığı',
-          child: const Text('Sohbet Odaları'),
+          child: Text('Sohbet Odaları'),
         ),
         leading: _isProfileIncomplete
           ? null
           : Builder(
               builder: (context) => IconButton(
-                icon: const Icon(Icons.menu, size: 30),
+                icon: Icon(Icons.menu, size: 30),
                 onPressed: () => Scaffold.of(context).openDrawer(),
                 tooltip: 'Menüyü Aç',
               ),
@@ -574,23 +574,23 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         ],
       ),
       drawer: _isProfileIncomplete ? null : Drawer(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.yellow),
+            DrawerHeader(
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
               child: Text(
                 'Blind Social Menü',
-                style: TextStyle(color: Colors.black, fontSize: 32, fontWeight: FontWeight.bold),
+                style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 32, fontWeight: FontWeight.bold),
               ),
             ),
             Semantics(
               label: 'Sesli Odalar butonu',
               button: true,
               child: ListTile(
-                leading: const Icon(Icons.forum, color: Colors.cyan, size: 30),
-                title: const Text('Sesli Odalar', style: TextStyle(color: Colors.white, fontSize: 22)),
+                leading: Icon(Icons.forum, color: Theme.of(context).colorScheme.secondary, size: 30),
+                title: Text('Sesli Odalar', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22)),
                 onTap: () => Navigator.pop(context),
               ),
             ),
@@ -598,8 +598,8 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
               label: 'Hesabım butonu',
               button: true,
               child: ListTile(
-                leading: const Icon(Icons.person, color: Colors.cyan, size: 30),
-                title: const Text('Hesabım', style: TextStyle(color: Colors.white, fontSize: 22)),
+                leading: Icon(Icons.person, color: Theme.of(context).colorScheme.secondary, size: 30),
+                title: Text('Hesabım', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22)),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.pushNamed(context, '/profile');
@@ -611,8 +611,8 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 label: 'Yönetici Paneli butonu',
                 button: true,
                 child: ListTile(
-                  leading: const Icon(Icons.admin_panel_settings, color: Colors.cyan, size: 30),
-                  title: const Text('Yönetici Paneli', style: TextStyle(color: Colors.white, fontSize: 22)),
+                  leading: Icon(Icons.admin_panel_settings, color: Theme.of(context).colorScheme.secondary, size: 30),
+                  title: Text('Yönetici Paneli', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22)),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/admin_panel');
@@ -624,26 +624,26 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 label: 'Yetkili Menüsü butonu',
                 button: true,
                 child: ListTile(
-                  leading: const Icon(Icons.build, color: Colors.cyan, size: 30),
-                  title: const Text('Yetkili Menüsü', style: TextStyle(color: Colors.white, fontSize: 22)),
+                  leading: Icon(Icons.build, color: Theme.of(context).colorScheme.secondary, size: 30),
+                  title: Text('Yetkili Menüsü', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22)),
                   onTap: () {
                     Navigator.pop(context);
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        backgroundColor: Colors.black,
-                        title: const Row(
+                        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                        title: Row(
                           children: [
-                            Icon(Icons.construction, color: Colors.yellow),
+                            Icon(Icons.construction, color: Theme.of(context).colorScheme.primary),
                             SizedBox(width: 10),
-                            Text('Uyarı', style: TextStyle(color: Colors.yellow)),
+                            Text('Uyarı', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                           ],
                         ),
-                        content: const Text('Bu bölüm yapım aşamasındadır.', style: TextStyle(color: Colors.white)),
+                        content: Text('Bu bölüm yapım aşamasındadır.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text('Tamam', style: TextStyle(color: Colors.cyan)),
+                            child: Text('Tamam', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
                           ),
                         ],
                       ),
@@ -660,17 +660,17 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         button: true,
         child: FloatingActionButton.extended(
           onPressed: _showCreateRoomDialog,
-          backgroundColor: Colors.yellow,
-          icon: const Icon(Icons.add, color: Colors.black, size: 30),
-          label: const Text('Oda Oluştur',
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          icon: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary, size: 30),
+          label: Text('Oda Oluştur',
               style: TextStyle(
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold)),
         ),
       ),
       body: _isProfileIncomplete
-        ? Container(color: Colors.black, child: const Center(child: Text('Lütfen profilinizi tamamlayın', style: TextStyle(color: Colors.white, fontSize: 20))))
+        ? Container(color: Theme.of(context).colorScheme.onPrimary, child: Center(child: Text('Lütfen profilinizi tamamlayın', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20))))
         : StreamBuilder<QuerySnapshot>(
         stream: _firestore
             .collection('chat_rooms')
@@ -693,7 +693,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
             return Center(
               child: Semantics(
                 label: 'Sohbet odaları yükleniyor, lütfen bekleyin',
-                child: const CircularProgressIndicator(strokeWidth: 6),
+                child: CircularProgressIndicator(strokeWidth: 6),
               ),
             );
           }
@@ -707,8 +707,8 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     label: 'Henüz aktif sunucu veya oda bulunmuyor.',
                     child: Column(
                       children: [
-                        const Icon(Icons.forum, size: 100, color: Colors.yellow),
-                        const SizedBox(height: 20),
+                        Icon(Icons.forum, size: 100, color: Theme.of(context).colorScheme.primary),
+                        SizedBox(height: 20),
                         Text(
                           'Henüz bir sohbet odası bulunmuyor.',
                           style: Theme.of(context).textTheme.bodyLarge,
@@ -748,20 +748,20 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   leading: Stack(
                     alignment: Alignment.bottomRight,
                     children: [
-                      const Icon(Icons.meeting_room,
-                          color: Colors.cyan, size: 40),
+                      Icon(Icons.meeting_room,
+                          color: Theme.of(context).colorScheme.secondary, size: 40),
                       if (isLocked && !isCreator)
-                        const Icon(Icons.lock, color: Colors.yellow, size: 20),
+                        Icon(Icons.lock, color: Theme.of(context).colorScheme.primary, size: 20),
                     ],
                   ),
                   title: Text(
                     roomName,
-                    style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                   ),
                   subtitle: Text(
                     'Kapasite: $currentParticipants / $maxCapacity',
-                    style: const TextStyle(color: Colors.cyan, fontSize: 18),
+                    style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -771,20 +771,20 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                           label: 'Odayı Düzenle',
                           button: true,
                           child: IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.cyan),
+                            icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.secondary),
                             onPressed: () => _showEditRoomDialog(room),
                           ),
                         ),
-                      const Icon(Icons.arrow_forward_ios, color: Colors.yellow),
+                      Icon(Icons.arrow_forward_ios, color: Theme.of(context).colorScheme.primary),
                     ],
                   ),
                   onTap: () async {
                     // Check capacity
                     if (currentParticipants >= maxCapacity) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text('Oda dolu, lütfen başka bir odayı deneyin.'),
-                          backgroundColor: Colors.redAccent,
+                          backgroundColor: Theme.of(context).colorScheme.error,
                         ),
                       );
                       return;
@@ -802,22 +802,22 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                           return StatefulBuilder(
                             builder: (context, setDialogState) {
                               return AlertDialog(
-                                backgroundColor: Colors.black,
-                                title: const Text('Şifre Gerekli', style: TextStyle(color: Colors.yellow)),
+                                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                                title: Text('Şifre Gerekli', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                                 content: TextField(
                                   controller: passwordController,
                                   obscureText: obscure,
-                                  style: const TextStyle(color: Colors.white),
+                                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                                   decoration: InputDecoration(
                                     labelText: 'Oda Şifresi',
-                                    labelStyle: const TextStyle(color: Colors.cyan),
+                                    labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
                                     suffixIcon: Semantics(
                                       label: obscure ? 'Şifreyi göster' : 'Şifreyi gizle',
                                       button: true,
                                       child: IconButton(
                                         icon: Icon(
                                           obscure ? Icons.visibility : Icons.visibility_off,
-                                          color: Colors.cyan,
+                                          color: Theme.of(context).colorScheme.secondary,
                                         ),
                                         onPressed: () {
                                           setDialogState(() {

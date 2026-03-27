@@ -6,7 +6,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pub_semver/pub_semver.dart' as semver;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'theme/app_theme.dart';
+
+import 'theme/theme_notifier.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_rooms_screen.dart';
 import 'screens/admin_panel_screen.dart';
@@ -34,6 +35,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
   void initState() {
     super.initState();
     _initFuture = _initialize();
+    appThemeNotifier.init();
   }
 
   Future<Map<String, dynamic>> _initialize() async {
@@ -90,10 +92,13 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return ValueListenableBuilder<ThemeData>(
+      valueListenable: appThemeNotifier,
+      builder: (context, theme, child) {
+        return MaterialApp(
       title: 'Blind Social',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.highContrastTheme,
+      theme: theme,
       locale: const Locale('tr', 'TR'),
       supportedLocales: const [Locale('tr', 'TR')],
       localizationsDelegates: const [
@@ -153,6 +158,8 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
         '/register': (context) => const RegisterScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/admin_panel': (context) => const AdminPanelScreen(),
+      },
+    );
       },
     );
   }

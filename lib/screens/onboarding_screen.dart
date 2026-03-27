@@ -66,7 +66,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -90,30 +90,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           child: Icon(
                             _getIconData(_pages[index]['icon']!),
                             size: 100,
-                            color: Colors.yellow,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
-                        const SizedBox(height: 40),
+                        SizedBox(height: 40),
                         Semantics(
                           label: 'Başlık: ${_pages[index]['title']}',
                           child: Text(
                             _pages[index]['title']!,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.cyan,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.secondary,
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20),
                         Semantics(
                           label: 'Açıklama: ${_pages[index]['description']}',
                           child: Text(
                             _pages[index]['description']!,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 20,
                             ),
                           ),
@@ -145,7 +145,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       child: Text(
                         'Geri',
                         style: TextStyle(
-                          color: _currentPage == 0 ? Colors.grey : Colors.yellow,
+                          color: _currentPage == 0 ? Colors.grey : Theme.of(context).colorScheme.primary,
                           fontSize: 20,
                         ),
                       ),
@@ -161,7 +161,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           width: _currentPage == index ? 16.0 : 8.0,
                           height: 8.0,
                           decoration: BoxDecoration(
-                            color: _currentPage == index ? Colors.cyan : Colors.grey,
+                            color: _currentPage == index ? Theme.of(context).colorScheme.secondary : Colors.grey,
                             borderRadius: BorderRadius.circular(4.0),
                           ),
                         ),
@@ -187,8 +187,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       },
                       child: Text(
                         _currentPage == _pages.length - 1 ? 'Başla' : 'İleri',
-                        style: const TextStyle(
-                          color: Colors.yellow,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),

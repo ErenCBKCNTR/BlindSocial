@@ -148,11 +148,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         title: Semantics(
           label: 'Kayıt Olma Ekranı Başlığı',
-          child: const Text('Blind Social Hesabı Oluştur'),
+          child: Text('Blind Social Hesabı Oluştur'),
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Form(
@@ -168,7 +168,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                     Semantics(
                       label: 'Kullanıcı Adı giriş alanı',
                       child: TextFormField(
@@ -201,7 +201,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: IconButton(
                                 icon: Icon(
                                   _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                                  color: Colors.cyan,
+                                  color: Theme.of(context).colorScheme.secondary,
                                 ),
                                 onPressed: () {
                                   setState(() {
@@ -214,8 +214,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         validator: (v) => v!.length < 6 ? 'En az 6 karakter' : null,
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    const Text('Doğum Tarihi', style: TextStyle(color: Colors.cyan, fontSize: 18)),
+                    SizedBox(height: 20),
+                    Text('Doğum Tarihi', style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18)),
                     Row(
                       children: [
                         Expanded(
@@ -229,7 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Expanded(
                           child: Semantics(
                             label: 'Ay',
@@ -263,10 +263,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             Checkbox(
                               value: _parentalConsent,
                               onChanged: (v) => setState(() => _parentalConsent = v!),
-                              activeColor: Colors.yellow,
-                              checkColor: Colors.black,
+                              activeColor: Theme.of(context).colorScheme.primary,
+                              checkColor: Theme.of(context).colorScheme.onPrimary,
                             ),
-                            const Expanded(child: Text('Bu hesabı ebeveynlerin izniyle oluşturuyorum.', style: TextStyle(color: Colors.white))),
+                            Expanded(child: Text('Bu hesabı ebeveynlerin izniyle oluşturuyorum.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface))),
                           ],
                         ),
                       ),
