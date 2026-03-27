@@ -50,6 +50,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _cachedTtl;
 
   bool _isRecording = false;
+  bool _isPaused = false;
   int _recordDuration = 0;
   Timer? _recordTimer;
 
@@ -273,15 +274,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
         setState(() {
           _isRecording = true;
+        _isPaused = false;
           _recordDuration = 0;
         });
 
         _recordTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!_isPaused) {
           setState(() {
             _recordDuration++;
           });
           if (_recordDuration >= 60) {
             _stopRecording();
+          }
           }
         });
       }
@@ -290,15 +294,49 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+Future<void> _pauseRecording() async {
+  if (_isRecording && !_isPaused) {
+    await _audioRecorder.pause();
+    setState(() {
+      _isPaused = true;
+    });
+  }
+}
+
+Future<void> _resumeRecording() async {
+  if (_isRecording && _isPaused) {
+    await _audioRecorder.resume();
+    setState(() {
+      _isPaused = false;
+    });
+  }
+}
+
   Future<void> _stopRecording() async {
     _recordTimer?.cancel();
     final path = await _audioRecorder.stop();
     setState(() {
       _isRecording = false;
+    _isPaused = false;
     });
 
-    if (path != null) {
+  if (path != null && path.isNotEmpty) {
+    final file = File(path);
+    if (file.existsSync()) {
       _uploadVoiceMessage(path);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sesli mesaj gönderilemedi hata')),
+        );
+      }
+    }
+  } else {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sesli mesaj gönderilemedi hata')),
+      );
+    }
     }
 
     if (_recordDuration >= 60) {
@@ -760,17 +798,28 @@ class _ChatScreenState extends State<ChatScreen> {
                       onPressed: _isRecording ? _stopRecording : _startRecording,
                     ),
                   ),
-                  if (_isRecording)
+                  if (_isRecording) ...[
+                    Semantics(
+                      label: _isPaused ? 'Kayda Devam Et' : 'Kaydı Duraklat',
+                      button: true,
+                      child: IconButton(
+                        icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause,
+                            color: Colors.yellow, size: 36),
+                        onPressed: _isPaused ? _resumeRecording : _pauseRecording,
+                      ),
+                    ),
                     Expanded(
                       child: Center(
                         child: Text(
-                          'Kayıt Yapılıyor: $_recordDuration sn',
+                          _isPaused
+                              ? 'Duraklatıldı: $_recordDuration sn'
+                              : 'Kayıt Yapılıyor: $_recordDuration sn',
                           style:
                               const TextStyle(color: Colors.red, fontSize: 20),
                         ),
                       ),
                     )
-                  else ...[
+                  ] else ...[
                     Expanded(
                       child: Semantics(
                         label: 'Mesajınızı buraya yazın',

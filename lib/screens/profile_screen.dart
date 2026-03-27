@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,13 +22,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isLoading = false;
   bool _showPasswordFields = false;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
   String _displayPreference = 'username';
   DateTime? _usernameLastChanged;
+  String _appVersion = '';
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = packageInfo.version;
+    });
   }
 
   Future<void> _loadUserData() async {
@@ -300,9 +312,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         label: 'Yeni Şifre alanı',
                         child: TextField(
                           controller: _newPasswordController,
-                          obscureText: true,
-                          decoration:
-                              const InputDecoration(labelText: 'Yeni Şifre'),
+                          obscureText: _obscureNewPassword,
+                          decoration: InputDecoration(
+                            labelText: 'Yeni Şifre',
+                            suffixIcon: Semantics(
+                              label: _obscureNewPassword ? 'Şifreyi göster' : 'Şifreyi gizle',
+                              button: true,
+                              child: IconButton(
+                                icon: Icon(
+                                  _obscureNewPassword ? Icons.visibility : Icons.visibility_off,
+                                  color: Colors.cyan,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureNewPassword = !_obscureNewPassword;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),
@@ -311,9 +339,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         label: 'Yeni Şifre Tekrar alanı',
                         child: TextField(
                           controller: _confirmPasswordController,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                              labelText: 'Yeni Şifre Tekrar'),
+                          obscureText: _obscureConfirmPassword,
+                          decoration: InputDecoration(
+                            labelText: 'Yeni Şifre Tekrar',
+                            suffixIcon: Semantics(
+                              label: _obscureConfirmPassword ? 'Şifreyi göster' : 'Şifreyi gizle',
+                              button: true,
+                              child: IconButton(
+                                icon: Icon(
+                                  _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                                  color: Colors.cyan,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureConfirmPassword = !_obscureConfirmPassword;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),
@@ -331,6 +375,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ],
                     const SizedBox(height: 40),
+                    Center(
+                      child: Semantics(
+                        label: 'Uygulama versiyonu: $_appVersion',
+                        child: Text(
+                          'Versiyon: $_appVersion',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
