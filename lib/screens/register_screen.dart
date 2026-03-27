@@ -3,13 +3,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final FirebaseAuth? auth;
+  final FirebaseFirestore? firestore;
+
+  const RegisterScreen({
+    super.key,
+    this.auth,
+    this.firestore,
+  });
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  FirebaseAuth get _auth => widget.auth ?? FirebaseAuth.instance;
+  FirebaseFirestore get _firestore => widget.firestore ?? FirebaseFirestore.instance;
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _usernameController = TextEditingController();
@@ -73,7 +82,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       // 1. Check unique username
       final username = _usernameController.text.trim().toLowerCase();
-      final userQuery = await FirebaseFirestore.instance
+      final userQuery = await _firestore
           .collection('users')
           .where('username', isEqualTo: username)
           .get();
@@ -83,7 +92,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
 
       // 2. Create Auth User
-      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final userCredential = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
@@ -95,7 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         final month = int.parse(_monthController.text);
         final year = int.parse(_yearController.text);
 
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        await _firestore.collection('users').doc(user.uid).set({
           'uid': user.uid,
           'fullName': _fullNameController.text.trim(),
           'username': username,
