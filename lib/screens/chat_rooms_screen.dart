@@ -3,6 +3,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math' as math;
 import 'chat_screen.dart';
 
 class ChatRoomsScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
   late final FirebaseAuth _auth;
   late final FirebaseFirestore _firestore;
   bool _isProfileIncomplete = false;
+  int? _userRole;
 
   String _hashPassword(String password) {
     var bytes = utf8.encode(password);
@@ -45,6 +47,13 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
       isIncomplete = true;
     } else {
       final data = doc.data() as Map<String, dynamic>;
+
+      if (mounted) {
+        setState(() {
+          _userRole = data['role_id'] as int?;
+        });
+      }
+
       if ((data['fullName'] ?? '').isEmpty ||
           (data['username'] ?? '').isEmpty ||
           data['birthDate'] == null) {
@@ -496,12 +505,18 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 final user = _auth.currentUser;
                 if (user == null) return;
 
+                // Generate a random 6-digit numericId
+                final random = math.Random();
+                final numericId = 100000 + random.nextInt(900000);
+
                 await _firestore.collection('chat_rooms').add({
                   'name': nameController.text.trim(),
+                  'numericId': numericId,
                   'maxCapacity': int.tryParse(capacityController.text) ?? 10,
                   'password': passwordController.text.isEmpty
                       ? null
                       : _hashPassword(passwordController.text),
+                  'plainPassword': passwordController.text.isEmpty ? null : passwordController.text,
                   'ttl': ttlPreference,
                   'creatorId': user.uid,
                   'currentParticipants': 0,
@@ -591,6 +606,51 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 },
               ),
             ),
+            if (_userRole == 0)
+              Semantics(
+                label: 'Yönetici Paneli butonu',
+                button: true,
+                child: ListTile(
+                  leading: const Icon(Icons.admin_panel_settings, color: Colors.cyan, size: 30),
+                  title: const Text('Yönetici Paneli', style: TextStyle(color: Colors.white, fontSize: 22)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/admin_panel');
+                  },
+                ),
+              ),
+            if (_userRole == 1)
+              Semantics(
+                label: 'Yetkili Menüsü butonu',
+                button: true,
+                child: ListTile(
+                  leading: const Icon(Icons.build, color: Colors.cyan, size: 30),
+                  title: const Text('Yetkili Menüsü', style: TextStyle(color: Colors.white, fontSize: 22)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: Colors.black,
+                        title: const Row(
+                          children: [
+                            Icon(Icons.construction, color: Colors.yellow),
+                            SizedBox(width: 10),
+                            Text('Uyarı', style: TextStyle(color: Colors.yellow)),
+                          ],
+                        ),
+                        content: const Text('Bu bölüm yapım aşamasındadır.', style: TextStyle(color: Colors.white)),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Tamam', style: TextStyle(color: Colors.cyan)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
           ],
         ),
       ),

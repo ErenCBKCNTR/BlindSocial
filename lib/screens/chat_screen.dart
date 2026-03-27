@@ -356,8 +356,28 @@ Future<void> _resumeRecording() async {
     });
 
     try {
+      // Fetch numeric IDs for naming convention
+      String userNumericId = 'UnknownUser';
+      final userDoc = await (widget.firestore ?? FirebaseFirestore.instance)
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      if (userDoc.exists && userDoc.data()!['numericId'] != null) {
+        userNumericId = userDoc.data()!['numericId'].toString();
+      }
+
+      String roomNumericId = 'UnknownRoom';
+      final roomDoc = await (widget.firestore ?? FirebaseFirestore.instance)
+          .collection('chat_rooms')
+          .doc(widget.roomId)
+          .get();
+      if (roomDoc.exists && roomDoc.data()!['numericId'] != null) {
+        roomNumericId = roomDoc.data()!['numericId'].toString();
+      }
+
       final fileName =
-          'voice_${widget.roomId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+          '${roomNumericId}_${userNumericId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
       final ref = (widget.storage ?? FirebaseStorage.instance)
           .ref()
           .child('chat_voices')

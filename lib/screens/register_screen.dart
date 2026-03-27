@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math' as math;
 
 class RegisterScreen extends StatefulWidget {
   final FirebaseAuth? auth;
@@ -106,8 +107,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         final month = int.parse(_monthController.text);
         final year = int.parse(_yearController.text);
 
+        // Generate a random 6-digit numericId
+        final random = math.Random();
+        final numericId = 100000 + random.nextInt(900000);
+
         await firestore.collection('users').doc(user.uid).set({
           'uid': user.uid,
+          'numericId': numericId,
           'fullName': _fullNameController.text.trim(),
           'username': username,
           'email': user.email,
