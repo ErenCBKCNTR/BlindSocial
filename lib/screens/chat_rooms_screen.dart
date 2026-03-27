@@ -4,14 +4,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'chat_screen.dart';
 
 class ChatRoomsScreen extends StatefulWidget {
-  const ChatRoomsScreen({super.key});
+  final FirebaseAuth? auth;
+  final FirebaseFirestore? firestore;
+
+  const ChatRoomsScreen({super.key, this.auth, this.firestore});
 
   @override
   State<ChatRoomsScreen> createState() => _ChatRoomsScreenState();
 }
 
 class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
-  final _auth = FirebaseAuth.instance;
+  late final FirebaseAuth _auth = widget.auth ?? FirebaseAuth.instance;
+  late final FirebaseFirestore _firestore = widget.firestore ?? FirebaseFirestore.instance;
   bool _isProfileIncomplete = false;
 
   @override
@@ -24,7 +28,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final doc = await _firestore.collection('users').doc(user.uid).get();
 
     bool isIncomplete = false;
     if (!doc.exists) {
@@ -182,7 +186,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
 
                               try {
                                 // Check username uniqueness
-                                final userQuery = await FirebaseFirestore.instance
+                                final userQuery = await _firestore
                                     .collection('users')
                                     .where('username', isEqualTo: username)
                                     .get();
@@ -195,7 +199,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
 
                                 final birthDate = DateTime(y, m, d);
 
-                                await FirebaseFirestore.instance
+                                await _firestore
                                     .collection('users')
                                     .doc(_auth.currentUser?.uid)
                                     .set({
@@ -412,7 +416,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 final user = _auth.currentUser;
                 if (user == null) return;
 
-                await FirebaseFirestore.instance.collection('chat_rooms').add({
+                await _firestore.collection('chat_rooms').add({
                   'name': nameController.text.trim(),
                   'maxCapacity': int.tryParse(capacityController.text) ?? 10,
                   'password': passwordController.text.isEmpty
@@ -465,7 +469,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
             child: IconButton(
               icon: const Icon(Icons.logout, size: 30),
               onPressed: () async {
-                await FirebaseAuth.instance.signOut();
+                await _auth.signOut();
                 if (!mounted) return;
                 // ignore: use_build_context_synchronously
                 Navigator.pushReplacementNamed(context, '/');
@@ -528,7 +532,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
       body: _isProfileIncomplete
         ? Container(color: Colors.black, child: const Center(child: Text('Lütfen profilinizi tamamlayın', style: TextStyle(color: Colors.white, fontSize: 20))))
         : StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
+        stream: _firestore
             .collection('chat_rooms')
             .orderBy('createdAt', descending: true)
             .snapshots(),
