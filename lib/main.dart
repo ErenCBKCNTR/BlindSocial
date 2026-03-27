@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pub_semver/pub_semver.dart' as semver;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_rooms_screen.dart';
@@ -35,14 +36,16 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
 
   Future<Map<String, dynamic>> _initialize() async {
     try {
+      await dotenv.load(fileName: ".env");
+
       // Step 1: Initialize Firebase with a 3-second timeout
       await Firebase.initializeApp(
-        options: const FirebaseOptions(
-          apiKey: 'AIzaSyDjVZZqS6EIxxjulS01zqAChH74DfLlf7E',
-          appId: '1:122600853691:web:7b215d6b1b8a5c946c999e',
-          messagingSenderId: '122600853691',
-          projectId: 'blind-social-a718c',
-          storageBucket: 'blind-social-a718c.firebasestorage.app',
+        options: FirebaseOptions(
+          apiKey: dotenv.env['FIREBASE_API_KEY'] ?? '',
+          appId: dotenv.env['FIREBASE_APP_ID'] ?? '',
+          messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '',
+          projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
+          storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
         ),
       ).timeout(const Duration(seconds: 3));
 
