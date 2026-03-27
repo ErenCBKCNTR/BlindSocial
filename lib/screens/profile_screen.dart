@@ -3,14 +3,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final FirebaseAuth? auth;
+  final FirebaseFirestore? firestore;
+
+  const ProfileScreen({super.key, this.auth, this.firestore});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final _auth = FirebaseAuth.instance;
+  late final FirebaseAuth _auth;
+  late final FirebaseFirestore _firestore;
   final _fullNameController = TextEditingController();
   final _usernameController = TextEditingController();
   final _dayController = TextEditingController();
@@ -27,6 +31,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _auth = widget.auth ?? FirebaseAuth.instance;
+    _firestore = widget.firestore ?? FirebaseFirestore.instance;
     _loadUserData();
   }
 
@@ -35,7 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user == null) return;
 
     final doc =
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        await _firestore.collection('users').doc(user.uid).get();
     if (doc.exists) {
       final data = doc.data() as Map<String, dynamic>;
       setState(() {
@@ -79,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
     try {
       final userRef =
-          FirebaseFirestore.instance.collection('users').doc(user.uid);
+          _firestore.collection('users').doc(user.uid);
       final doc = await userRef.get();
       final data = doc.data() as Map<String, dynamic>;
       final currentUsername = data['username'] ?? '';
@@ -101,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
 
         // Uniqueness check
-        final query = await FirebaseFirestore.instance
+        final query = await _firestore
             .collection('users')
             .where('username', isEqualTo: newUsername)
             .get();
