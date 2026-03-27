@@ -4,7 +4,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final FirebaseAuth? auth;
+  final FirebaseFirestore? firestore;
+
+  const LoginScreen({
+    super.key,
+    this.auth,
+    this.firestore,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -13,13 +20,16 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _auth = FirebaseAuth.instance;
+  late final FirebaseAuth _auth;
+  late final FirebaseFirestore _firestore;
   bool _isLoading = false;
   bool _rememberMe = false;
 
   @override
   void initState() {
     super.initState();
+    _auth = widget.auth ?? FirebaseAuth.instance;
+    _firestore = widget.firestore ?? FirebaseFirestore.instance;
     _checkRememberMe();
   }
 
@@ -107,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // If identifier doesn't contain '@', it's a username
       if (!identifier.contains('@')) {
-        final userQuery = await FirebaseFirestore.instance
+        final userQuery = await _firestore
             .collection('users')
             .where('username', isEqualTo: identifier.toLowerCase())
             .get();
