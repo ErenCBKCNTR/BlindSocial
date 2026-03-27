@@ -26,14 +26,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       stream: _firestore.collection('users').orderBy('createdAt', descending: true).snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const Center(child: Text('Bir hata oluştu.', style: TextStyle(color: Colors.white)));
+          return Center(child: Text('Bir hata oluştu.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)));
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator());
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text('Üye bulunamadı.', style: TextStyle(color: Colors.white)));
+          return Center(child: Text('Üye bulunamadı.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)));
         }
 
         return ListView.builder(
@@ -54,19 +54,19 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               child: ListTile(
                 title: Text(
                   'ID: $userId - $username',
-                  style: const TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
                   'Kayıt Tarihi: $createdAt',
-                  style: const TextStyle(color: Colors.cyan),
+                  style: TextStyle(color: Theme.of(context).colorScheme.secondary),
                 ),
                 trailing: Semantics(
                   label: 'Detaylı bilgileri gör',
                   button: true,
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
+                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
                     onPressed: () => _showUserDetails(context, user),
-                    child: const Text('Detaylar', style: TextStyle(color: Colors.black)),
+                    child: Text('Detaylar', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
                   ),
                 ),
               ),
@@ -92,24 +92,24 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Colors.black,
-          title: Text('${user['username'] ?? 'Bilinmiyor'} Detayları', style: const TextStyle(color: Colors.yellow)),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          title: Text('${user['username'] ?? 'Bilinmiyor'} Detayları', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('İsim Soyisim: ${user['fullName'] ?? 'Bilinmiyor'}', style: const TextStyle(color: Colors.white)),
-                const SizedBox(height: 10),
-                Text('Kayıt Tarihi: $createdAt', style: const TextStyle(color: Colors.white)),
-                const SizedBox(height: 10),
-                Text('E-posta: ${user['email'] ?? 'Bilinmiyor'}', style: const TextStyle(color: Colors.white)),
-                const SizedBox(height: 10),
-                Text('Doğum Tarihi: $birthDate', style: const TextStyle(color: Colors.white)),
+                Text('İsim Soyisim: ${user['fullName'] ?? 'Bilinmiyor'}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                SizedBox(height: 10),
+                Text('Kayıt Tarihi: $createdAt', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                SizedBox(height: 10),
+                Text('E-posta: ${user['email'] ?? 'Bilinmiyor'}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                SizedBox(height: 10),
+                Text('Doğum Tarihi: $birthDate', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Kapat', style: TextStyle(color: Colors.cyan)),
+              child: Text('Kapat', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -129,9 +129,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               FilterChip(
-                label: const Text('Şifreli', style: TextStyle(color: Colors.white)),
+                label: Text('Şifreli', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                 selected: _filterRoomsWithPassword,
-                selectedColor: Colors.cyan.withValues(alpha: 0.5),
+                selectedColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5),
                 backgroundColor: Colors.grey[800],
                 onSelected: (bool value) {
                   setState(() {
@@ -141,9 +141,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 },
               ),
               FilterChip(
-                label: const Text('Şifresiz', style: TextStyle(color: Colors.white)),
+                label: Text('Şifresiz', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                 selected: _filterRoomsWithoutPassword,
-                selectedColor: Colors.cyan.withValues(alpha: 0.5),
+                selectedColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5),
                 backgroundColor: Colors.grey[800],
                 onSelected: (bool value) {
                   setState(() {
@@ -160,10 +160,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             stream: _firestore.collection('chat_rooms').orderBy('createdAt', descending: true).snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return const Center(child: Text('Bir hata oluştu.', style: TextStyle(color: Colors.white)));
+                return Center(child: Text('Bir hata oluştu.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)));
               }
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return Center(child: CircularProgressIndicator());
               }
 
               var docs = snapshot.data!.docs;
@@ -181,7 +181,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               }
 
               if (docs.isEmpty) {
-                return const Center(child: Text('Oda bulunamadı.', style: TextStyle(color: Colors.white)));
+                return Center(child: Text('Oda bulunamadı.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)));
               }
 
               return ListView.builder(
@@ -198,11 +198,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     child: ListTile(
                       title: Text(
                         'ID: $roomId - $roomName',
-                        style: const TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
                         'Şifre: $password',
-                        style: const TextStyle(color: Colors.cyan),
+                        style: TextStyle(color: Theme.of(context).colorScheme.secondary),
                       ),
                     ),
                   );
@@ -223,12 +223,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         appBar: AppBar(
           title: Semantics(
             label: 'Yönetici Paneli Başlığı',
-            child: const Text('Yönetici Paneli', style: TextStyle(color: Colors.yellow)),
+            child: Text('Yönetici Paneli', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
           ),
-          bottom: const TabBar(
-            indicatorColor: Colors.yellow,
-            labelColor: Colors.yellow,
-            unselectedLabelColor: Colors.cyan,
+          bottom: TabBar(
+            indicatorColor: Theme.of(context).colorScheme.primary,
+            labelColor: Theme.of(context).colorScheme.primary,
+            unselectedLabelColor: Theme.of(context).colorScheme.secondary,
             tabs: [
               Tab(
                 icon: Icon(Icons.meeting_room),

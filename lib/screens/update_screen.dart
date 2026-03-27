@@ -19,7 +19,7 @@ class UpdateScreen extends StatelessWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {},
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -27,32 +27,32 @@ class UpdateScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
+                Icon(
                   Icons.system_update_rounded,
-                  color: Colors.yellow,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 100,
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 Semantics(
                   label: 'Güncelleme Gerekli başlığı',
-                  child: const Text(
+                  child: Text(
                     'Güncelleme Gerekli',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.yellow,
+                      color: Theme.of(context).colorScheme.primary,
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Semantics(
                   label: 'Uygulamanın daha iyi ve sorunsuz çalışması için yeni sürümü yüklemelisiniz içeriği',
-                  child: const Text(
+                  child: Text(
                     'Uygulamanın daha iyi ve sorunsuz çalışması için yeni sürümü yüklemelisiniz.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 20,
                     ),
                   ),
@@ -65,8 +65,8 @@ class UpdateScreen extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: _launchUpdate,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellow,
-                      foregroundColor: Colors.black,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       minimumSize: const Size(double.infinity, 70),
                     ),
                     child: const Text(

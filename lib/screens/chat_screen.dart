@@ -177,9 +177,9 @@ class _ChatScreenState extends State<ChatScreen> {
           SnackBar(
             content: Semantics(
               label: 'Mikrofon izni verilmedi. Sesli sohbete katılmak için lütfen izin verin.',
-              child: const Text('Mikrofon izni verilmedi. Sesli sohbete katılmak için lütfen izin verin.'),
+              child: Text('Mikrofon izni verilmedi. Sesli sohbete katılmak için lütfen izin verin.'),
             ),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -468,7 +468,7 @@ Future<void> _resumeRecording() async {
   void _showParticipantList() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       builder: (context) => StreamBuilder<QuerySnapshot>(
         stream: (widget.firestore ?? FirebaseFirestore.instance)
             .collection('chat_rooms')
@@ -476,14 +476,14 @@ Future<void> _resumeRecording() async {
             .collection('participants')
             .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
           final participants = snapshot.data!.docs;
 
           return Column(
             children: [
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(16.0),
-                child: Text('Katılımcılar', style: TextStyle(color: Colors.yellow, fontSize: 24, fontWeight: FontWeight.bold)),
+                child: Text('Katılımcılar', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 24, fontWeight: FontWeight.bold)),
               ),
               Expanded(
                 child: ListView.builder(
@@ -494,8 +494,8 @@ Future<void> _resumeRecording() async {
                     return Semantics(
                       label: 'Katılımcı: $name',
                       child: ListTile(
-                        leading: const Icon(Icons.person, color: Colors.cyan),
-                        title: Text(name, style: const TextStyle(color: Colors.white, fontSize: 18)),
+                        leading: Icon(Icons.person, color: Theme.of(context).colorScheme.secondary),
+                        title: Text(name, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18)),
                       ),
                     );
                   },
@@ -512,11 +512,11 @@ Future<void> _resumeRecording() async {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: const Text('Odayı Sil', style: TextStyle(color: Colors.red)),
-        content: const Text('Bu odayı kalıcı olarak silmek istediğinize emin misiniz?', style: TextStyle(color: Colors.white)),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        title: Text('Odayı Sil', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        content: Text('Bu odayı kalıcı olarak silmek istediğinize emin misiniz?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Vazgeç')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Vazgeç')),
           ElevatedButton(
             onPressed: () async {
               await (widget.firestore ?? FirebaseFirestore.instance).collection('chat_rooms').doc(widget.roomId).delete();
@@ -525,8 +525,8 @@ Future<void> _resumeRecording() async {
                 Navigator.pop(context); // leave chat screen
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('SİL'),
+            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            child: Text('SİL'),
           ),
         ],
       ),
@@ -543,7 +543,7 @@ Future<void> _resumeRecording() async {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.people, size: 30),
+            icon: Icon(Icons.people, size: 30),
             onPressed: _showParticipantList,
             tooltip: 'Katılımcıları Gör',
           ),
@@ -554,7 +554,7 @@ Future<void> _resumeRecording() async {
                 final data = snapshot.data!.data() as Map<String, dynamic>;
                 if (data['creatorId'] == _auth.currentUser?.uid) {
                   return IconButton(
-                    icon: const Icon(Icons.delete_forever, color: Colors.red, size: 30),
+                    icon: Icon(Icons.delete_forever, color: Theme.of(context).colorScheme.error, size: 30),
                     onPressed: _confirmDeleteRoom,
                     tooltip: 'Odayı Sil',
                   );
@@ -570,7 +570,7 @@ Future<void> _resumeRecording() async {
           // Voice Chat Controls
           Container(
             padding: const EdgeInsets.all(16.0),
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onPrimary,
             child: Column(
               children: [
                 if (!_isJoined)
@@ -582,13 +582,13 @@ Future<void> _resumeRecording() async {
                     child: ElevatedButton.icon(
                       onPressed: _isJoining ? null : _joinVoiceChannel,
                       icon: _isJoining
-                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                        : const Icon(Icons.volume_up, size: 30),
+                        ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary))
+                        : Icon(Icons.volume_up, size: 30),
                       label: Text(_isJoining ? 'Katılınıyor...' : 'Sesli Kanala Katıl'),
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 60),
-                        backgroundColor: Colors.cyan,
-                        foregroundColor: Colors.black,
+                        backgroundColor: Theme.of(context).colorScheme.secondary,
+                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       ),
                     ),
                   )
@@ -605,13 +605,13 @@ Future<void> _resumeRecording() async {
                             icon: Icon(_isMuted ? Icons.mic_off : Icons.mic, size: 30),
                             label: Text(_isMuted ? 'Sesi Aç' : 'Sustur'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _isMuted ? Colors.red : Colors.yellow,
-                              foregroundColor: Colors.black,
+                              backgroundColor: _isMuted ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.primary,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Semantics(
                           label: 'Sesli Kanaldan Ayrıl',
@@ -619,11 +619,11 @@ Future<void> _resumeRecording() async {
                           button: true,
                           child: ElevatedButton.icon(
                             onPressed: _leaveVoiceChannel,
-                            icon: const Icon(Icons.call_end, size: 30),
-                            label: const Text('Ayrıl'),
+                            icon: Icon(Icons.call_end, size: 30),
+                            label: Text('Ayrıl'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.redAccent,
-                              foregroundColor: Colors.black,
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                         ),
@@ -635,7 +635,7 @@ Future<void> _resumeRecording() async {
                   liveRegion: true,
                   child: Text(
                     _statusMessage,
-                    style: const TextStyle(color: Colors.transparent, fontSize: 1),
+                    style: TextStyle(color: Colors.transparent, fontSize: 1),
                   ),
                 ),
               ],
@@ -649,13 +649,13 @@ Future<void> _resumeRecording() async {
                   return Center(
                     child: Semantics(
                       label: 'Mesajlar yüklenirken hata oluştu',
-                      child: const Text('Bir hata oluştu.'),
+                      child: Text('Bir hata oluştu.'),
                     ),
                   );
                 }
 
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
+                  return Center(
                     child: CircularProgressIndicator(strokeWidth: 6),
                   );
                 }
@@ -716,7 +716,7 @@ Future<void> _resumeRecording() async {
                           child: Container(
                             padding: const EdgeInsets.all(12.0),
                             decoration: BoxDecoration(
-                              color: isMe ? Colors.yellow : Colors.cyan,
+                              color: isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
@@ -727,13 +727,13 @@ Future<void> _resumeRecording() async {
                                   children: [
                                     Text(
                                       senderName,
-                                      style: const TextStyle(
-                                        color: Colors.black,
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.onPrimary,
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
+                                    SizedBox(height: 4),
                                     if (type == 'audio')
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -742,8 +742,8 @@ Future<void> _resumeRecording() async {
                                             label: 'Sesli Mesajı Oynat',
                                             button: true,
                                             child: IconButton(
-                                              icon: const Icon(Icons.play_arrow,
-                                                  color: Colors.black, size: 30),
+                                              icon: Icon(Icons.play_arrow,
+                                                  color: Theme.of(context).colorScheme.onPrimary, size: 30),
                                               onPressed: () {
                                                 if (audioUrl != null) {
                                                   _audioPlayer.play(
@@ -753,15 +753,15 @@ Future<void> _resumeRecording() async {
                                             ),
                                           ),
                                           Text('$duration sn',
-                                              style: const TextStyle(
-                                                  color: Colors.black,
+                                              style: TextStyle(
+                                                  color: Theme.of(context).colorScheme.onPrimary,
                                                   fontSize: 18)),
                                           Semantics(
                                             label: 'Sesli Mesajı Durdur',
                                             button: true,
                                             child: IconButton(
-                                              icon: const Icon(Icons.stop,
-                                                  color: Colors.black, size: 30),
+                                              icon: Icon(Icons.stop,
+                                                  color: Theme.of(context).colorScheme.onPrimary, size: 30),
                                               onPressed: () =>
                                                   _audioPlayer.stop(),
                                             ),
@@ -771,18 +771,18 @@ Future<void> _resumeRecording() async {
                                     else
                                       Text(
                                         text,
-                                        style: const TextStyle(
-                                          color: Colors.black,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onPrimary,
                                           fontSize: 20,
                                         ),
                                       ),
                                   ],
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: 4),
                                 Text(
                                   timeString,
-                                  style: const TextStyle(
-                                    color: Colors.black54,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
                                     fontSize: 14,
                                   ),
                                 ),
@@ -799,7 +799,7 @@ Future<void> _resumeRecording() async {
           ),
           Container(
             padding: const EdgeInsets.all(16.0),
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onPrimary,
             child: SafeArea(
               child: Row(
                 children: [
@@ -813,7 +813,7 @@ Future<void> _resumeRecording() async {
                     button: true,
                     child: IconButton(
                       icon: Icon(_isRecording ? Icons.stop : Icons.mic,
-                          color: _isRecording ? Colors.red : Colors.cyan,
+                          color: _isRecording ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.secondary,
                           size: 36),
                       onPressed: _isRecording ? _stopRecording : _startRecording,
                     ),
@@ -824,7 +824,7 @@ Future<void> _resumeRecording() async {
                       button: true,
                       child: IconButton(
                         icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause,
-                            color: Colors.yellow, size: 36),
+                            color: Theme.of(context).colorScheme.primary, size: 36),
                         onPressed: _isPaused ? _resumeRecording : _pauseRecording,
                       ),
                     ),
@@ -835,7 +835,7 @@ Future<void> _resumeRecording() async {
                               ? 'Duraklatıldı: $_recordDuration sn'
                               : 'Kayıt Yapılıyor: $_recordDuration sn',
                           style:
-                              const TextStyle(color: Colors.red, fontSize: 20),
+                              TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 20),
                         ),
                       ),
                     )
@@ -849,18 +849,18 @@ Future<void> _resumeRecording() async {
                             hintText: 'Mesaj...',
                           ),
                           style:
-                              const TextStyle(color: Colors.white, fontSize: 20),
+                              TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Semantics(
                       label: 'Mesajı Gönder butonu',
                       hint: 'Yazdığınız mesajı odaya göndermek için dokunun',
                       button: true,
                       child: IconButton(
-                        icon: const Icon(Icons.send,
-                            color: Colors.yellow, size: 36),
+                        icon: Icon(Icons.send,
+                            color: Theme.of(context).colorScheme.primary, size: 36),
                         onPressed: () => _sendMessage(),
                       ),
                     ),

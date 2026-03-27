@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../theme/theme_notifier.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -183,215 +184,425 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Semantics(label: 'Hesabım Ekranı', child: const Text('Hesabım')),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Semantics(
-                      label: 'İsim Soyisim düzenleme alanı',
-                      child: TextField(
-                        controller: _fullNameController,
-                        decoration:
-                            const InputDecoration(labelText: 'İsim Soyisim'),
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 20),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Semantics(
-                      label: 'Kullanıcı Adı düzenleme alanı',
-                      hint: '15 dakikada bir değiştirilebilir',
-                      child: TextField(
-                        controller: _usernameController,
-                        decoration:
-                            const InputDecoration(labelText: 'Kullanıcı Adı'),
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 20),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text('Platformda nasıl görünmek istersiniz?',
-                        style: TextStyle(color: Colors.cyan, fontSize: 18)),
-                    Semantics(
-                      label: 'Platform görünüm seçimi açılır menüsü',
-                      child: DropdownButton<String>(
-                        value: _displayPreference,
-                        dropdownColor: Colors.black,
-                        isExpanded: true,
-                        style:
-                            const TextStyle(color: Colors.yellow, fontSize: 20),
-                        items: const [
-                          DropdownMenuItem(
-                              value: 'fullName', child: Text('İsim Soyisim')),
-                          DropdownMenuItem(
-                              value: 'username', child: Text('Kullanıcı Adı')),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() => _displayPreference = val);
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text('Doğum Tarihi',
-                        style: TextStyle(color: Colors.cyan, fontSize: 18)),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Semantics(
-                            label: 'Gün giriniz',
-                            child: TextFormField(
-                              controller: _dayController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(hintText: 'Gün'),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Semantics(
-                            label: 'Ay giriniz',
-                            child: TextFormField(
-                              controller: _monthController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(hintText: 'Ay'),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Semantics(
-                            label: 'Yıl giriniz',
-                            child: TextFormField(
-                              controller: _yearController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(hintText: 'Yıl'),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 30),
-                    Semantics(
-                      label: 'Bilgileri Kaydet butonu',
-                      button: true,
-                      child: ElevatedButton(
-                        onPressed: _updateProfile,
-                        child: const Text('Bilgileri Kaydet'),
-                      ),
-                    ),
-                    const Divider(height: 60, color: Colors.cyan, thickness: 2),
-                    Semantics(
-                      label: 'Şifre Değiştirme panelini açma butonu',
-                      button: true,
-                      child: TextButton.icon(
-                        onPressed: () => setState(
-                            () => _showPasswordFields = !_showPasswordFields),
-                        icon: Icon(
-                            _showPasswordFields
-                                ? Icons.expand_less
-                                : Icons.expand_more,
-                            color: Colors.yellow),
-                        label: const Text('Şifre Değiştir',
-                            style:
-                                TextStyle(color: Colors.yellow, fontSize: 20)),
-                      ),
-                    ),
-                    if (_showPasswordFields) ...[
-                      const SizedBox(height: 20),
-                      Semantics(
-                        label: 'Yeni Şifre alanı',
-                        child: TextField(
-                          controller: _newPasswordController,
-                          obscureText: _obscureNewPassword,
-                          decoration: InputDecoration(
-                            labelText: 'Yeni Şifre',
-                            suffixIcon: Semantics(
-                              label: _obscureNewPassword ? 'Şifreyi göster' : 'Şifreyi gizle',
-                              button: true,
-                              child: IconButton(
-                                icon: Icon(
-                                  _obscureNewPassword ? Icons.visibility : Icons.visibility_off,
-                                  color: Colors.cyan,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscureNewPassword = !_obscureNewPassword;
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Semantics(
-                        label: 'Yeni Şifre Tekrar alanı',
-                        child: TextField(
-                          controller: _confirmPasswordController,
-                          obscureText: _obscureConfirmPassword,
-                          decoration: InputDecoration(
-                            labelText: 'Yeni Şifre Tekrar',
-                            suffixIcon: Semantics(
-                              label: _obscureConfirmPassword ? 'Şifreyi göster' : 'Şifreyi gizle',
-                              button: true,
-                              child: IconButton(
-                                icon: Icon(
-                                  _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
-                                  color: Colors.cyan,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscureConfirmPassword = !_obscureConfirmPassword;
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Semantics(
-                        label: 'Şifreyi Güncelle butonu',
-                        button: true,
-                        child: ElevatedButton(
-                          onPressed: _changePassword,
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.cyan),
-                          child: const Text('Şifreyi Güncelle',
-                              style: TextStyle(color: Colors.black)),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 40),
-                    Center(
-                      child: Semantics(
-                        label: 'Uygulama versiyonu: $_appVersion',
-                        child: Text(
-                          'Versiyon: $_appVersion',
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+    return ValueListenableBuilder<ThemeData>(
+      valueListenable: appThemeNotifier,
+      builder: (context, theme, child) {
+        final themeIndex = appThemeNotifier.currentThemeIndex;
+
+        return Scaffold(
+          appBar: themeIndex == 2
+              ? null // Use SliverAppBar for Minimalist Theme
+              : AppBar(
+                  title: Semantics(
+                    label: 'Hesabım Ekranı',
+                    child: Text('Hesabım'),
+                  ),
+                ),
+          body: _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : SafeArea(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 500),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                    child: _buildLayoutForTheme(themeIndex, theme),
+                  ),
+                ),
+        );
+      },
+    );
+  }
+
+  Widget _buildThemeSelector(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Uygulama Teması',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.secondary,
+            fontWeight: FontWeight.bold,
+          ) ?? TextStyle(color: theme.colorScheme.secondary, fontSize: 18),
+        ),
+        SizedBox(height: 10),
+        Semantics(
+          label: 'Tema seçim alanı',
+          child: ToggleButtons(
+            isSelected: [
+              appThemeNotifier.currentThemeIndex == 0,
+              appThemeNotifier.currentThemeIndex == 1,
+              appThemeNotifier.currentThemeIndex == 2,
+            ],
+            onPressed: (index) {
+              appThemeNotifier.setTheme(index);
+            },
+            fillColor: theme.colorScheme.secondary.withValues(alpha: 0.2),
+            selectedColor: theme.colorScheme.secondary,
+            color: theme.colorScheme.onSurface,
+            borderRadius: BorderRadius.circular(8),
+            children: const [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Text('Kontrast'),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Text('Neon'),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Text('Minimal'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLayoutForTheme(int themeIndex, ThemeData theme) {
+    if (themeIndex == 2) {
+      // Modern Minimalist Theme Layout
+      return CustomScrollView(
+        key: const ValueKey(2),
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 150.0,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              title: const Text('Hesabım'),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                 ),
               ),
             ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildThemeSelector(theme),
+                  const SizedBox(height: 30),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildTextField('İsim Soyisim', _fullNameController, 'İsim Soyisim düzenleme alanı'),
+                          const SizedBox(height: 20),
+                          _buildTextField('Kullanıcı Adı', _usernameController, 'Kullanıcı Adı düzenleme alanı', hint: '15 dakikada bir değiştirilebilir'),
+                          const SizedBox(height: 20),
+                          _buildDropdown(theme),
+                          const SizedBox(height: 20),
+                          _buildDateFields(theme),
+                          const SizedBox(height: 30),
+                          _buildSaveButton(theme),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: _buildPasswordSection(theme),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  _buildVersionText(theme),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    } else if (themeIndex == 1) {
+      // Neon Cyberpunk Theme Layout
+      return SingleChildScrollView(
+        key: const ValueKey(1),
+        padding: const EdgeInsets.all(24.0),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: theme.colorScheme.primary, width: 2),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                blurRadius: 20,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'SYSTEM CONFIG',
+                style: theme.textTheme.displayLarge?.copyWith(fontSize: 24),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 30),
+              _buildThemeSelector(theme),
+              const SizedBox(height: 30),
+              _buildTextField('İsim Soyisim', _fullNameController, 'İsim Soyisim düzenleme alanı'),
+              const SizedBox(height: 20),
+              _buildTextField('Kullanıcı Adı', _usernameController, 'Kullanıcı Adı düzenleme alanı', hint: '15 dakikada bir değiştirilebilir'),
+              const SizedBox(height: 20),
+              _buildDropdown(theme),
+              const SizedBox(height: 20),
+              _buildDateFields(theme),
+              const SizedBox(height: 30),
+              _buildSaveButton(theme),
+              const Divider(height: 60, thickness: 2),
+              _buildPasswordSection(theme),
+              const SizedBox(height: 40),
+              _buildVersionText(theme),
+            ],
+          ),
+        ),
+      );
+    } else {
+      // High Contrast Theme Layout (Original Style)
+      return SingleChildScrollView(
+        key: const ValueKey(0),
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildThemeSelector(theme),
+            const SizedBox(height: 30),
+            _buildTextField('İsim Soyisim', _fullNameController, 'İsim Soyisim düzenleme alanı'),
+            const SizedBox(height: 20),
+            _buildTextField('Kullanıcı Adı', _usernameController, 'Kullanıcı Adı düzenleme alanı', hint: '15 dakikada bir değiştirilebilir'),
+            const SizedBox(height: 20),
+            _buildDropdown(theme),
+            const SizedBox(height: 20),
+            _buildDateFields(theme),
+            const SizedBox(height: 30),
+            _buildSaveButton(theme),
+            const Divider(height: 60, thickness: 2),
+            _buildPasswordSection(theme),
+            const SizedBox(height: 40),
+            _buildVersionText(theme),
+            const SizedBox(height: 20),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller, String semanticLabel, {String? hint}) {
+    return Semantics(
+      label: semanticLabel,
+      hint: hint,
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(labelText: label),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Platformda nasıl görünmek istersiniz?',
+            style: TextStyle(color: theme.colorScheme.secondary, fontSize: 18)),
+        Semantics(
+          label: 'Platform görünüm seçimi açılır menüsü',
+          child: DropdownButton<String>(
+            value: _displayPreference,
+            dropdownColor: theme.colorScheme.surface,
+            isExpanded: true,
+            style: TextStyle(color: theme.colorScheme.primary, fontSize: 20),
+            items: const [
+              DropdownMenuItem(value: 'fullName', child: Text('İsim Soyisim')),
+              DropdownMenuItem(value: 'username', child: Text('Kullanıcı Adı')),
+            ],
+            onChanged: (val) {
+              if (val != null) {
+                setState(() => _displayPreference = val);
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateFields(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Doğum Tarihi',
+            style: TextStyle(color: theme.colorScheme.secondary, fontSize: 18)),
+        Row(
+          children: [
+            Expanded(
+              child: Semantics(
+                label: 'Gün giriniz',
+                child: TextFormField(
+                  controller: _dayController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(hintText: 'Gün'),
+                  style: TextStyle(color: theme.colorScheme.onSurface),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Semantics(
+                label: 'Ay giriniz',
+                child: TextFormField(
+                  controller: _monthController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(hintText: 'Ay'),
+                  style: TextStyle(color: theme.colorScheme.onSurface),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Semantics(
+                label: 'Yıl giriniz',
+                child: TextFormField(
+                  controller: _yearController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(hintText: 'Yıl'),
+                  style: TextStyle(color: theme.colorScheme.onSurface),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSaveButton(ThemeData theme) {
+    return Semantics(
+      label: 'Bilgileri Kaydet butonu',
+      button: true,
+      child: ElevatedButton(
+        onPressed: _updateProfile,
+        child: const Text('Bilgileri Kaydet'),
+      ),
+    );
+  }
+
+  Widget _buildPasswordSection(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          label: 'Şifre Değiştirme panelini açma butonu',
+          button: true,
+          child: TextButton.icon(
+            onPressed: () => setState(() => _showPasswordFields = !_showPasswordFields),
+            icon: Icon(
+                _showPasswordFields ? Icons.expand_less : Icons.expand_more,
+                color: theme.colorScheme.primary),
+            label: Text('Şifre Değiştir',
+                style: TextStyle(color: theme.colorScheme.primary, fontSize: 20)),
+          ),
+        ),
+        if (_showPasswordFields) ...[
+          const SizedBox(height: 20),
+          Semantics(
+            label: 'Yeni Şifre alanı',
+            child: TextField(
+              controller: _newPasswordController,
+              obscureText: _obscureNewPassword,
+              decoration: InputDecoration(
+                labelText: 'Yeni Şifre',
+                suffixIcon: Semantics(
+                  label: _obscureNewPassword ? 'Şifreyi göster' : 'Şifreyi gizle',
+                  button: true,
+                  child: IconButton(
+                    icon: Icon(
+                      _obscureNewPassword ? Icons.visibility : Icons.visibility_off,
+                      color: theme.colorScheme.secondary,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureNewPassword = !_obscureNewPassword;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              style: TextStyle(color: theme.colorScheme.onSurface),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Semantics(
+            label: 'Yeni Şifre Tekrar alanı',
+            child: TextField(
+              controller: _confirmPasswordController,
+              obscureText: _obscureConfirmPassword,
+              decoration: InputDecoration(
+                labelText: 'Yeni Şifre Tekrar',
+                suffixIcon: Semantics(
+                  label: _obscureConfirmPassword ? 'Şifreyi göster' : 'Şifreyi gizle',
+                  button: true,
+                  child: IconButton(
+                    icon: Icon(
+                      _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                      color: theme.colorScheme.secondary,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureConfirmPassword = !_obscureConfirmPassword;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              style: TextStyle(color: theme.colorScheme.onSurface),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Semantics(
+            label: 'Şifreyi Güncelle butonu',
+            button: true,
+            child: ElevatedButton(
+              onPressed: _changePassword,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.secondary),
+              child: Text('Şifreyi Güncelle',
+                  style: TextStyle(color: theme.colorScheme.onSecondary)),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildVersionText(ThemeData theme) {
+    return Center(
+      child: Semantics(
+        label: 'Uygulama versiyonu: $_appVersion',
+        child: Text(
+          'Versiyon: $_appVersion',
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            fontSize: 14,
+          ),
+        ),
+      ),
     );
   }
 }
