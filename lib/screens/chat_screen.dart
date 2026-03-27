@@ -20,8 +20,20 @@ const String liveKitApiSecret = 'lQTO4G5gD9rGBFx94LoAl2bh0yaMBAaR6VgHN45ZeoO';
 class ChatScreen extends StatefulWidget {
   final String roomId;
   final String roomName;
+  final AudioRecorder? audioRecorder;
+  final FirebaseAuth? auth;
+  final FirebaseFirestore? firestore;
+  final FirebaseStorage? storage;
 
-  const ChatScreen({super.key, required this.roomId, required this.roomName});
+  const ChatScreen({
+    super.key,
+    required this.roomId,
+    required this.roomName,
+    this.audioRecorder,
+    this.auth,
+    this.firestore,
+    this.storage,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -29,9 +41,9 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
-  final _auth = FirebaseAuth.instance;
+  late final _auth = widget.auth ?? FirebaseAuth.instance;
   final _scrollController = ScrollController();
-  final _audioRecorder = AudioRecorder();
+  late final _audioRecorder = widget.audioRecorder ?? AudioRecorder();
   final _audioPlayer = AudioPlayer();
 
   bool _isRecording = false;
@@ -55,21 +67,23 @@ class _ChatScreenState extends State<ChatScreen> {
     if (user == null) return;
 
     final roomRef =
-        FirebaseFirestore.instance.collection('chat_rooms').doc(widget.roomId);
+        (widget.firestore ?? FirebaseFirestore.instance).collection('chat_rooms').doc(widget.roomId);
 
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
+    await (widget.firestore ?? FirebaseFirestore.instance).runTransaction((transaction) async {
       final snapshot = await transaction.get(roomRef);
+      final userDoc = await transaction.get((widget.firestore ?? FirebaseFirestore.instance).collection('users').doc(user.uid));
+
       if (!snapshot.exists) return;
 
       int current = snapshot.data()?['currentParticipants'] ?? 0;
+      final userData = userDoc.data() as Map<String, dynamic>? ?? {};
+      final displayName = userData['display_preference'] == 'fullName'
+          ? userData['fullName'] ?? 'Anonim'
+          : userData['username'] ?? 'Anonim';
+
       transaction.update(roomRef, {'currentParticipants': current + 1});
 
       final participantRef = roomRef.collection('participants').doc(user.uid);
-      final userDoc = await transaction.get(FirebaseFirestore.instance.collection('users').doc(user.uid));
-      final userData = userDoc.data() as Map<String, dynamic>;
-      final displayName = userData['display_preference'] == 'fullName'
-          ? userData['fullName']
-          : userData['username'];
 
       transaction.set(participantRef, {
         'uid': user.uid,
@@ -84,9 +98,9 @@ class _ChatScreenState extends State<ChatScreen> {
     if (user == null) return;
 
     final roomRef =
-        FirebaseFirestore.instance.collection('chat_rooms').doc(widget.roomId);
+        (widget.firestore ?? FirebaseFirestore.instance).collection('chat_rooms').doc(widget.roomId);
 
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
+    await (widget.firestore ?? FirebaseFirestore.instance).runTransaction((transaction) async {
       final snapshot = await transaction.get(roomRef);
       if (!snapshot.exists) return;
 
@@ -276,7 +290,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final fileName =
           'voice_${widget.roomId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      final ref = FirebaseStorage.instance
+      final ref = (widget.storage ?? FirebaseStorage.instance)
           .ref()
           .child('chat_voices')
           .child(widget.roomId)
@@ -307,13 +321,13 @@ class _ChatScreenState extends State<ChatScreen> {
     if (user == null) return;
 
     final userDoc =
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        await (widget.firestore ?? FirebaseFirestore.instance).collection('users').doc(user.uid).get();
     final userData = userDoc.data() as Map<String, dynamic>;
     final displayName = userData['display_preference'] == 'fullName'
         ? userData['fullName']
         : userData['username'];
 
-    final roomDoc = await FirebaseFirestore.instance
+    final roomDoc = await (widget.firestore ?? FirebaseFirestore.instance)
         .collection('chat_rooms')
         .doc(widget.roomId)
         .get();
@@ -329,7 +343,7 @@ class _ChatScreenState extends State<ChatScreen> {
       expiresAt = expiresAt.add(const Duration(days: 7));
     }
 
-    await FirebaseFirestore.instance
+    await (widget.firestore ?? FirebaseFirestore.instance)
         .collection('chat_rooms')
         .doc(widget.roomId)
         .collection('messages')
@@ -359,7 +373,7 @@ class _ChatScreenState extends State<ChatScreen> {
       context: context,
       backgroundColor: Colors.black,
       builder: (context) => StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
+        stream: (widget.firestore ?? FirebaseFirestore.instance)
             .collection('chat_rooms')
             .doc(widget.roomId)
             .collection('participants')
@@ -408,7 +422,7 @@ class _ChatScreenState extends State<ChatScreen> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Vazgeç')),
           ElevatedButton(
             onPressed: () async {
-              await FirebaseFirestore.instance.collection('chat_rooms').doc(widget.roomId).delete();
+              await (widget.firestore ?? FirebaseFirestore.instance).collection('chat_rooms').doc(widget.roomId).delete();
               if (context.mounted) {
                 Navigator.pop(context); // close dialog
                 Navigator.pop(context); // leave chat screen
@@ -437,7 +451,7 @@ class _ChatScreenState extends State<ChatScreen> {
             tooltip: 'Katılımcıları Gör',
           ),
           StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance.collection('chat_rooms').doc(widget.roomId).snapshots(),
+            stream: (widget.firestore ?? FirebaseFirestore.instance).collection('chat_rooms').doc(widget.roomId).snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data!.exists) {
                 final data = snapshot.data!.data() as Map<String, dynamic>;
@@ -532,7 +546,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
+              stream: (widget.firestore ?? FirebaseFirestore.instance)
                   .collection('chat_rooms')
                   .doc(widget.roomId)
                   .collection('messages')
