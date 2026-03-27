@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:record/record.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'dart:async';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -28,9 +34,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   DateTime? _usernameLastChanged;
   String _appVersion = '';
 
+  String? _voiceBioUrl;
+  bool _isRecordingBio = false;
+  bool _isPlayingBio = false;
+  final _audioRecorder = AudioRecorder();
+  final _audioPlayer = AudioPlayer();
+  Timer? _recordTimer;
+  int _recordDuration = 0;
+
   @override
   void initState() {
     super.initState();
+    _audioPlayer.onPlayerComplete.listen((_) {
+      if (mounted) setState(() => _isPlayingBio = false);
+    });
     _loadUserData();
     _loadAppVersion();
   }
@@ -64,7 +81,99 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _monthController.text = date.month.toString();
           _yearController.text = date.year.toString();
         }
+        _voiceBioUrl = data['voiceBioUrl'];
       });
+    }
+  }
+
+  @override
+  void dispose() {
+    _audioRecorder.dispose();
+    _audioPlayer.dispose();
+    _recordTimer?.cancel();
+    _fullNameController.dispose();
+    _usernameController.dispose();
+    _dayController.dispose();
+    _monthController.dispose();
+    _yearController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _recordVoiceBio() async {
+    try {
+      if (await _audioRecorder.hasPermission()) {
+        final dir = await getTemporaryDirectory();
+        final path = '${dir.path}/voice_bio.m4a';
+
+        await _audioRecorder.start(
+          const RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 32000, sampleRate: 22050),
+          path: path,
+        );
+
+        setState(() {
+          _isRecordingBio = true;
+          _recordDuration = 0;
+        });
+
+        _recordTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+          setState(() => _recordDuration++);
+          if (_recordDuration >= 15) {
+            await _stopRecordingBio();
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Bio record start error: $e');
+    }
+  }
+
+  Future<void> _stopRecordingBio() async {
+    _recordTimer?.cancel();
+    final path = await _audioRecorder.stop();
+    setState(() => _isRecordingBio = false);
+
+    if (path != null && File(path).existsSync()) {
+      setState(() => _isLoading = true);
+      try {
+        final user = _auth.currentUser;
+        if (user == null) return;
+
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('voice_bios')
+            .child('${user.uid}_bio.m4a');
+
+        await ref.putFile(File(path));
+        final url = await ref.getDownloadURL();
+
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({'voiceBioUrl': url});
+
+        if (mounted) {
+          setState(() {
+            _voiceBioUrl = url;
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli kartvizitiniz kaydedildi.')));
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli kartvizit yüklenirken hata oluştu.')));
+        }
+      }
+    }
+  }
+
+  Future<void> _playVoiceBio() async {
+    if (_voiceBioUrl == null) return;
+    if (_isPlayingBio) {
+      await _audioPlayer.stop();
+      setState(() => _isPlayingBio = false);
+    } else {
+      await _audioPlayer.play(UrlSource(_voiceBioUrl!));
+      setState(() => _isPlayingBio = true);
     }
   }
 
@@ -289,6 +398,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: const Text('Bilgileri Kaydet'),
                       ),
                     ),
+                    const Divider(height: 30, color: Colors.cyan, thickness: 2),
+                    const Text('Sesli Kendini Tanıtma (Maks 15 sn)',
+                        style: TextStyle(color: Colors.cyan, fontSize: 18)),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (_voiceBioUrl != null)
+                          Semantics(
+                            label: 'Sesli kartvizitimi dinle',
+                            button: true,
+                            child: IconButton(
+                              icon: Icon(
+                                _isPlayingBio ? Icons.stop_circle : Icons.play_circle_fill,
+                                color: Colors.yellow,
+                                size: 48,
+                              ),
+                              onPressed: _playVoiceBio,
+                              tooltip: _isPlayingBio ? 'Durdur' : 'Sesli biyografiyi dinle',
+                            ),
+                          ),
+                        const SizedBox(width: 20),
+                        Semantics(
+                          label: 'Sesli kartvizit kaydet veya değiştir',
+                          button: true,
+                          child: IconButton(
+                            icon: Icon(
+                              _isRecordingBio ? Icons.stop_circle : Icons.mic,
+                              color: _isRecordingBio ? Colors.red : Colors.cyan,
+                              size: 48,
+                            ),
+                            onPressed: _isRecordingBio ? _stopRecordingBio : _recordVoiceBio,
+                            tooltip: _isRecordingBio ? 'Kaydı Durdur' : 'Yeni sesli biyografi kaydet',
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_isRecordingBio)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          'Kaydediliyor... $_recordDuration sn',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.red, fontSize: 16),
+                        ),
+                      ),
                     const Divider(height: 60, color: Colors.cyan, thickness: 2),
                     Semantics(
                       label: 'Şifre Değiştirme panelini açma butonu',

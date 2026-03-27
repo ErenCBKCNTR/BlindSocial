@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
+import 'package:audioplayers/audioplayers.dart';
 import 'chat_screen.dart';
 
 class ChatRoomsScreen extends StatefulWidget {
@@ -19,8 +20,15 @@ class ChatRoomsScreen extends StatefulWidget {
 class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
   late final FirebaseAuth _auth;
   late final FirebaseFirestore _firestore;
+  final AudioPlayer _effectsPlayer = AudioPlayer();
   bool _isProfileIncomplete = false;
   int? _userRole;
+
+  @override
+  void dispose() {
+    _effectsPlayer.dispose();
+    super.dispose();
+  }
 
   String _hashPassword(String password) {
     var bytes = utf8.encode(password);
@@ -384,6 +392,67 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
     );
   }
 
+  Future<void> _joinRandomRoom() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    // Search for an existing random room with space
+    final query = await _firestore
+        .collection('chat_rooms')
+        .where('isRandomMatch', isEqualTo: true)
+        .where('currentParticipants', isLessThan: 2)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      final doc = query.docs.first;
+      final roomData = doc.data();
+      final roomId = doc.id;
+      final roomName = roomData['name'] ?? 'Rastgele Oda';
+
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatScreen(
+            roomId: roomId,
+            roomName: roomName,
+          ),
+        ),
+      );
+    } else {
+      // Create a new random room
+      final random = math.Random();
+      final numericId = 100000 + random.nextInt(900000);
+
+      final docRef = await _firestore.collection('chat_rooms').add({
+        'name': 'Rastgele Eşleşme Odası',
+        'numericId': numericId,
+        'maxCapacity': 2,
+        'password': null,
+        'plainPassword': null,
+        'ttl': '24h',
+        'creatorId': user.uid,
+        'currentParticipants': 0,
+        'isRandomMatch': true,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      _effectsPlayer.play(AssetSource('sounds/success.wav'));
+
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatScreen(
+            roomId: docRef.id,
+            roomName: 'Rastgele Eşleşme Odası',
+          ),
+        ),
+      );
+    }
+  }
+
   void _showCreateRoomDialog() {
     final nameController = TextEditingController();
     final capacityController = TextEditingController(text: '10');
@@ -522,6 +591,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   'currentParticipants': 0,
                   'createdAt': FieldValue.serverTimestamp(),
                 });
+                _effectsPlayer.play(AssetSource('sounds/success.wav'));
                 if (!mounted) return;
                 // ignore: use_build_context_synchronously
                 Navigator.pop(context);
@@ -671,7 +741,29 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
       ),
       body: _isProfileIncomplete
         ? Container(color: Colors.black, child: const Center(child: Text('Lütfen profilinizi tamamlayın', style: TextStyle(color: Colors.white, fontSize: 20))))
-        : StreamBuilder<QuerySnapshot>(
+        : Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Semantics(
+                  label: 'Rastgele Biriyle Eşleş',
+                  hint: 'Tek dokunuşla rastgele bir sesli sohbet odasına katıl',
+                  button: true,
+                  child: ElevatedButton.icon(
+                    onPressed: _joinRandomRoom,
+                    icon: const Icon(Icons.shuffle, size: 28),
+                    label: const Text('Rastgele Eşleş', style: TextStyle(fontSize: 20)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.cyan,
+                      foregroundColor: Colors.black,
+                      minimumSize: const Size.fromHeight(60),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
         stream: _firestore
             .collection('chat_rooms')
             .orderBy('createdAt', descending: true)
@@ -722,11 +814,17 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
             );
           }
 
+          // Filter out random match rooms client-side
+          final docs = snapshot.data!.docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return data['isRandomMatch'] != true;
+          }).toList();
+
           return ListView.builder(
             padding: const EdgeInsets.only(bottom: 80),
-            itemCount: snapshot.data!.docs.length,
+            itemCount: docs.length,
             itemBuilder: (context, index) {
-              var room = snapshot.data!.docs[index];
+              var room = docs[index];
               var roomData = room.data() as Map<String, dynamic>;
               var roomName = roomData['name'] ?? 'İsimsiz Oda';
               var roomId = room.id;
@@ -870,6 +968,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
           );
         },
       ),
+              ),
+            ],
+          ),
     );
   }
 }

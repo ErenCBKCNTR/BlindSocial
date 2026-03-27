@@ -69,6 +69,7 @@ void main() {
       'currentParticipants': 2,
       'createdAt': DateTime.now().subtract(const Duration(minutes: 5)),
       'creatorId': 'some_other_uid',
+      'isRandomMatch': false,
     });
 
     await fakeFirestore.collection('chat_rooms').doc('room2').set({
@@ -78,6 +79,7 @@ void main() {
       'password': '123',
       'createdAt': DateTime.now(),
       'creatorId': 'some_other_uid',
+      'isRandomMatch': false,
     });
 
     // 2. Pump the ChatRoomsScreen

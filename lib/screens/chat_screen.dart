@@ -45,6 +45,12 @@ class _ChatScreenState extends State<ChatScreen> {
   final _scrollController = ScrollController();
   late final _audioRecorder = widget.audioRecorder ?? AudioRecorder();
   final _audioPlayer = AudioPlayer();
+  final _effectsPlayer = AudioPlayer();
+  final _walkieTalkiePlayer = AudioPlayer();
+
+  final List<String> _audioQueue = [];
+  bool _isPlayingQueue = false;
+  String? _lastSeenMessageId;
 
   String? _cachedDisplayName;
   String? _cachedTtl;
@@ -62,10 +68,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
   late final Stream<DocumentSnapshot> _roomStream;
   late final Stream<QuerySnapshot> _messagesStream;
+  StreamSubscription<QuerySnapshot>? _messagesSubscription;
 
   @override
   void initState() {
     super.initState();
+
+    _walkieTalkiePlayer.onPlayerComplete.listen((_) {
+      _playNextInQueue();
+    });
+
     // ⚡ Bolt: Cache Firestore streams in initState rather than build() to prevent
     // re-subscribing and fetching all historical documents on every widget rebuild
     // (e.g., when typing a message).
@@ -84,6 +96,37 @@ class _ChatScreenState extends State<ChatScreen> {
         .where('expires_at', isGreaterThan: now)
         .orderBy('expires_at', descending: true)
         .snapshots();
+
+    _messagesSubscription = _messagesStream.listen((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        final latestDoc = snapshot.docs.first;
+        final latestData = latestDoc.data() as Map<String, dynamic>;
+        final docId = latestDoc.id;
+
+        if (_lastSeenMessageId != null && _lastSeenMessageId != docId) {
+          // New message that we haven't processed yet
+          final senderId = latestData['senderId'];
+          if (senderId != _auth.currentUser?.uid) {
+            final type = latestData['type'];
+            if (type == 'audio' && latestData['audioUrl'] != null) {
+              _effectsPlayer.play(AssetSource('sounds/message_received.wav'));
+              _audioQueue.add(latestData['audioUrl'] as String);
+              if (!_isPlayingQueue) {
+                _playNextInQueue();
+              }
+            } else if (type == 'text') {
+              _effectsPlayer.play(AssetSource('sounds/message_received.wav'));
+            }
+          }
+        }
+
+        // Initialize or update _lastSeenMessageId
+        if (_lastSeenMessageId != docId) {
+          _lastSeenMessageId = docId;
+        }
+      }
+    });
+
     _addParticipant();
   }
 
@@ -251,14 +294,33 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _messagesSubscription?.cancel();
     _removeParticipant();
     _messageController.dispose();
     _scrollController.dispose();
     _audioRecorder.dispose();
     _audioPlayer.dispose();
+    _effectsPlayer.dispose();
+    _walkieTalkiePlayer.dispose();
     _recordTimer?.cancel();
     _room?.disconnect();
     super.dispose();
+  }
+
+  void _playNextInQueue() async {
+    if (_audioQueue.isEmpty) {
+      _isPlayingQueue = false;
+      return;
+    }
+
+    _isPlayingQueue = true;
+    final nextUrl = _audioQueue.removeAt(0);
+    try {
+      await _walkieTalkiePlayer.play(UrlSource(nextUrl));
+    } catch (e) {
+      debugPrint('Walkie talkie play error: $e');
+      _playNextInQueue(); // Skip to next on error
+    }
   }
 
   Future<void> _startRecording() async {
@@ -454,6 +516,8 @@ Future<void> _resumeRecording() async {
       'timestamp': FieldValue.serverTimestamp(),
       'expires_at': Timestamp.fromDate(expiresAt),
     });
+
+    _effectsPlayer.play(AssetSource('sounds/message_sent.wav'));
 
     if (type == 'text') _messageController.clear();
     if (_scrollController.hasClients) {
