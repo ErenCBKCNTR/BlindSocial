@@ -15,6 +15,176 @@ void main() {
     registerFallbackValue(RecordConfig());
   });
 
+  testWidgets('ChatScreen displays empty message initially', (WidgetTester tester) async {
+    final mockAudioRecorder = MockAudioRecorder();
+    when(() => mockAudioRecorder.dispose()).thenAnswer((_) async {});
+
+    final user = MockUser(
+      isAnonymous: false,
+      uid: 'test_uid',
+      email: 'test@example.com',
+      displayName: 'Test User',
+    );
+    final mockAuth = MockFirebaseAuth(mockUser: user, signedIn: true);
+    final fakeFirestore = FakeFirebaseFirestore();
+
+    await fakeFirestore.collection('users').doc('test_uid').set({
+      'display_preference': 'fullName',
+      'fullName': 'Test User Full',
+      'username': 'testuser',
+    });
+
+    await fakeFirestore.collection('chat_rooms').doc('test_room_id').set({
+      'currentParticipants': 0,
+      'ttl': '24h',
+      'creatorId': 'creator_uid',
+    });
+
+    final mockStorage = MockFirebaseStorage();
+
+    await tester.pumpWidget(MaterialApp(
+      home: ChatScreen(
+        roomId: 'test_room_id',
+        roomName: 'Test Room',
+        audioRecorder: mockAudioRecorder,
+        auth: mockAuth,
+        firestore: fakeFirestore,
+        storage: mockStorage,
+      ),
+    ));
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Test Room'), findsOneWidget);
+    expect(find.text('Henüz mesaj bulunmuyor.'), findsOneWidget);
+  });
+
+  testWidgets('ChatScreen sends text message and displays it', (WidgetTester tester) async {
+    final mockAudioRecorder = MockAudioRecorder();
+    when(() => mockAudioRecorder.dispose()).thenAnswer((_) async {});
+
+    final user = MockUser(
+      isAnonymous: false,
+      uid: 'test_uid',
+      email: 'test@example.com',
+      displayName: 'Test User',
+    );
+    final mockAuth = MockFirebaseAuth(mockUser: user, signedIn: true);
+    final fakeFirestore = FakeFirebaseFirestore();
+
+    await fakeFirestore.collection('users').doc('test_uid').set({
+      'display_preference': 'fullName',
+      'fullName': 'Test User Full',
+      'username': 'testuser',
+    });
+
+    await fakeFirestore.collection('chat_rooms').doc('test_room_id').set({
+      'currentParticipants': 0,
+      'ttl': '24h',
+      'creatorId': 'creator_uid',
+    });
+
+    final mockStorage = MockFirebaseStorage();
+
+    await tester.pumpWidget(MaterialApp(
+      home: ChatScreen(
+        roomId: 'test_room_id',
+        roomName: 'Test Room',
+        audioRecorder: mockAudioRecorder,
+        auth: mockAuth,
+        firestore: fakeFirestore,
+        storage: mockStorage,
+      ),
+    ));
+
+    await tester.pumpAndSettle();
+
+    final textFieldFinder = find.byType(TextField);
+    expect(textFieldFinder, findsOneWidget);
+
+    await tester.enterText(textFieldFinder, 'Hello world');
+    await tester.pumpAndSettle();
+
+    final sendButtonFinder = find.byIcon(Icons.send);
+    expect(sendButtonFinder, findsOneWidget);
+
+    await tester.tap(sendButtonFinder);
+    await tester.pumpAndSettle();
+
+    // After send, input should be cleared
+    final textField = tester.widget<TextField>(textFieldFinder);
+    expect(textField.controller?.text, isEmpty);
+
+    // Verify message is shown
+    expect(find.text('Hello world'), findsOneWidget);
+    expect(find.text('Test User Full'), findsOneWidget);
+
+    // Check Firestore
+    final messages = await fakeFirestore
+        .collection('chat_rooms')
+        .doc('test_room_id')
+        .collection('messages')
+        .get();
+
+    expect(messages.docs.length, 1);
+    expect(messages.docs.first['text'], 'Hello world');
+  });
+
+  testWidgets('ChatScreen shows delete room button for creator', (WidgetTester tester) async {
+    final mockAudioRecorder = MockAudioRecorder();
+    when(() => mockAudioRecorder.dispose()).thenAnswer((_) async {});
+
+    final user = MockUser(
+      isAnonymous: false,
+      uid: 'creator_uid', // match creatorId
+      email: 'creator@example.com',
+    );
+    final mockAuth = MockFirebaseAuth(mockUser: user, signedIn: true);
+    final fakeFirestore = FakeFirebaseFirestore();
+
+    await fakeFirestore.collection('users').doc('creator_uid').set({
+      'display_preference': 'username',
+      'username': 'creator',
+    });
+
+    await fakeFirestore.collection('chat_rooms').doc('test_room_id').set({
+      'currentParticipants': 0,
+      'ttl': '24h',
+      'creatorId': 'creator_uid',
+    });
+
+    final mockStorage = MockFirebaseStorage();
+
+    await tester.pumpWidget(MaterialApp(
+      home: ChatScreen(
+        roomId: 'test_room_id',
+        roomName: 'Test Room',
+        audioRecorder: mockAudioRecorder,
+        auth: mockAuth,
+        firestore: fakeFirestore,
+        storage: mockStorage,
+      ),
+    ));
+
+    await tester.pumpAndSettle();
+
+    final deleteButtonFinder = find.byIcon(Icons.delete_forever);
+    expect(deleteButtonFinder, findsOneWidget);
+
+    // Test delete dialog
+    await tester.tap(deleteButtonFinder);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Odayı Sil'), findsOneWidget);
+    expect(find.text('Bu odayı kalıcı olarak silmek istediğinize emin misiniz?'), findsOneWidget);
+
+    // Cancel
+    await tester.tap(find.text('Vazgeç'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Odayı Sil'), findsNothing);
+  });
+
   testWidgets('ChatScreen handles audio recording start error gracefully', (WidgetTester tester) async {
     // 1. Setup mock AudioRecorder
     final mockAudioRecorder = MockAudioRecorder();
