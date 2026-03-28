@@ -7,11 +7,7 @@ class RegisterScreen extends StatefulWidget {
   final FirebaseAuth? auth;
   final FirebaseFirestore? firestore;
 
-  const RegisterScreen({
-    super.key,
-    this.auth,
-    this.firestore,
-  });
+  const RegisterScreen({super.key, this.auth, this.firestore});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -54,7 +50,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         final birthDate = DateTime(year, month, day);
         final today = DateTime.now();
         int age = today.year - birthDate.year;
-        if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
+        if (today.month < birthDate.month ||
+            (today.month == birthDate.month && today.day < birthDate.day)) {
           age--;
         }
         setState(() {
@@ -70,7 +67,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_isUnderage && !_parentalConsent) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ebeveyn izni kutusunu işaretlemelisiniz.')),
+        const SnackBar(
+          content: Text('Ebeveyn izni kutusunu işaretlemelisiniz.'),
+        ),
       );
       return;
     }
@@ -91,7 +90,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           .get();
 
       if (userQuery.docs.isNotEmpty) {
-        throw FirebaseAuthException(code: 'username-already-in-use', message: 'Bu kullanıcı adı zaten alınmış.');
+        throw FirebaseAuthException(
+          code: 'username-already-in-use',
+          message: 'Bu kullanıcı adı zaten alınmış.',
+        );
       }
 
       // 2. Create Auth User
@@ -132,11 +134,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       String message = 'Bir hata oluştu.';
       if (e.code == 'username-already-in-use') message = e.message!;
-      if (e.code == 'email-already-in-use') message = 'Bu e-posta adresi zaten kullanımda.';
+      if (e.code == 'email-already-in-use')
+        message = 'Bu e-posta adresi zaten kullanımda.';
       if (e.code == 'weak-password') message = 'Şifre çok zayıf.';
 
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -145,12 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Semantics(
-          label: 'Kayıt Olma Ekranı Başlığı',
-          child: Text('Blind Social Hesabı Oluştur'),
-        ),
-      ),
+      appBar: AppBar(title: Text('Blind Social Hesabı Oluştur')),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -160,124 +160,113 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Semantics(
-                      label: 'İsim Soyisim giriş alanı',
-                      child: TextFormField(
-                        controller: _fullNameController,
-                        decoration: const InputDecoration(labelText: 'İsim Soyisim'),
-                        validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
+                    TextFormField(
+                      controller: _fullNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'İsim Soyisim',
                       ),
+                      validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
                     ),
                     SizedBox(height: 20),
-                    Semantics(
-                      label: 'Kullanıcı Adı giriş alanı',
-                      child: TextFormField(
-                        controller: _usernameController,
-                        decoration: const InputDecoration(labelText: 'Kullanıcı Adı'),
-                        validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Kullanıcı Adı',
                       ),
+                      validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
                     ),
                     const SizedBox(height: 20),
-                    Semantics(
-                      label: 'E-posta giriş alanı',
-                      child: TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(labelText: 'E-posta'),
-                        validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
-                      ),
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(labelText: 'E-posta'),
+                      validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
                     ),
                     const SizedBox(height: 20),
-                    Semantics(
-                      label: 'Şifre giriş alanı',
-                      child: TextFormField(
-                        controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          decoration: InputDecoration(
-                            labelText: 'Şifre',
-                            suffixIcon: Semantics(
-                              label: _obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
-                              button: true,
-                              child: IconButton(
-                                icon: Icon(
-                                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                                  color: Theme.of(context).colorScheme.secondary,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
-                              ),
-                            ),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Şifre',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: Theme.of(context).colorScheme.secondary,
                           ),
-                        validator: (v) => v!.length < 6 ? 'En az 6 karakter' : null,
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
                       ),
+                      validator: (v) =>
+                          v!.length < 6 ? 'En az 6 karakter' : null,
                     ),
                     SizedBox(height: 20),
-                    Text('Doğum Tarihi', style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18)),
+                    Text(
+                      'Doğum Tarihi',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.secondary,
+                        fontSize: 18,
+                      ),
+                    ),
                     Row(
                       children: [
                         Expanded(
-                          child: Semantics(
-                            label: 'Gün',
-                            child: TextFormField(
-                              controller: _dayController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(hintText: 'Gün'),
-                              onChanged: (_) => _checkAge(),
-                            ),
+                          child: TextFormField(
+                            controller: _dayController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(hintText: 'Gün'),
+                            onChanged: (_) => _checkAge(),
                           ),
                         ),
                         SizedBox(width: 10),
                         Expanded(
-                          child: Semantics(
-                            label: 'Ay',
-                            child: TextFormField(
-                              controller: _monthController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(hintText: 'Ay'),
-                              onChanged: (_) => _checkAge(),
-                            ),
+                          child: TextFormField(
+                            controller: _monthController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(hintText: 'Ay'),
+                            onChanged: (_) => _checkAge(),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Semantics(
-                            label: 'Yıl',
-                            child: TextFormField(
-                              controller: _yearController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(hintText: 'Yıl'),
-                              onChanged: (_) => _checkAge(),
-                            ),
+                          child: TextFormField(
+                            controller: _yearController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(hintText: 'Yıl'),
+                            onChanged: (_) => _checkAge(),
                           ),
                         ),
                       ],
                     ),
                     if (_isUnderage)
-                      Semantics(
-                        label: 'Ebeveyn İzni onay kutusu',
-                        child: Row(
-                          children: [
-                            Checkbox(
-                              value: _parentalConsent,
-                              onChanged: (v) => setState(() => _parentalConsent = v!),
-                              activeColor: Theme.of(context).colorScheme.primary,
-                              checkColor: Theme.of(context).colorScheme.onPrimary,
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _parentalConsent,
+                            onChanged: (v) =>
+                                setState(() => _parentalConsent = v!),
+                            activeColor: Theme.of(context).colorScheme.primary,
+                            checkColor: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                          Expanded(
+                            child: Text(
+                              'Bu hesabı ebeveynlerin izniyle oluşturuyorum.',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
                             ),
-                            Expanded(child: Text('Bu hesabı ebeveynlerin izniyle oluşturuyorum.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface))),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     const SizedBox(height: 40),
-                    Semantics(
-                      label: 'Hesabı Oluştur butonu',
-                      button: true,
-                      child: ElevatedButton(
-                        onPressed: _handleRegister,
-                        child: const Text('Kayıt Ol'),
-                      ),
+                    ElevatedButton(
+                      onPressed: _handleRegister,
+                      child: const Text('Kayıt Ol'),
                     ),
                   ],
                 ),

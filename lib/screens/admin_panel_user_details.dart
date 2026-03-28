@@ -21,21 +21,31 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
 
   Future<void> _updateUserRole() async {
     try {
-      final query = await FirebaseFirestore.instance.collection('users').where('numericId', isEqualTo: widget.user['numericId']).limit(1).get();
+      final query = await FirebaseFirestore.instance
+          .collection('users')
+          .where('numericId', isEqualTo: widget.user['numericId'])
+          .limit(1)
+          .get();
       if (query.docs.isNotEmpty) {
         await query.docs.first.reference.update({'role_id': _roleId});
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kullanıcı yetkisi güncellendi.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Kullanıcı yetkisi güncellendi.')),
+          );
           Navigator.pop(context);
         }
       } else {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kullanıcı bulunamadı.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Kullanıcı bulunamadı.')),
+          );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
       }
     }
   }
@@ -61,19 +71,63 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('ID: U${widget.user['numericId'] ?? 'Bilinmiyor'}', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'ID: U${widget.user['numericId'] ?? 'Bilinmiyor'}',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 10),
-            Text('Kullanıcı Adı: ${widget.user['username'] ?? 'Bilinmiyor'}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16)),
+            Text(
+              'Kullanıcı Adı: ${widget.user['username'] ?? 'Bilinmiyor'}',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 16,
+              ),
+            ),
             const SizedBox(height: 10),
-            Text('İsim Soyisim: ${widget.user['fullName'] ?? 'Bilinmiyor'}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16)),
+            Text(
+              'İsim Soyisim: ${widget.user['fullName'] ?? 'Bilinmiyor'}',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 16,
+              ),
+            ),
             const SizedBox(height: 10),
-            Text('E-posta: ${widget.user['email'] ?? 'Bilinmiyor'}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16)),
+            Text(
+              'E-posta: ${widget.user['email'] ?? 'Bilinmiyor'}',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 16,
+              ),
+            ),
             const SizedBox(height: 10),
-            Text('Doğum Tarihi: $birthDate', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16)),
+            Text(
+              'Doğum Tarihi: $birthDate',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 16,
+              ),
+            ),
             const SizedBox(height: 10),
-            Text('Kayıt Tarihi: $createdAt', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16)),
+            Text(
+              'Kayıt Tarihi: $createdAt',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 16,
+              ),
+            ),
             const SizedBox(height: 30),
-            Text('Kullanıcı Yetkisi', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'Kullanıcı Yetkisi',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 10),
             DropdownButtonFormField<int>(
               initialValue: _roleId,
@@ -85,7 +139,10 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
               dropdownColor: Colors.grey[900],
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               items: const [
-                DropdownMenuItem(value: 0, child: Text('0 - Sistem Yöneticisi')),
+                DropdownMenuItem(
+                  value: 0,
+                  child: Text('0 - Sistem Yöneticisi'),
+                ),
                 DropdownMenuItem(value: 1, child: Text('1 - Teknik Ekip')),
                 DropdownMenuItem(value: 2, child: Text('2 - Kullanıcı')),
               ],
@@ -102,15 +159,83 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 15,
+                  ),
                 ),
                 onPressed: _updateUserRole,
-                child: Text('Yetkiyi Güncelle', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 16)),
+                child: Text(
+                  'Yetkiyi Güncelle',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 15,
+                  ),
+                ),
+                onPressed: () => _deleteUser(context),
+                child: const Text(
+                  'Üyeyi Sil',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _deleteUser(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Üyeyi Sil'),
+        content: const Text('Bu üyeyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Sil', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(widget.user['id'] as String).delete();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Üye başarıyla silindi.')),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Üye silinirken bir hata oluştu.')),
+          );
+        }
+      }
+    }
   }
 }

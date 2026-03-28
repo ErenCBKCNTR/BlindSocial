@@ -43,27 +43,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+  String _originalFullName = '';
+  String _originalUsername = '';
+  String _originalDisplayPreference = '';
+  int? _originalDay;
+  int? _originalMonth;
+  int? _originalYear;
+
   Future<void> _loadUserData() async {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    final doc =
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
     if (doc.exists) {
       final data = doc.data() as Map<String, dynamic>;
       setState(() {
         _fullNameController.text = data['fullName'] ?? '';
         _usernameController.text = data['username'] ?? '';
         _displayPreference = data['display_preference'] ?? 'username';
+
+        _originalFullName = _fullNameController.text;
+        _originalUsername = _usernameController.text;
+        _originalDisplayPreference = _displayPreference;
+
         if (data['username_last_changed'] != null) {
-          _usernameLastChanged =
-              (data['username_last_changed'] as Timestamp).toDate();
+          _usernameLastChanged = (data['username_last_changed'] as Timestamp)
+              .toDate();
         }
         if (data['birthDate'] != null) {
           final date = (data['birthDate'] as Timestamp).toDate();
           _dayController.text = date.day.toString();
           _monthController.text = date.month.toString();
           _yearController.text = date.year.toString();
+
+          _originalDay = date.day;
+          _originalMonth = date.month;
+          _originalYear = date.year;
         }
       });
     }
@@ -85,14 +103,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
         month == null ||
         year == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Lütfen tüm alanları doldurunuz.')));
+        const SnackBar(content: Text('Lütfen tüm alanları doldurunuz.')),
+      );
+      return;
+    }
+
+    if (name == _originalFullName &&
+        newUsername == _originalUsername &&
+        _displayPreference == _originalDisplayPreference &&
+        day == _originalDay &&
+        month == _originalMonth &&
+        year == _originalYear) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Güncellenen değişiklik bulunamadı.')),
+      );
       return;
     }
 
     setState(() => _isLoading = true);
     try {
-      final userRef =
-          FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final userRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
       final doc = await userRef.get();
       final data = doc.data() as Map<String, dynamic>;
       final currentUsername = data['username'] ?? '';
@@ -131,24 +163,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (mounted) {
         // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Profil güncellendi.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Profil güncellendi.')));
       }
     } catch (e) {
       String msg = 'Hata oluştu.';
       if (e.toString().contains('username-taken')) {
         msg = 'Bu kullanıcı adı zaten alınmış.';
-      } else if (e.toString().contains('cooldown')) {
-        final parts = e.toString().split(':');
-        final rem = parts.length > 1 ? parts[1] : '?';
-        msg =
-            'Kullanıcı adınızı değiştirmek için lütfen $rem dakika daha bekleyin.';
+      } else if (e.toString().contains('cooldown:')) {
+        final regex = RegExp(r'cooldown:(\d+)m(\d+)s');
+        final match = regex.firstMatch(e.toString());
+        if (match != null) {
+          final m = match.group(1);
+          final s = match.group(2);
+          msg = 'Kullanıcı adınızı değiştirmek için $m dakika $s saniye beklemeniz gerekmektedir.';
+        } else {
+          msg = 'Kullanıcı adınızı değiştirmek için biraz beklemeniz gerekmektedir.';
+        }
       } else if (e.toString().contains('network')) {
         msg = 'Bağlantı hatası, lütfen internetinizi kontrol edin.';
       }
       if (mounted) {
         // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -157,11 +197,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _changePassword() async {
     if (_newPasswordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Şifreler eşleşmiyor.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Şifreler eşleşmiyor.')));
       return;
     }
     if (_newPasswordController.text.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('En az 6 karakter olmalı.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('En az 6 karakter olmalı.')));
       return;
     }
 
@@ -172,11 +216,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _confirmPasswordController.clear();
       if (!mounted) return;
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Şifre güncellendi.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Şifre güncellendi.')));
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message ?? 'Hata oluştu.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message ?? 'Hata oluştu.')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -192,12 +240,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return Scaffold(
           appBar: themeIndex == 2
               ? null // Use SliverAppBar for Minimalist Theme
-              : AppBar(
-                  title: Semantics(
-                    label: 'Hesabım Ekranı',
-                    child: Text('Hesabım'),
-                  ),
-                ),
+              : AppBar(title: Text('Hesabım')),
           body: _isLoading
               ? Center(child: CircularProgressIndicator())
               : SafeArea(
@@ -215,50 +258,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildThemeSelector(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Uygulama Teması',
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: theme.colorScheme.secondary,
-            fontWeight: FontWeight.bold,
-          ) ?? TextStyle(color: theme.colorScheme.secondary, fontSize: 18),
-        ),
-        SizedBox(height: 10),
-        Semantics(
-          label: 'Tema seçim alanı',
-          child: ToggleButtons(
-            isSelected: [
-              appThemeNotifier.currentThemeIndex == 0,
-              appThemeNotifier.currentThemeIndex == 1,
-              appThemeNotifier.currentThemeIndex == 2,
-            ],
-            onPressed: (index) {
-              appThemeNotifier.setTheme(index);
-            },
-            fillColor: theme.colorScheme.secondary.withValues(alpha: 0.2),
-            selectedColor: theme.colorScheme.secondary,
-            color: theme.colorScheme.onSurface,
-            borderRadius: BorderRadius.circular(8),
-            children: const [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Text('Kontrast'),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Text('Neon'),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Text('Minimal'),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildLayoutForTheme(int themeIndex, ThemeData theme) {
@@ -276,7 +276,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
+                    colors: [
+                      theme.colorScheme.primary,
+                      theme.colorScheme.secondary,
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -298,9 +301,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _buildTextField('İsim Soyisim', _fullNameController, 'İsim Soyisim düzenleme alanı'),
+                          _buildTextField(
+                            'İsim Soyisim',
+                            _fullNameController,
+                            'İsim Soyisim düzenleme alanı',
+                          ),
                           const SizedBox(height: 20),
-                          _buildTextField('Kullanıcı Adı', _usernameController, 'Kullanıcı Adı düzenleme alanı', hint: '15 dakikada bir değiştirilebilir'),
+                          _buildTextField(
+                            'Kullanıcı Adı',
+                            _usernameController,
+                            'Kullanıcı Adı düzenleme alanı',
+                            hint: '15 dakikada bir değiştirilebilir',
+                          ),
                           const SizedBox(height: 20),
                           _buildDropdown(theme),
                           const SizedBox(height: 20),
@@ -356,9 +368,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 30),
               _buildThemeSelector(theme),
               const SizedBox(height: 30),
-              _buildTextField('İsim Soyisim', _fullNameController, 'İsim Soyisim düzenleme alanı'),
+              _buildTextField(
+                'İsim Soyisim',
+                _fullNameController,
+                'İsim Soyisim düzenleme alanı',
+              ),
               const SizedBox(height: 20),
-              _buildTextField('Kullanıcı Adı', _usernameController, 'Kullanıcı Adı düzenleme alanı', hint: '15 dakikada bir değiştirilebilir'),
+              _buildTextField(
+                'Kullanıcı Adı',
+                _usernameController,
+                'Kullanıcı Adı düzenleme alanı',
+                hint: '15 dakikada bir değiştirilebilir',
+              ),
               const SizedBox(height: 20),
               _buildDropdown(theme),
               const SizedBox(height: 20),
@@ -383,9 +404,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             _buildThemeSelector(theme),
             const SizedBox(height: 30),
-            _buildTextField('İsim Soyisim', _fullNameController, 'İsim Soyisim düzenleme alanı'),
+            _buildTextField(
+              'İsim Soyisim',
+              _fullNameController,
+              'İsim Soyisim düzenleme alanı',
+            ),
             const SizedBox(height: 20),
-            _buildTextField('Kullanıcı Adı', _usernameController, 'Kullanıcı Adı düzenleme alanı', hint: '15 dakikada bir değiştirilebilir'),
+            _buildTextField(
+              'Kullanıcı Adı',
+              _usernameController,
+              'Kullanıcı Adı düzenleme alanı',
+              hint: '15 dakikada bir değiştirilebilir',
+            ),
             const SizedBox(height: 20),
             _buildDropdown(theme),
             const SizedBox(height: 20),
@@ -403,41 +433,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, String semanticLabel, {String? hint}) {
-    return Semantics(
-      label: semanticLabel,
-      hint: hint,
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(labelText: label),
-        style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20),
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    String semanticLabel, {
+    String? hint,
+  }) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label),
+      style: TextStyle(
+        color: Theme.of(context).colorScheme.onSurface,
+        fontSize: 20,
       ),
     );
   }
 
   Widget _buildDropdown(ThemeData theme) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Platformda nasıl görünmek istersiniz?',
-            style: TextStyle(color: theme.colorScheme.secondary, fontSize: 18)),
-        Semantics(
-          label: 'Platform görünüm seçimi açılır menüsü',
-          child: DropdownButton<String>(
-            value: _displayPreference,
-            dropdownColor: theme.colorScheme.surface,
-            isExpanded: true,
-            style: TextStyle(color: theme.colorScheme.primary, fontSize: 20),
-            items: const [
-              DropdownMenuItem(value: 'fullName', child: Text('İsim Soyisim')),
-              DropdownMenuItem(value: 'username', child: Text('Kullanıcı Adı')),
-            ],
-            onChanged: (val) {
-              if (val != null) {
-                setState(() => _displayPreference = val);
-              }
-            },
-          ),
+        Text(
+          'Platformda nasıl görünmek istersiniz?',
+          style: TextStyle(color: theme.colorScheme.secondary, fontSize: 18),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _displayPreference == 'fullName'
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.surface,
+                  foregroundColor: _displayPreference == 'fullName'
+                      ? theme.colorScheme.onPrimary
+                      : theme.colorScheme.onSurface,
+                  side: BorderSide(
+                    color: theme.colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+                onPressed: () {
+                  setState(() => _displayPreference = 'fullName');
+                },
+                child: const Text('İsim Soyisim', textAlign: TextAlign.center),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _displayPreference == 'username'
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.surface,
+                  foregroundColor: _displayPreference == 'username'
+                      ? theme.colorScheme.onPrimary
+                      : theme.colorScheme.onSurface,
+                  side: BorderSide(
+                    color: theme.colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+                onPressed: () {
+                  setState(() => _displayPreference = 'username');
+                },
+                child: const Text('Kullanıcı Adı', textAlign: TextAlign.center),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -447,43 +513,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Doğum Tarihi',
-            style: TextStyle(color: theme.colorScheme.secondary, fontSize: 18)),
+        Text(
+          'Doğum Tarihi',
+          style: TextStyle(color: theme.colorScheme.secondary, fontSize: 18),
+        ),
         Row(
           children: [
             Expanded(
-              child: Semantics(
-                label: 'Gün giriniz',
-                child: TextFormField(
-                  controller: _dayController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(hintText: 'Gün'),
-                  style: TextStyle(color: theme.colorScheme.onSurface),
-                ),
+              child: TextFormField(
+                controller: _dayController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(hintText: 'Gün'),
+                style: TextStyle(color: theme.colorScheme.onSurface),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Semantics(
-                label: 'Ay giriniz',
-                child: TextFormField(
-                  controller: _monthController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(hintText: 'Ay'),
-                  style: TextStyle(color: theme.colorScheme.onSurface),
-                ),
+              child: TextFormField(
+                controller: _monthController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(hintText: 'Ay'),
+                style: TextStyle(color: theme.colorScheme.onSurface),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Semantics(
-                label: 'Yıl giriniz',
-                child: TextFormField(
-                  controller: _yearController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(hintText: 'Yıl'),
-                  style: TextStyle(color: theme.colorScheme.onSurface),
-                ),
+              child: TextFormField(
+                controller: _yearController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(hintText: 'Yıl'),
+                style: TextStyle(color: theme.colorScheme.onSurface),
               ),
             ),
           ],
@@ -493,13 +552,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildSaveButton(ThemeData theme) {
-    return Semantics(
-      label: 'Bilgileri Kaydet butonu',
-      button: true,
-      child: ElevatedButton(
-        onPressed: _updateProfile,
-        child: const Text('Bilgileri Kaydet'),
-      ),
+    return ElevatedButton(
+      onPressed: _updateProfile,
+      child: const Text('Bilgileri Kaydet'),
     );
   }
 
@@ -507,83 +562,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Semantics(
-          label: 'Şifre Değiştirme panelini açma butonu',
-          button: true,
-          child: TextButton.icon(
-            onPressed: () => setState(() => _showPasswordFields = !_showPasswordFields),
-            icon: Icon(
-                _showPasswordFields ? Icons.expand_less : Icons.expand_more,
-                color: theme.colorScheme.primary),
-            label: Text('Şifre Değiştir',
-                style: TextStyle(color: theme.colorScheme.primary, fontSize: 20)),
+        TextButton.icon(
+          onPressed: () =>
+              setState(() => _showPasswordFields = !_showPasswordFields),
+          icon: Icon(
+            _showPasswordFields ? Icons.expand_less : Icons.expand_more,
+            color: theme.colorScheme.primary,
+          ),
+          label: Text(
+            'Şifre Değiştir',
+            style: TextStyle(color: theme.colorScheme.primary, fontSize: 20),
           ),
         ),
         if (_showPasswordFields) ...[
           const SizedBox(height: 20),
-          Semantics(
-            label: 'Yeni Şifre alanı',
-            child: TextField(
-              controller: _newPasswordController,
-              obscureText: _obscureNewPassword,
-              decoration: InputDecoration(
-                labelText: 'Yeni Şifre',
-                suffixIcon: Semantics(
-                  label: _obscureNewPassword ? 'Şifreyi göster' : 'Şifreyi gizle',
-                  button: true,
-                  child: IconButton(
-                    icon: Icon(
-                      _obscureNewPassword ? Icons.visibility : Icons.visibility_off,
-                      color: theme.colorScheme.secondary,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureNewPassword = !_obscureNewPassword;
-                      });
-                    },
-                  ),
+          TextField(
+            controller: _newPasswordController,
+            obscureText: _obscureNewPassword,
+            decoration: InputDecoration(
+              labelText: 'Yeni Şifre',
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureNewPassword ? Icons.visibility : Icons.visibility_off,
+                  color: theme.colorScheme.secondary,
                 ),
+                onPressed: () {
+                  setState(() {
+                    _obscureNewPassword = !_obscureNewPassword;
+                  });
+                },
               ),
-              style: TextStyle(color: theme.colorScheme.onSurface),
             ),
+            style: TextStyle(color: theme.colorScheme.onSurface),
           ),
           const SizedBox(height: 10),
-          Semantics(
-            label: 'Yeni Şifre Tekrar alanı',
-            child: TextField(
-              controller: _confirmPasswordController,
-              obscureText: _obscureConfirmPassword,
-              decoration: InputDecoration(
-                labelText: 'Yeni Şifre Tekrar',
-                suffixIcon: Semantics(
-                  label: _obscureConfirmPassword ? 'Şifreyi göster' : 'Şifreyi gizle',
-                  button: true,
-                  child: IconButton(
-                    icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
-                      color: theme.colorScheme.secondary,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureConfirmPassword = !_obscureConfirmPassword;
-                      });
-                    },
-                  ),
+          TextField(
+            controller: _confirmPasswordController,
+            obscureText: _obscureConfirmPassword,
+            decoration: InputDecoration(
+              labelText: 'Yeni Şifre Tekrar',
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureConfirmPassword
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  color: theme.colorScheme.secondary,
                 ),
+                onPressed: () {
+                  setState(() {
+                    _obscureConfirmPassword = !_obscureConfirmPassword;
+                  });
+                },
               ),
-              style: TextStyle(color: theme.colorScheme.onSurface),
             ),
+            style: TextStyle(color: theme.colorScheme.onSurface),
           ),
           const SizedBox(height: 20),
-          Semantics(
-            label: 'Şifreyi Güncelle butonu',
-            button: true,
-            child: ElevatedButton(
-              onPressed: _changePassword,
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.secondary),
-              child: Text('Şifreyi Güncelle',
-                  style: TextStyle(color: theme.colorScheme.onSecondary)),
+          ElevatedButton(
+            onPressed: _changePassword,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.secondary,
+            ),
+            child: Text(
+              'Şifreyi Güncelle',
+              style: TextStyle(color: theme.colorScheme.onSecondary),
             ),
           ),
         ],
@@ -593,14 +635,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildVersionText(ThemeData theme) {
     return Center(
-      child: Semantics(
-        label: 'Uygulama versiyonu: $_appVersion',
-        child: Text(
-          'Versiyon: $_appVersion',
-          style: TextStyle(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-            fontSize: 14,
-          ),
+      child: Text(
+        'Versiyon: $_appVersion',
+        style: TextStyle(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          fontSize: 14,
         ),
       ),
     );

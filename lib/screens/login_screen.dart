@@ -7,11 +7,7 @@ class LoginScreen extends StatefulWidget {
   final FirebaseAuth? auth;
   final FirebaseFirestore? firestore;
 
-  const LoginScreen({
-    super.key,
-    this.auth,
-    this.firestore,
-  });
+  const LoginScreen({super.key, this.auth, this.firestore});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -86,15 +82,12 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showThemedError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Semantics(
-          label: 'Hata bildirimi: $message',
-          child: Text(
-            message,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+        content: Text(
+          message,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
         backgroundColor: const Color(0xFF333333),
@@ -155,7 +148,10 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        title: Text('Şifremi Unuttum', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+        title: Text(
+          'Şifremi Unuttum',
+          style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        ),
         content: Text(
           'Bu özellik şu anda devre dışıdır, lütfen yönetici ile irtibata geçiniz.',
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
@@ -163,7 +159,10 @@ class _LoginScreenState extends State<LoginScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Tamam', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
+            child: Text(
+              'Tamam',
+              style: TextStyle(color: Theme.of(context).colorScheme.secondary),
+            ),
           ),
         ],
       ),
@@ -173,136 +172,99 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Semantics(
-          label: 'Giriş Ekranı Başlığı',
-          child: Text('Blind Social - Giriş'),
-        ),
-      ),
+      appBar: AppBar(title: Text('Blind Social - Giriş')),
       body: _isLoading
-          ? Center(
-              child: Semantics(
-                label: 'İşlem yapılıyor, lütfen bekleyin',
-                child: CircularProgressIndicator(
-                  strokeWidth: 6,
-                ),
-              ),
-            )
+          ? Center(child: CircularProgressIndicator(strokeWidth: 6))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SizedBox(height: 40),
-                  Semantics(
-                    label: 'Hoş geldiniz mesajı',
-                    child: Text(
-                      'Blind Social\'a Hoş Geldiniz',
-                      style: Theme.of(context).textTheme.displayMedium,
-                      textAlign: TextAlign.center,
-                    ),
+                  Text(
+                    'Blind Social\'a Hoş Geldiniz',
+                    style: Theme.of(context).textTheme.displayMedium,
+                    textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 40),
-                  Semantics(
-                    label: 'E-posta veya Kullanıcı Adı giriş alanı',
-                    hint: 'E-posta adresinizi veya kullanıcı adınızı buraya yazın.',
-                    child: TextField(
-                      controller: _identifierController,
-                      decoration: const InputDecoration(
-                        labelText: 'E-posta veya Kullanıcı Adı',
-                        hintText: 'ornek@email.com veya kullanıcıadı',
-                      ),
+                  TextField(
+                    controller: _identifierController,
+                    decoration: const InputDecoration(
+                      labelText: 'E-posta veya Kullanıcı Adı',
+                      hintText: 'ornek@email.com veya kullanıcıadı',
                     ),
                   ),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton(
                       onPressed: _handleForgotPassword,
-                      child: Semantics(
-                        label: 'Şifrenizi mi unuttunuz?',
-                        child: Text(
-                          'Şifrenizi mi unuttunuz?',
-                          style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18),
+                      child: Text(
+                        'Şifrenizi mi unuttunuz?',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.secondary,
+                          fontSize: 18,
                         ),
                       ),
                     ),
                   ),
                   SizedBox(height: 20),
-                  Semantics(
-                    label: 'Şifre giriş alanı',
-                    hint: 'Şifrenizi buraya yazın. En az 6 karakter olmalıdır.',
-                    child: TextField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        labelText: 'Şifre',
-                        hintText: 'Şifreniz',
-                        suffixIcon: Semantics(
-                          label: _obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
-                          button: true,
-                          child: IconButton(
-                            icon: Icon(
-                              _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                          ),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: 'Şifre',
+                      hintText: 'Şifreniz',
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Theme.of(context).colorScheme.secondary,
                         ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
                       ),
                     ),
                   ),
                   SizedBox(height: 20),
-                  Semantics(
-                    label: 'Beni Hatırla',
-                    hint: _rememberMe
-                        ? 'Beni hatırla seçili. Otomatik giriş yapmak için işaretli tutun.'
-                        : 'Beni hatırla seçili değil. Otomatik giriş yapmak için işaretleyin.',
-                    child: Row(
-                      children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          onChanged: (val) => _updateRememberMe(val ?? false),
-                          activeColor: Theme.of(context).colorScheme.primary,
-                          checkColor: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                        Text(
-                          'Beni Hatırla',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _rememberMe,
+                        onChanged: (val) => _updateRememberMe(val ?? false),
+                        activeColor: Theme.of(context).colorScheme.primary,
+                        checkColor: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                      Text(
+                        'Beni Hatırla',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
                   ),
                   SizedBox(height: 40),
-                  Semantics(
-                    label: 'Giriş Yap butonu',
-                    hint: 'Sohbet odalarına gitmek için dokunun',
-                    button: true,
-                    child: ElevatedButton(
-                      onPressed: _handleLogin,
-                      child: Text('Giriş Yap'),
-                    ),
+                  ElevatedButton(
+                    onPressed: _handleLogin,
+                    child: Text('Giriş Yap'),
                   ),
                   const SizedBox(height: 20),
-                  Semantics(
-                    label: 'Blind Social Hesabı Oluştur butonu',
-                    hint: 'Yeni bir hesap oluşturmak için dokunun',
-                    button: true,
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pushNamed(context, '/register'),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 2),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                  OutlinedButton(
+                    onPressed: () => Navigator.pushNamed(context, '/register'),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.secondary,
+                        width: 2,
                       ),
-                      child: Text(
-                        'Blind Social Hesabı Oluştur',
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.secondary,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: Text(
+                      'Blind Social Hesabı Oluştur',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.secondary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),

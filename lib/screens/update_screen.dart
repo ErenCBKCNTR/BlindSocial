@@ -33,49 +33,35 @@ class UpdateScreen extends StatelessWidget {
                   size: 100,
                 ),
                 SizedBox(height: 32),
-                Semantics(
-                  label: 'Güncelleme Gerekli başlığı',
-                  child: Text(
-                    'Güncelleme Gerekli',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
+                Text(
+                  'Güncelleme Gerekli',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 SizedBox(height: 24),
-                Semantics(
-                  label: 'Uygulamanın daha iyi ve sorunsuz çalışması için yeni sürümü yüklemelisiniz içeriği',
-                  child: Text(
-                    'Uygulamanın daha iyi ve sorunsuz çalışması için yeni sürümü yüklemelisiniz.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontSize: 20,
-                    ),
+                Text(
+                  'Uygulamanın daha iyi ve sorunsuz çalışması için yeni sürümü yüklemelisiniz.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 20,
                   ),
                 ),
                 const Spacer(),
-                Semantics(
-                  label: 'Güncellemeyi İndir butonu',
-                  hint: 'Dış tarayıcıyı açarak yeni APK dosyasını indirmenizi sağlar',
-                  button: true,
-                  child: ElevatedButton(
-                    onPressed: _launchUpdate,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                      minimumSize: const Size(double.infinity, 70),
-                    ),
-                    child: const Text(
-                      'Güncellemeyi İndir',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                ElevatedButton(
+                  onPressed: _launchUpdate,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    minimumSize: const Size(double.infinity, 70),
+                  ),
+                  child: const Text(
+                    'Güncellemeyi İndir',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 24),
