@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_panel_room_details.dart';
 import 'admin_panel_user_details.dart';
+import 'reported_posts_screen.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   final FirebaseFirestore? firestore;
@@ -27,8 +28,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     // ⚡ Bolt: Cache Firestore streams in initState rather than build() to prevent
     // re-subscribing and fetching all historical documents on every widget rebuild
     // (e.g., when toggling room filters).
-    _usersStream = _firestore.collection('users').orderBy('createdAt', descending: true).snapshots();
-    _roomsStream = _firestore.collection('chat_rooms').orderBy('createdAt', descending: true).snapshots();
+    _usersStream = _firestore
+        .collection('users')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+    _roomsStream = _firestore
+        .collection('chat_rooms')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
   }
 
   Widget _buildMemberList() {
@@ -36,20 +43,31 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       stream: _usersStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text('Bir hata oluştu.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)));
+          return Center(
+            child: Text(
+              'Bir hata oluştu.',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+          );
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text('Üye bulunamadı.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)));
+          return Center(
+            child: Text(
+              'Üye bulunamadı.',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+          );
         }
 
         return ListView.builder(
           itemCount: snapshot.data!.docs.length,
           itemBuilder: (context, index) {
-            var user = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+            var user =
+                snapshot.data!.docs[index].data() as Map<String, dynamic>;
             String userId = user['numericId']?.toString() ?? 'Bilinmiyor';
             String username = user['username'] ?? 'İsimsiz';
 
@@ -64,24 +82,36 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               child: ListTile(
                 title: Text(
                   'ID: U$userId - $username',
-                  style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 subtitle: Text(
                   'Kayıt Tarihi: $createdAt',
-                  style: TextStyle(color: Theme.of(context).colorScheme.secondary),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
                 ),
-                trailing: Semantics(
-                  label: 'Detaylı bilgileri gör',
-                  button: true,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => AdminPanelUserDetails(user: user)),
-                      );
-                    },
-                    child: Text('Detaylar', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
+                trailing: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                  ),
+                  onPressed: () {
+                    final userData = Map<String, dynamic>.from(user);
+                    userData['id'] = snapshot.data!.docs[index].id;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AdminPanelUserDetails(user: userData),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Detaylar',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
                   ),
                 ),
               ),
@@ -101,9 +131,16 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               FilterChip(
-                label: Text('Şifreli', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                label: Text(
+                  'Şifreli',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
                 selected: _filterRoomsWithPassword,
-                selectedColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5),
+                selectedColor: Theme.of(
+                  context,
+                ).colorScheme.secondary.withValues(alpha: 0.5),
                 backgroundColor: Colors.grey[800],
                 onSelected: (bool value) {
                   setState(() {
@@ -113,9 +150,16 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 },
               ),
               FilterChip(
-                label: Text('Şifresiz', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                label: Text(
+                  'Şifresiz',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
                 selected: _filterRoomsWithoutPassword,
-                selectedColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5),
+                selectedColor: Theme.of(
+                  context,
+                ).colorScheme.secondary.withValues(alpha: 0.5),
                 backgroundColor: Colors.grey[800],
                 onSelected: (bool value) {
                   setState(() {
@@ -132,7 +176,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             stream: _roomsStream,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return Center(child: Text('Bir hata oluştu.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)));
+                return Center(
+                  child: Text(
+                    'Bir hata oluştu.',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                );
               }
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());
@@ -143,17 +194,26 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               if (_filterRoomsWithPassword) {
                 docs = docs.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
-                  return data['plainPassword'] != null && data['plainPassword'].toString().isNotEmpty;
+                  return data['plainPassword'] != null &&
+                      data['plainPassword'].toString().isNotEmpty;
                 }).toList();
               } else if (_filterRoomsWithoutPassword) {
                 docs = docs.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
-                  return data['plainPassword'] == null || data['plainPassword'].toString().isEmpty;
+                  return data['plainPassword'] == null ||
+                      data['plainPassword'].toString().isEmpty;
                 }).toList();
               }
 
               if (docs.isEmpty) {
-                return Center(child: Text('Oda bulunamadı.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)));
+                return Center(
+                  child: Text(
+                    'Oda bulunamadı.',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                );
               }
 
               return ListView.builder(
@@ -166,31 +226,46 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
                   return Card(
                     color: Colors.grey[900],
-                    margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     child: ListTile(
                       title: Text(
                         'ID: R$roomId - $roomName',
-                        style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       subtitle: Text(
                         'Şifre: $password',
-                        style: TextStyle(color: Theme.of(context).colorScheme.secondary),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
                       ),
-                      trailing: Semantics(
-                        label: 'Oda detaylarını gör',
-                        button: true,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    AdminPanelRoomDetails(room: room, roomRef: docs[index].reference),
+                      trailing: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AdminPanelRoomDetails(
+                                room: room,
+                                roomRef: docs[index].reference,
                               ),
-                            );
-                          },
-                          child: Text('Detaylar', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          'Detaylar',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
                         ),
                       ),
                     ),
@@ -207,37 +282,117 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Semantics(
-            label: 'Yönetici Paneli Başlığı',
-            child: Text('Yönetici Paneli', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+          title: Text(
+            'Yönetici Paneli',
+            style: TextStyle(color: Theme.of(context).colorScheme.primary),
           ),
           bottom: TabBar(
             indicatorColor: Theme.of(context).colorScheme.primary,
             labelColor: Theme.of(context).colorScheme.primary,
             unselectedLabelColor: Theme.of(context).colorScheme.secondary,
             tabs: [
-              Tab(
-                icon: Icon(Icons.meeting_room),
-                text: 'Oda Listesi',
-              ),
-              Tab(
-                icon: Icon(Icons.people),
-                text: 'Üyeler',
-              ),
+              Tab(icon: Icon(Icons.dashboard), text: 'Pano'),
+              Tab(icon: Icon(Icons.meeting_room), text: 'Odalar'),
+              Tab(icon: Icon(Icons.people), text: 'Üyeler'),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            // Oda Listesi
+            _buildDashboard(context),
             _buildRoomList(),
-            // Üyeler
             _buildMemberList(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDashboard(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          StreamBuilder<QuerySnapshot>(
+            stream: _roomsStream,
+            builder: (context, snapshot) {
+              final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+              return InkWell(
+                onTap: () {
+                  DefaultTabController.of(context).animateTo(1);
+                },
+                child: Card(
+                  color: Colors.blueGrey[900],
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Toplam Odalar',
+                          style: TextStyle(color: Colors.white, fontSize: 24),
+                        ),
+                        Text(
+                          '$count',
+                          style: const TextStyle(color: Colors.yellow, fontSize: 32, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+          StreamBuilder<QuerySnapshot>(
+            stream: _usersStream,
+            builder: (context, snapshot) {
+              final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+              return InkWell(
+                onTap: () {
+                  DefaultTabController.of(context).animateTo(2);
+                },
+                child: Card(
+                  color: Colors.blueGrey[900],
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Toplam Üyeler',
+                          style: TextStyle(color: Colors.white, fontSize: 24),
+                        ),
+                        Text(
+                          '$count',
+                          style: const TextStyle(color: Colors.yellow, fontSize: 32, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ReportedPostsScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 60),
+            ),
+            child: const Text('Şikayet Edilen Gönderiler', style: TextStyle(fontSize: 20)),
+          ),
+        ],
       ),
     );
   }

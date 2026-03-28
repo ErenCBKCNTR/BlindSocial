@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -17,6 +18,7 @@ import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/square_screen.dart';
+import 'screens/games/trivia_game_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,14 +32,34 @@ class BlindSocialApp extends StatefulWidget {
   State<BlindSocialApp> createState() => _BlindSocialAppState();
 }
 
-class _BlindSocialAppState extends State<BlindSocialApp> {
+class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObserver {
   late Future<Map<String, dynamic>> _initFuture;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initFuture = _initialize();
     appThemeNotifier.init();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      if (state == AppLifecycleState.resumed) {
+        FirebaseFirestore.instance.collection('users').doc(user.uid).update({'isOnline': 1}).catchError((_) {});
+      } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive || state == AppLifecycleState.detached) {
+        FirebaseFirestore.instance.collection('users').doc(user.uid).update({'isOnline': 0}).catchError((_) {});
+      }
+    }
   }
 
   Future<Map<String, dynamic>> _initialize() async {
@@ -52,6 +74,13 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
           storageBucket: 'blind-social-a718c.firebasestorage.app',
         ),
       ).timeout(const Duration(seconds: 3));
+
+      // Set online status initially if logged in
+      FirebaseAuth.instance.authStateChanges().listen((user) {
+        if (user != null) {
+          FirebaseFirestore.instance.collection('users').doc(user.uid).update({'isOnline': 1}).catchError((_) {});
+        }
+      });
 
       // Step 2: Check for mandatory updates
       final packageInfo = await PackageInfo.fromPlatform();
@@ -98,72 +127,73 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
       valueListenable: appThemeNotifier,
       builder: (context, theme, child) {
         return MaterialApp(
-      title: 'Blind Social',
-      debugShowCheckedModeBanner: false,
-      theme: theme,
-      locale: const Locale('tr', 'TR'),
-      supportedLocales: const [Locale('tr', 'TR')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: FutureBuilder<Map<String, dynamic>>(
-        future: _initFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const SplashScreen();
-          }
-
-          final updateData = snapshot.data ?? {'required': false};
-          if (updateData['required'] == true) {
-            return UpdateScreen(updateUrl: updateData['url'] ?? "");
-          }
-
-          if (updateData['onboarding'] == true) {
-            return const OnboardingScreen();
-          }
-
-          // Recommendation logic after auth or first load
-          if (updateData['recommended'] == true) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (ScaffoldMessenger.maybeOf(context) != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Semantics(
-                      label:
-                          'Yeni bir sürüm mevcut, lütfen en iyi deneyim için uygulamayı güncelleyin',
-                      child: const Text(
-                          'Yeni bir sürüm mevcut, lütfen en iyi deneyim için uygulamayı güncelleyin'),
-                    ),
-                    backgroundColor: Colors.cyan,
-                    action: SnackBarAction(
-                        label: 'GÜNCELLE',
-                        textColor: Colors.black,
-                        onPressed: () {
-                          launchUrl(Uri.parse(updateData['url']),
-                              mode: LaunchMode.externalApplication);
-                        }),
-                  ),
-                );
+          title: 'Blind Social',
+          debugShowCheckedModeBanner: false,
+          theme: theme,
+          locale: const Locale('tr', 'TR'),
+          supportedLocales: const [Locale('tr', 'TR')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: FutureBuilder<Map<String, dynamic>>(
+            future: _initFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SplashScreen();
               }
-            });
-          }
 
-          return const LoginScreen();
-        },
-      ),
-      routes: {
-        '/onboarding': (context) => const OnboardingScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/chat_rooms': (context) => const ChatRoomsScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/profile': (context) => const ProfileScreen(),
-        '/admin_panel': (context) => const AdminPanelScreen(),
-        '/square': (context) => const SquareScreen(),
-        '/game_room': (context) => const GameRoomScreen(),
-      },
-    );
+              final updateData = snapshot.data ?? {'required': false};
+              if (updateData['required'] == true) {
+                return UpdateScreen(updateUrl: updateData['url'] ?? "");
+              }
+
+              if (updateData['onboarding'] == true) {
+                return const OnboardingScreen();
+              }
+
+              // Recommendation logic after auth or first load
+              if (updateData['recommended'] == true) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (ScaffoldMessenger.maybeOf(context) != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                          'Yeni bir sürüm mevcut, lütfen en iyi deneyim için uygulamayı güncelleyin',
+                        ),
+                        backgroundColor: Colors.cyan,
+                        action: SnackBarAction(
+                          label: 'GÜNCELLE',
+                          textColor: Colors.black,
+                          onPressed: () {
+                            launchUrl(
+                              Uri.parse(updateData['url']),
+                              mode: LaunchMode.externalApplication,
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  }
+                });
+              }
+
+              return const LoginScreen();
+            },
+          ),
+          routes: {
+            '/onboarding': (context) => const OnboardingScreen(),
+            '/login': (context) => const LoginScreen(),
+            '/chat_rooms': (context) => const ChatRoomsScreen(),
+            '/register': (context) => const RegisterScreen(),
+            '/profile': (context) => const ProfileScreen(),
+            '/admin_panel': (context) => const AdminPanelScreen(),
+            '/square': (context) => const SquareScreen(),
+            '/game_room': (context) => const GameRoomScreen(),
+            '/trivia': (context) => const TriviaGameScreen(),
+          },
+        );
       },
     );
   }
@@ -180,23 +210,17 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Semantics(
-              label: 'Yükleniyor, lütfen bekleyin',
-              child: const CircularProgressIndicator(
-                strokeWidth: 10,
-                color: Colors.yellow,
-              ),
+            const CircularProgressIndicator(
+              strokeWidth: 10,
+              color: Colors.yellow,
             ),
             const SizedBox(height: 40),
-            Semantics(
-              label: 'Uygulama başlatılıyor içeriği',
-              child: const Text(
-                'Yükleniyor...',
-                style: TextStyle(
-                  color: Colors.yellow,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
+            const Text(
+              'Yükleniyor...',
+              style: TextStyle(
+                color: Colors.yellow,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],

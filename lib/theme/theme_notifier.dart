@@ -24,18 +24,7 @@ class ThemeNotifier extends ValueNotifier<ThemeData> {
   }
 
   void _updateTheme() {
-    switch (_currentThemeIndex) {
-      case 1:
-        value = AppTheme.neonCyberpunkTheme;
-        break;
-      case 2:
-        value = AppTheme.modernMinimalistTheme;
-        break;
-      case 0:
-      default:
-        value = AppTheme.highContrastTheme;
-        break;
-    }
+    value = AppTheme.highContrastTheme;
   }
 }
 

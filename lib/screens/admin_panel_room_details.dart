@@ -5,7 +5,11 @@ class AdminPanelRoomDetails extends StatefulWidget {
   final Map<String, dynamic> room;
   final DocumentReference roomRef;
 
-  const AdminPanelRoomDetails({super.key, required this.room, required this.roomRef});
+  const AdminPanelRoomDetails({
+    super.key,
+    required this.room,
+    required this.roomRef,
+  });
 
   @override
   State<AdminPanelRoomDetails> createState() => _AdminPanelRoomDetailsState();
@@ -24,9 +28,15 @@ class _AdminPanelRoomDetailsState extends State<AdminPanelRoomDetails> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.room['name']);
-    _passwordController = TextEditingController(text: widget.room['plainPassword'] ?? '');
-    _capacityController = TextEditingController(text: widget.room['maxCapacity']?.toString() ?? '10');
-    _ttlController = TextEditingController(text: widget.room['ttlPreference']?.toString() ?? '24h');
+    _passwordController = TextEditingController(
+      text: widget.room['plainPassword'] ?? '',
+    );
+    _capacityController = TextEditingController(
+      text: widget.room['maxCapacity']?.toString() ?? '10',
+    );
+    _ttlController = TextEditingController(
+      text: widget.room['ttlPreference']?.toString() ?? '24h',
+    );
     _fetchCreatorInfo();
   }
 
@@ -34,11 +44,16 @@ class _AdminPanelRoomDetailsState extends State<AdminPanelRoomDetails> {
     try {
       String creatorUid = widget.room['creatorId'] ?? '';
       if (creatorUid.isNotEmpty) {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(creatorUid).get();
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(creatorUid)
+            .get();
         if (userDoc.exists) {
-          Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+          Map<String, dynamic> userData =
+              userDoc.data() as Map<String, dynamic>;
           setState(() {
-            _creatorName = "${userData['fullName'] ?? 'İsimsiz'} (${userData['username'] ?? 'Kullanıcı Adı Yok'})";
+            _creatorName =
+                "${userData['fullName'] ?? 'İsimsiz'} (${userData['username'] ?? 'Kullanıcı Adı Yok'})";
             _creatorId = "U${userData['numericId']}";
           });
         } else {
@@ -48,10 +63,10 @@ class _AdminPanelRoomDetailsState extends State<AdminPanelRoomDetails> {
           });
         }
       } else {
-         setState(() {
-            _creatorName = "Bilinmiyor";
-            _creatorId = "Bilinmiyor";
-          });
+        setState(() {
+          _creatorName = "Bilinmiyor";
+          _creatorId = "Bilinmiyor";
+        });
       }
     } catch (e) {
       setState(() {
@@ -74,11 +89,15 @@ class _AdminPanelRoomDetailsState extends State<AdminPanelRoomDetails> {
     try {
       int? capacity = int.tryParse(_capacityController.text);
       if (capacity == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kapasite geçerli bir sayı olmalıdır.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kapasite geçerli bir sayı olmalıdır.')),
+        );
         return;
       }
 
-      String? password = _passwordController.text.isEmpty ? null : _passwordController.text;
+      String? password = _passwordController.text.isEmpty
+          ? null
+          : _passwordController.text;
 
       await widget.roomRef.update({
         'name': _nameController.text.trim(),
@@ -89,12 +108,16 @@ class _AdminPanelRoomDetailsState extends State<AdminPanelRoomDetails> {
         // NOTE: actual ttl logic is somewhat tied to ttlPreference format (e.g., '24h'), but keeping simple update here
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Oda güncellendi.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Oda güncellendi.')));
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
       }
     }
   }
@@ -104,12 +127,16 @@ class _AdminPanelRoomDetailsState extends State<AdminPanelRoomDetails> {
       await widget.roomRef.delete();
       // NOTE: Deep deletion of subcollections would be ideal but sticking to doc delete for now
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Oda silindi.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Oda silindi.')));
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
       }
     }
   }
@@ -130,8 +157,14 @@ class _AdminPanelRoomDetailsState extends State<AdminPanelRoomDetails> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Kuruluş Tarihi: $createdAt', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-            Text('Kurucu: $_creatorId - $_creatorName', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+            Text(
+              'Kuruluş Tarihi: $createdAt',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+            Text(
+              'Kurucu: $_creatorId - $_creatorName',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
             const Divider(height: 30, thickness: 2),
             TextField(
               controller: _nameController,
@@ -154,7 +187,9 @@ class _AdminPanelRoomDetailsState extends State<AdminPanelRoomDetails> {
             const SizedBox(height: 10),
             TextField(
               controller: _ttlController,
-              decoration: const InputDecoration(labelText: 'Geçerlilik Süresi (Örn: 24h, 3d)'),
+              decoration: const InputDecoration(
+                labelText: 'Geçerlilik Süresi (Örn: 24h, 3d)',
+              ),
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             const SizedBox(height: 30),
@@ -162,34 +197,67 @@ class _AdminPanelRoomDetailsState extends State<AdminPanelRoomDetails> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                  ),
                   onPressed: _updateRoom,
-                  child: Text('Kaydet', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
+                  child: Text(
+                    'Kaydet',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
                 ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
                   onPressed: () {
-                     showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                          title: Text('Odayı Sil', style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                          content: Text('Odayı silmek istediğinize emin misiniz?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Vazgeç')),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
-                              onPressed: () {
-                                Navigator.pop(context);
-                                _deleteRoom();
-                              },
-                              child: const Text('SİL'),
-                            ),
-                          ],
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: Theme.of(
+                          context,
+                        ).scaffoldBackgroundColor,
+                        title: Text(
+                          'Odayı Sil',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
-                      );
+                        content: Text(
+                          'Odayı silmek istediğinize emin misiniz?',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Vazgeç'),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _deleteRoom();
+                            },
+                            child: const Text('SİL'),
+                          ),
+                        ],
+                      ),
+                    );
                   },
-                  child: Text('Odayı Sil', style: TextStyle(color: Theme.of(context).colorScheme.onError)),
+                  child: Text(
+                    'Odayı Sil',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onError,
+                    ),
+                  ),
                 ),
               ],
             ),

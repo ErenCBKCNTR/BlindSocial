@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'post_comments_screen.dart';
 
 class SquareScreen extends StatefulWidget {
   final FirebaseAuth? auth;
@@ -22,18 +23,23 @@ class _SquareScreenState extends State<SquareScreen> {
   int _limit = 20;
   late Stream<QuerySnapshot> _postsStream;
 
+  int _userRole = 2;
+
   @override
   void initState() {
     super.initState();
     _auth = widget.auth ?? FirebaseAuth.instance;
     _firestore = widget.firestore ?? FirebaseFirestore.instance;
 
+    _checkUserRole();
+
     // ⚡ Bolt: Cache Firestore stream to prevent unnecessary queries on unrelated
     // widget rebuilds. Re-assign the stream only when _limit changes.
     _updateStream();
 
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
         if (mounted) {
           setState(() {
             _limit += 20;
@@ -42,6 +48,20 @@ class _SquareScreenState extends State<SquareScreen> {
         }
       }
     });
+  }
+
+  Future<void> _checkUserRole() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      final doc = await _firestore.collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        if (mounted) {
+          setState(() {
+            _userRole = doc.data()?['role_id'] ?? 2;
+          });
+        }
+      }
+    }
   }
 
   void _updateStream() {
@@ -66,7 +86,9 @@ class _SquareScreenState extends State<SquareScreen> {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    setState(() { _isPosting = true; });
+    setState(() {
+      _isPosting = true;
+    });
 
     try {
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
@@ -84,19 +106,21 @@ class _SquareScreenState extends State<SquareScreen> {
 
       _postController.clear();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gönderi paylaşıldı.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Gönderi paylaşıldı.')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gönderi paylaşılamadı.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Gönderi paylaşılamadı.')));
       }
     } finally {
       if (mounted) {
-        setState(() { _isPosting = false; });
+        setState(() {
+          _isPosting = false;
+        });
       }
     }
   }
@@ -111,11 +135,11 @@ class _SquareScreenState extends State<SquareScreen> {
     final docRef = _firestore.collection('meydan_posts').doc(postId);
     if (isLiked) {
       await docRef.update({
-        'likes': FieldValue.arrayRemove([uid])
+        'likes': FieldValue.arrayRemove([uid]),
       });
     } else {
       await docRef.update({
-        'likes': FieldValue.arrayUnion([uid])
+        'likes': FieldValue.arrayUnion([uid]),
       });
     }
   }
@@ -135,14 +159,105 @@ class _SquareScreenState extends State<SquareScreen> {
     }
 
     await _firestore.collection('meydan_posts').doc(postId).update({
-      'reportedBy': FieldValue.arrayUnion([uid])
+      'reportedBy': FieldValue.arrayUnion([uid]),
+    });
+
+    // Send report to reported_posts for admin
+    await _firestore.collection('reported_posts').add({
+      'postId': postId,
+      'reportedByUserId': uid,
+      'reportedAt': FieldValue.serverTimestamp(),
     });
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gönderi şikayet edildi. İncelenecektir.')),
+        const SnackBar(
+          content: Text('Gönderi şikayet edildi. İncelenecektir.'),
+        ),
       );
     }
+  }
+
+  Future<void> _deletePost(String postId) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    await _firestore.collection('meydan_posts').doc(postId).delete();
+  }
+
+  String _formatTimestamp(Timestamp timestamp) {
+    final now = DateTime.now();
+    final date = timestamp.toDate();
+    final diff = now.difference(date);
+
+    if (diff.inSeconds < 60) {
+      return '${diff.inSeconds}s önce';
+    } else if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}d önce';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours}h önce';
+    } else if (diff.inDays < 30) {
+      return '${diff.inDays}g önce';
+    } else if (diff.inDays < 365) {
+      return '${diff.inDays ~/ 30}a önce';
+    } else {
+      return '${diff.inDays ~/ 365}y önce';
+    }
+  }
+
+  Future<void> _editPost(String postId, String oldContent) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final editController = TextEditingController(text: oldContent);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.black,
+          title: const Text(
+            'Gönderiyi Düzenle',
+            style: TextStyle(color: Colors.yellow),
+          ),
+          content: TextField(
+            controller: editController,
+            maxLines: 4,
+            maxLength: 280,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintStyle: TextStyle(color: Colors.grey),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.cyan),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.yellow),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('İptal', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final text = editController.text.trim();
+                if (text.isEmpty) return;
+                await _firestore.collection('meydan_posts').doc(postId).update({
+                  'content': text,
+                  'editedAt': FieldValue.serverTimestamp(),
+                });
+                if (mounted) Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.yellow,
+                foregroundColor: Colors.black,
+              ),
+              child: const Text('Güncelle'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showNewPostDialog() {
@@ -151,7 +266,10 @@ class _SquareScreenState extends State<SquareScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.black,
-          title: const Text('Yeni Gönderi', style: TextStyle(color: Colors.yellow)),
+          title: const Text(
+            'Yeni Gönderi',
+            style: TextStyle(color: Colors.yellow),
+          ),
           content: TextField(
             controller: _postController,
             maxLines: 4,
@@ -160,8 +278,12 @@ class _SquareScreenState extends State<SquareScreen> {
             decoration: const InputDecoration(
               hintText: 'Neler düşünüyorsunuz?',
               hintStyle: TextStyle(color: Colors.grey),
-              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.cyan)),
-              focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.yellow)),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.cyan),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.yellow),
+              ),
             ),
           ),
           actions: [
@@ -175,11 +297,14 @@ class _SquareScreenState extends State<SquareScreen> {
                 _submitPost();
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
-              child: const Text('Paylaş', style: TextStyle(color: Colors.black)),
+              child: const Text(
+                'Paylaş',
+                style: TextStyle(color: Colors.black),
+              ),
             ),
           ],
         );
-      }
+      },
     );
   }
 
@@ -188,20 +313,11 @@ class _SquareScreenState extends State<SquareScreen> {
     final currentUserUid = _auth.currentUser?.uid;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Semantics(
-          label: 'BS Meydan Başlığı',
-          child: const Text('BS Meydan'),
-        ),
-      ),
-      floatingActionButton: Semantics(
-        label: 'Yeni gönderi paylaş',
-        button: true,
-        child: FloatingActionButton(
-          onPressed: _showNewPostDialog,
-          backgroundColor: Colors.yellow,
-          child: const Icon(Icons.edit, color: Colors.black),
-        ),
+      appBar: AppBar(title: const Text('BS Meydan')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showNewPostDialog,
+        backgroundColor: Colors.yellow,
+        child: const Icon(Icons.edit, color: Colors.black),
       ),
       body: Column(
         children: [
@@ -220,10 +336,10 @@ class _SquareScreenState extends State<SquareScreen> {
                 final docs = snapshot.data?.docs ?? [];
                 if (docs.isEmpty) {
                   return Center(
-                    child: Semantics(
-                      label: 'Henüz gönderi yok',
-                      child: const Text('Henüz gönderi yok.', style: TextStyle(color: Colors.white, fontSize: 18)),
-                    )
+                    child: const Text(
+                      'Henüz gönderi yok.',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
                   );
                 }
 
@@ -236,34 +352,62 @@ class _SquareScreenState extends State<SquareScreen> {
                     final data = doc.data() as Map<String, dynamic>;
 
                     final content = data['content'] ?? '';
+                    final authorId = data['authorId'];
                     final authorUsername = data['authorUsername'] ?? 'İsimsiz';
                     final likes = data['likes'] as List<dynamic>? ?? [];
-                    final reportedBy = data['reportedBy'] as List<dynamic>? ?? [];
+                    final reportedBy =
+                        data['reportedBy'] as List<dynamic>? ?? [];
 
                     // Basic client-side hide if current user reported it
-                    if (currentUserUid != null && reportedBy.contains(currentUserUid)) {
+                    if (currentUserUid != null &&
+                        reportedBy.contains(currentUserUid)) {
                       return const SizedBox.shrink();
                     }
 
-                    final isLiked = currentUserUid != null && likes.contains(currentUserUid);
+                    final isLiked =
+                        currentUserUid != null &&
+                        likes.contains(currentUserUid);
                     final likeCount = likes.length;
 
                     return Card(
                       color: Colors.grey[900],
-                      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '@$authorUsername',
-                              style: const TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold, fontSize: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '@$authorUsername',
+                                  style: const TextStyle(
+                                    color: Colors.yellow,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                if (data['createdAt'] != null)
+                                  Text(
+                                    _formatTimestamp(data['createdAt'] as Timestamp),
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                              ],
                             ),
                             const SizedBox(height: 8),
                             Text(
                               content,
-                              style: const TextStyle(color: Colors.white, fontSize: 18),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                              ),
                             ),
                             const SizedBox(height: 12),
                             Row(
@@ -271,34 +415,71 @@ class _SquareScreenState extends State<SquareScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    Semantics(
-                                      label: isLiked ? 'Beğenmekten vazgeç' : 'Beğen',
-                                      button: true,
-                                      child: IconButton(
-                                        icon: Icon(
-                                          isLiked ? Icons.favorite : Icons.favorite_border,
-                                          color: isLiked ? Colors.red : Colors.grey,
-                                        ),
-                                        onPressed: () => _toggleLike(doc.id, likes),
+                                    IconButton(
+                                      icon: Icon(
+                                        isLiked
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: isLiked
+                                            ? Colors.red
+                                            : Colors.grey,
                                       ),
+                                      onPressed: () =>
+                                          _toggleLike(doc.id, likes),
                                     ),
                                     Text(
                                       '$likeCount',
-                                      style: const TextStyle(color: Colors.grey, fontSize: 16),
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                   ],
                                 ),
-                                Semantics(
-                                  label: 'Şikayet Et',
-                                  button: true,
-                                  child: IconButton(
-                                    icon: const Icon(Icons.report, color: Colors.grey),
-                                    onPressed: () => _reportPost(doc.id, reportedBy),
-                                    tooltip: 'Şikayet Et',
-                                  ),
+                                Row(
+                                  children: [
+                                    if (currentUserUid != null) ...[
+                                      IconButton(
+                                        icon: const Icon(Icons.comment, color: Colors.grey),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => PostCommentsScreen(postId: doc.id),
+                                            ),
+                                          );
+                                        },
+                                        tooltip: 'Yorumlar',
+                                      ),
+                                    ],
+                                    if (currentUserUid == authorId || _userRole == 0 || _userRole == 1) ...[
+                                      if (currentUserUid == authorId)
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, color: Colors.blue),
+                                          onPressed: () => _editPost(doc.id, content),
+                                          tooltip: 'Düzenle',
+                                        ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        onPressed: () => _deletePost(doc.id),
+                                        tooltip: 'Sil',
+                                      ),
+                                    ],
+                                    if (currentUserUid != null && currentUserUid != authorId) ...[
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.report,
+                                          color: Colors.grey,
+                                        ),
+                                        onPressed: () =>
+                                            _reportPost(doc.id, reportedBy),
+                                        tooltip: 'Şikayet Et',
+                                      ),
+                                    ]
+                                  ],
                                 ),
                               ],
-                            )
+                            ),
                           ],
                         ),
                       ),

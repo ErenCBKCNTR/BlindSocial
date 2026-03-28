@@ -60,7 +60,7 @@ void main() {
     final textField = find.byType(TextField);
     expect(textField, findsOneWidget);
 
-    final sendButton = find.bySemanticsLabel('Mesajı Gönder butonu');
+    final sendButton = find.byTooltip('Mesajı Gönder');
     expect(sendButton, findsOneWidget);
 
     final stopwatch = Stopwatch()..start();

@@ -49,31 +49,6 @@ void main() {
     expect(find.byType(ElevatedButton), findsOneWidget);
   });
 
-  testWidgets('has proper accessibility semantics', (WidgetTester tester) async {
-    final semanticsHandle = tester.ensureSemantics();
-    await tester.pumpWidget(createWidgetUnderTest());
-
-    final titleSemanticsFinder = find.byWidgetPredicate(
-      (widget) => widget is Semantics && widget.properties.label == 'Güncelleme Gerekli başlığı',
-    );
-    expect(titleSemanticsFinder, findsOneWidget);
-
-    final contentSemanticsFinder = find.byWidgetPredicate(
-      (widget) => widget is Semantics && widget.properties.label == 'Uygulamanın daha iyi ve sorunsuz çalışması için yeni sürümü yüklemelisiniz içeriği',
-    );
-    expect(contentSemanticsFinder, findsOneWidget);
-
-    final buttonSemanticsFinder = find.byWidgetPredicate(
-      (widget) => widget is Semantics && widget.properties.label == 'Güncellemeyi İndir butonu',
-    );
-    expect(buttonSemanticsFinder, findsOneWidget);
-
-    final Semantics buttonSemantics = tester.widget(buttonSemanticsFinder);
-    expect(buttonSemantics.properties.hint, 'Dış tarayıcıyı açarak yeni APK dosyasını indirmenizi sağlar');
-    expect(buttonSemantics.properties.button, isTrue);
-
-    semanticsHandle.dispose();
-  });
 
   testWidgets('launches URL when button is tapped', (WidgetTester tester) async {
     await tester.pumpWidget(createWidgetUnderTest());

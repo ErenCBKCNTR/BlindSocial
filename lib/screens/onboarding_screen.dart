@@ -15,22 +15,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> _pages = [
     {
       'title': 'Blind Social\'a Hoş Geldiniz',
-      'description': 'Görme engelliler için özel olarak tasarlanmış, tamamen sesli ve erişilebilir sosyal medya platformuna hoş geldiniz.',
+      'description':
+          'Görme engelliler için özel olarak tasarlanmış, tamamen sesli ve erişilebilir sosyal medya platformuna hoş geldiniz.',
       'icon': 'accessibility_new',
     },
     {
       'title': 'Sesli Odalar',
-      'description': 'İlgi alanlarınıza göre sesli sohbet odaları oluşturun veya mevcut odalara katılarak yeni insanlarla tanışın.',
+      'description':
+          'İlgi alanlarınıza göre sesli sohbet odaları oluşturun veya mevcut odalara katılarak yeni insanlarla tanışın.',
       'icon': 'record_voice_over',
     },
     {
       'title': 'Gizlilik ve Güvenlik',
-      'description': 'Şifreli odalar oluşturarak özel görüşmeler yapın. Mesajlarınız belirlediğiniz süre sonunda otomatik olarak silinir.',
+      'description':
+          'Şifreli odalar oluşturarak özel görüşmeler yapın. Mesajlarınız belirlediğiniz süre sonunda otomatik olarak silinir.',
       'icon': 'security',
     },
     {
       'title': 'Tamamen Erişilebilir',
-      'description': 'TalkBack ve VoiceOver ile tam uyumlu arayüz sayesinde uygulamayı kolayca ve bağımsız bir şekilde kullanın.',
+      'description':
+          'TalkBack ve VoiceOver ile tam uyumlu arayüz sayesinde uygulamayı kolayca ve bağımsız bir şekilde kullanın.',
       'icon': 'hearing',
     },
   ];
@@ -85,37 +89,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Semantics(
-                          label: 'Sayfa ${index + 1} ikonu',
-                          child: Icon(
-                            _getIconData(_pages[index]['icon']!),
-                            size: 100,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                        Icon(
+                          _getIconData(_pages[index]['icon']!),
+                          size: 100,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         SizedBox(height: 40),
-                        Semantics(
-                          label: '${_pages[index]['title']}',
-                          child: Text(
-                            _pages[index]['title']!,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.secondary,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        Text(
+                          _pages[index]['title']!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.secondary,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         SizedBox(height: 20),
-                        Semantics(
-                          label: '${_pages[index]['description']}',
-                          child: Text(
-                            _pages[index]['description']!,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              fontSize: 20,
-                            ),
+                        Text(
+                          _pages[index]['description']!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 20,
                           ),
                         ),
                       ],
@@ -129,69 +124,58 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Semantics(
-                    button: true,
-                    label: 'Geri butonu',
-                    hint: 'Önceki sayfaya dönmek için çift dokunun',
-                    child: TextButton(
-                      onPressed: _currentPage == 0
-                          ? null
-                          : () {
-                              _pageController.previousPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                            },
-                      child: Text(
-                        'Geri',
-                        style: TextStyle(
-                          color: _currentPage == 0 ? Colors.grey : Theme.of(context).colorScheme.primary,
-                          fontSize: 20,
-                        ),
+                  TextButton(
+                    onPressed: _currentPage == 0
+                        ? null
+                        : () {
+                            _pageController.previousPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                    child: Text(
+                      'Geri',
+                      style: TextStyle(
+                        color: _currentPage == 0
+                            ? Colors.grey
+                            : Theme.of(context).colorScheme.primary,
+                        fontSize: 20,
                       ),
                     ),
                   ),
                   Row(
                     children: List.generate(
                       _pages.length,
-                      (index) => Semantics(
-                        label: 'Sayfa göstergesi ${index + 1} / ${_pages.length}',
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                          width: _currentPage == index ? 16.0 : 8.0,
-                          height: 8.0,
-                          decoration: BoxDecoration(
-                            color: _currentPage == index ? Theme.of(context).colorScheme.secondary : Colors.grey,
-                            borderRadius: BorderRadius.circular(4.0),
-                          ),
+                      (index) => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                        width: _currentPage == index ? 16.0 : 8.0,
+                        height: 8.0,
+                        decoration: BoxDecoration(
+                          color: _currentPage == index
+                              ? Theme.of(context).colorScheme.secondary
+                              : Colors.grey,
+                          borderRadius: BorderRadius.circular(4.0),
                         ),
                       ),
                     ),
                   ),
-                  Semantics(
-                    button: true,
-                    label: _currentPage == _pages.length - 1 ? 'Başla butonu' : 'İleri butonu',
-                    hint: _currentPage == _pages.length - 1
-                        ? 'Uygulamaya başlamak için çift dokunun'
-                        : 'Sonraki sayfaya geçmek için çift dokunun',
-                    child: TextButton(
-                      onPressed: () {
-                        if (_currentPage == _pages.length - 1) {
-                          _completeOnboarding();
-                        } else {
-                          _pageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        }
-                      },
-                      child: Text(
-                        _currentPage == _pages.length - 1 ? 'Başla' : 'İleri',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  TextButton(
+                    onPressed: () {
+                      if (_currentPage == _pages.length - 1) {
+                        _completeOnboarding();
+                      } else {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    },
+                    child: Text(
+                      _currentPage == _pages.length - 1 ? 'Başla' : 'İleri',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),

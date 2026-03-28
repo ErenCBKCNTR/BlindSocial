@@ -90,103 +90,101 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         child: StatefulBuilder(
           builder: (context, setModalState) => SafeArea(
             child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 24,
-              right: 24,
-              top: 24,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Profil Tamamlama Gerekli',
-                    style: TextStyle(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 24,
+                right: 24,
+                top: 24,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Profil Tamamlama Gerekli',
+                      style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
                         fontSize: 22,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 20),
-                  Semantics(
-                    label: 'İsim Soyisim giriş alanı',
-                    hint: 'Tam adınızı giriniz',
-                    child: TextField(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    TextField(
                       controller: nameController,
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                      decoration: const InputDecoration(labelText: 'İsim Soyisim'),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'İsim Soyisim',
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 10),
-                  Semantics(
-                    label: 'Kullanıcı Adı giriş alanı',
-                    hint: 'Benzersiz bir kullanıcı adı seçiniz',
-                    child: TextField(
+                    SizedBox(height: 10),
+                    TextField(
                       controller: usernameController,
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                      decoration: const InputDecoration(labelText: 'Kullanıcı Adı'),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Kullanıcı Adı',
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 20),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Doğum Tarihi',
-                        style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18)),
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Semantics(
-                          label: 'Doğum günü',
-                          hint: 'Gün giriniz (2 haneli)',
+                    SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Doğum Tarihi',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.secondary,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
                           child: TextField(
                             controller: dayController,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                             decoration: const InputDecoration(hintText: 'Gün'),
                           ),
                         ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Semantics(
-                          label: 'Doğum ayı',
-                          hint: 'Ay giriniz (2 haneli)',
+                        SizedBox(width: 10),
+                        Expanded(
                           child: TextField(
                             controller: monthController,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                             decoration: const InputDecoration(hintText: 'Ay'),
                           ),
                         ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Semantics(
-                          label: 'Doğum yılı',
-                          hint: 'Yıl giriniz (4 haneli)',
+                        SizedBox(width: 10),
+                        Expanded(
                           child: TextField(
                             controller: yearController,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                             decoration: const InputDecoration(hintText: 'Yıl'),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 30),
-                  isSaving
-                      ? CircularProgressIndicator()
-                      : Semantics(
-                          label: 'Bilgileri Kaydet butonu',
-                          button: true,
-                          child: ElevatedButton(
+                      ],
+                    ),
+                    SizedBox(height: 30),
+                    isSaving
+                        ? CircularProgressIndicator()
+                        : ElevatedButton(
                             onPressed: () async {
                               final name = nameController.text.trim();
-                              final username =
-                                  usernameController.text.trim().toLowerCase();
+                              final username = usernameController.text
+                                  .trim()
+                                  .toLowerCase();
                               final d = int.tryParse(dayController.text);
                               final m = int.tryParse(monthController.text);
                               final y = int.tryParse(yearController.text);
@@ -198,7 +196,10 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                                   y == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                      content: Text('Lütfen tüm alanları doldurun.')),
+                                    content: Text(
+                                      'Lütfen tüm alanları doldurun.',
+                                    ),
+                                  ),
                                 );
                                 return;
                               }
@@ -224,13 +225,15 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                                     .collection('users')
                                     .doc(_auth.currentUser?.uid)
                                     .set({
-                                  'fullName': name,
-                                  'username': username,
-                                  'birthDate': Timestamp.fromDate(birthDate),
-                                  'role_id': 2,
-                                  'display_preference': 'username',
-                                  'updatedAt': FieldValue.serverTimestamp(),
-                                }, SetOptions(merge: true));
+                                      'fullName': name,
+                                      'username': username,
+                                      'birthDate': Timestamp.fromDate(
+                                        birthDate,
+                                      ),
+                                      'role_id': 2,
+                                      'display_preference': 'username',
+                                      'updatedAt': FieldValue.serverTimestamp(),
+                                    }, SetOptions(merge: true));
 
                                 if (mounted) {
                                   // ignore: use_build_context_synchronously
@@ -243,21 +246,23 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                                 if (e.toString().contains('username-taken')) {
                                   msg = 'Bu kullanıcı adı zaten alınmış.';
                                 } else if (e.toString().contains('network')) {
-                                  msg = 'Bağlantı hatası, lütfen internetinizi kontrol edin.';
+                                  msg =
+                                      'Bağlantı hatası, lütfen internetinizi kontrol edin.';
                                 }
                                 // ignore: use_build_context_synchronously
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(SnackBar(content: Text(msg)));
+                                ScaffoldMessenger.of(
+                                  context,
+                                ).showSnackBar(SnackBar(content: Text(msg)));
                               } finally {
-                                if (mounted) setModalState(() => isSaving = false);
+                                if (mounted)
+                                  setModalState(() => isSaving = false);
                               }
                             },
                             child: Text('Bilgileri Kaydet'),
                           ),
-                        ),
-                  const SizedBox(height: 20),
-                ],
-              ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
             ),
           ),
@@ -269,9 +274,12 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
   void _showEditRoomDialog(DocumentSnapshot roomDoc) {
     final roomData = roomDoc.data() as Map<String, dynamic>;
     final nameController = TextEditingController(text: roomData['name']);
-    final capacityController =
-        TextEditingController(text: roomData['maxCapacity']?.toString());
-    final passwordController = TextEditingController(text: roomData['password']);
+    final capacityController = TextEditingController(
+      text: roomData['maxCapacity']?.toString(),
+    );
+    final passwordController = TextEditingController(
+      text: roomData['password'],
+    );
     String ttlPreference = roomData['ttlPreference'] ?? '24h';
 
     showDialog(
@@ -282,79 +290,100 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              title: Text('Odayı Düzenle', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+              title: Text(
+                'Odayı Düzenle',
+                style: TextStyle(color: Theme.of(context).colorScheme.primary),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
                       controller: nameController,
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                       decoration: InputDecoration(
-                          labelText: 'Oda İsmi', labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary)),
+                        labelText: 'Oda İsmi',
+                        labelStyle: TextStyle(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
                     ),
                     SizedBox(height: 10),
                     TextField(
                       controller: capacityController,
                       keyboardType: TextInputType.number,
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                       decoration: InputDecoration(
-                          labelText: 'Kapasite', labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary)),
+                        labelText: 'Kapasite',
+                        labelStyle: TextStyle(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
                     ),
                     SizedBox(height: 10),
                     TextField(
                       controller: passwordController,
                       obscureText: obscure,
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                       decoration: InputDecoration(
                         labelText: 'Yeni Şifre (Boş = Şifresiz)',
-                        labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
-                        suffixIcon: Semantics(
-                          label: obscure ? 'Şifreyi göster' : 'Şifreyi gizle',
-                          button: true,
-                          child: IconButton(
-                            icon: Icon(
-                              obscure ? Icons.visibility : Icons.visibility_off,
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                            onPressed: () {
-                              setDialogState(() {
-                                obscure = !obscure;
-                              });
-                            },
+                        labelStyle: TextStyle(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscure ? Icons.visibility : Icons.visibility_off,
+                            color: Theme.of(context).colorScheme.secondary,
                           ),
+                          onPressed: () {
+                            setDialogState(() {
+                              obscure = !obscure;
+                            });
+                          },
                         ),
                       ),
                     ),
                     SizedBox(height: 20),
-                    Text('Mesaj Saklanma Süresi',
-                        style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18)),
-                    Semantics(
-                      label: 'Mesaj Saklanma Süresi seçimi',
-                      child: DropdownButton<String>(
-                        value: ttlPreference,
-                        dropdownColor: Theme.of(context).colorScheme.surface,
-                        isExpanded: true,
-                        style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 20),
-                        items: const [
-                          DropdownMenuItem(value: '24h', child: Text('24 Saat')),
-                          DropdownMenuItem(value: '3d', child: Text('3 Gün')),
-                          DropdownMenuItem(value: '7d', child: Text('7 Gün')),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) {
-                            setDialogState(() => ttlPreference = val);
-                          }
-                        },
+                    Text(
+                      'Mesaj Saklanma Süresi',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.secondary,
+                        fontSize: 18,
                       ),
+                    ),
+                    DropdownButton<String>(
+                      value: ttlPreference,
+                      dropdownColor: Theme.of(context).colorScheme.surface,
+                      isExpanded: true,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 20,
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: '24h', child: Text('24 Saat')),
+                        DropdownMenuItem(value: '3d', child: Text('3 Gün')),
+                        DropdownMenuItem(value: '7d', child: Text('7 Gün')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() => ttlPreference = val);
+                        }
+                      },
                     ),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('İptal')),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('İptal'),
+                ),
                 ElevatedButton(
                   onPressed: () async {
                     int maxCap = int.tryParse(capacityController.text) ?? 10;
@@ -366,7 +395,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     await roomDoc.reference.update({
                       'name': nameController.text.trim(),
                       'maxCapacity': maxCap,
-                      'password': passwordController.text.isEmpty ? null : passwordController.text,
+                      'password': passwordController.text.isEmpty
+                          ? null
+                          : passwordController.text,
                       'ttlPreference': ttlPreference,
                       'ttl': ttlHours,
                     });
@@ -396,96 +427,109 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => AlertDialog(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          title: Semantics(
-            label: 'Yeni Oda Oluştur',
-            child: Text('Yeni Oda Oluştur',
-                style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+          title: Text(
+            'Yeni Oda Oluştur',
+            style: TextStyle(color: Theme.of(context).colorScheme.primary),
           ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Semantics(
-                  label: 'Oda İsmi Giriş Alanı',
-                  child: TextField(
-                    controller: nameController,
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20),
-                    decoration: InputDecoration(
-                      labelText: 'Oda İsmi',
-                      labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
-                      enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
-                    ),
+                TextField(
+                  controller: nameController,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 20,
                   ),
-                ),
-                SizedBox(height: 20),
-                Semantics(
-                  label: 'Kapasite Giriş Alanı',
-                  hint: 'Maksimum katılımcı sayısı',
-                  child: TextField(
-                    controller: capacityController,
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20),
-                    decoration: InputDecoration(
-                      labelText: 'Kapasite (Örn: 10)',
-                      labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
-                      enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
+                  decoration: InputDecoration(
+                    labelText: 'Oda İsmi',
+                    labelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.secondary,
                     ),
-                  ),
-                ),
-                SizedBox(height: 20),
-                Semantics(
-                  label: 'Şifre Giriş Alanı',
-                  hint: 'Oda şifreli olsun istiyorsanız doldurun, yoksa boş bırakın',
-                  child: TextField(
-                    controller: passwordController,
-                    obscureText: obscure,
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20),
-                    decoration: InputDecoration(
-                      labelText: 'Şifre (Opsiyonel)',
-                      labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
-                      enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
-                      suffixIcon: Semantics(
-                        label: obscure ? 'Şifreyi göster' : 'Şifreyi gizle',
-                        button: true,
-                        child: IconButton(
-                          icon: Icon(
-                            obscure ? Icons.visibility : Icons.visibility_off,
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
-                          onPressed: () {
-                            setModalState(() {
-                              obscure = !obscure;
-                            });
-                          },
-                        ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.secondary,
                       ),
                     ),
                   ),
                 ),
                 SizedBox(height: 20),
-                Text('Mesaj Saklanma Süresi',
-                    style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18)),
-                Semantics(
-                  label: 'Mesaj Saklanma Süresi seçimi',
-                  child: DropdownButton<String>(
-                    value: ttlPreference,
-                    dropdownColor: Theme.of(context).colorScheme.surface,
-                    isExpanded: true,
-                    style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 20),
-                    items: const [
-                      DropdownMenuItem(value: '24h', child: Text('24 Saat')),
-                      DropdownMenuItem(value: '3d', child: Text('3 Gün')),
-                      DropdownMenuItem(value: '7d', child: Text('7 Gün')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setModalState(() => ttlPreference = val);
-                      }
-                    },
+                TextField(
+                  controller: capacityController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 20,
                   ),
+                  decoration: InputDecoration(
+                    labelText: 'Kapasite (Örn: 10)',
+                    labelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                TextField(
+                  controller: passwordController,
+                  obscureText: obscure,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 20,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: 'Şifre (Opsiyonel)',
+                    labelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscure ? Icons.visibility : Icons.visibility_off,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      onPressed: () {
+                        setModalState(() {
+                          obscure = !obscure;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Mesaj Saklanma Süresi',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.secondary,
+                    fontSize: 18,
+                  ),
+                ),
+                DropdownButton<String>(
+                  value: ttlPreference,
+                  dropdownColor: Theme.of(context).colorScheme.surface,
+                  isExpanded: true,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 20,
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: '24h', child: Text('24 Saat')),
+                    DropdownMenuItem(value: '3d', child: Text('3 Gün')),
+                    DropdownMenuItem(value: '7d', child: Text('7 Gün')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setModalState(() => ttlPreference = val);
+                    }
+                  },
                 ),
               ],
             ),
@@ -493,10 +537,12 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Semantics(
-                label: 'Vazgeç butonu',
-                child: Text('İptal',
-                    style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 18)),
+              child: Text(
+                'İptal',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontSize: 18,
+                ),
               ),
             ),
             ElevatedButton(
@@ -513,8 +559,12 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   'name': nameController.text.trim(),
                   'numericId': numericId,
                   'maxCapacity': int.tryParse(capacityController.text) ?? 10,
-                  'password': passwordController.text.isEmpty ? null : passwordController.text,
-                  'plainPassword': passwordController.text.isEmpty ? null : passwordController.text,
+                  'password': passwordController.text.isEmpty
+                      ? null
+                      : passwordController.text,
+                  'plainPassword': passwordController.text.isEmpty
+                      ? null
+                      : passwordController.text,
                   'ttl': ttlPreference,
                   'creatorId': user.uid,
                   'currentParticipants': 0,
@@ -524,11 +574,15 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 // ignore: use_build_context_synchronously
                 Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
-              child: Semantics(
-                label: 'Oda Oluştur butonu',
-                child: Text('Oluştur',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 18)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+              ),
+              child: Text(
+                'Oluştur',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontSize: 18,
+                ),
               ),
             ),
           ],
@@ -541,354 +595,509 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Semantics(
-          label: 'Sohbet Odaları Başlığı',
-          child: Text('Sohbet Odaları'),
-        ),
+        title: Text('Sohbet Odaları'),
         leading: _isProfileIncomplete
-          ? null
-          : Builder(
-              builder: (context) => IconButton(
-                icon: Icon(Icons.menu, size: 30),
-                onPressed: () => Scaffold.of(context).openDrawer(),
-                tooltip: 'Menüyü Aç',
+            ? null
+            : Builder(
+                builder: (context) => IconButton(
+                  icon: Icon(Icons.menu, size: 30),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                  tooltip: 'Menüyü Aç',
+                ),
               ),
-            ),
         actions: [
-          Semantics(
-            label: 'Oturumu kapat',
-            hint: 'Giriş ekranına geri dönmek için dokunun',
-            button: true,
-            child: IconButton(
-              icon: const Icon(Icons.logout, size: 30),
-              onPressed: () async {
-                await _auth.signOut();
-                if (!mounted) return;
-                // ignore: use_build_context_synchronously
-                Navigator.pushReplacementNamed(context, '/');
-              },
-            ),
+          IconButton(
+            icon: const Icon(Icons.logout, size: 30),
+            onPressed: () async {
+              await _auth.signOut();
+              if (!mounted) return;
+              // ignore: use_build_context_synchronously
+              Navigator.pushReplacementNamed(context, '/');
+            },
           ),
         ],
       ),
-      drawer: _isProfileIncomplete ? null : Drawer(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
-              child: Text(
-                'Blind Social Menü',
-                style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-            ),
-            Semantics(
-              label: 'Sesli Odalar butonu',
-              button: true,
-              child: ListTile(
-                leading: Icon(Icons.forum, color: Theme.of(context).colorScheme.secondary, size: 30),
-                title: Text('Sesli Odalar', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22)),
-                onTap: () => Navigator.pop(context),
-              ),
-            ),
-            Semantics(
-              label: 'BS Meydan butonu',
-              button: true,
-              child: ListTile(
-                leading: const Icon(Icons.public, color: Colors.cyan, size: 30),
-                title: const Text('BS Meydan', style: TextStyle(color: Colors.white, fontSize: 22)),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/square');
-                },
-              ),
-            ),
-            Semantics(
-              label: 'Oyun Odası butonu',
-              button: true,
-              child: ListTile(
-                leading: Icon(Icons.sports_esports, color: Theme.of(context).colorScheme.secondary, size: 30),
-                title: Text('Oyun Odası', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22)),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/game_room');
-                },
-              ),
-            ),
-            Semantics(
-              label: 'Hesabım butonu',
-              button: true,
-              child: ListTile(
-                leading: Icon(Icons.person, color: Theme.of(context).colorScheme.secondary, size: 30),
-                title: Text('Hesabım', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22)),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/profile');
-                },
-              ),
-            ),
-            if (_userRole == 0)
-              Semantics(
-                label: 'Yönetici Paneli butonu',
-                button: true,
-                child: ListTile(
-                  leading: Icon(Icons.admin_panel_settings, color: Theme.of(context).colorScheme.secondary, size: 30),
-                  title: Text('Yönetici Paneli', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/admin_panel');
-                  },
-                ),
-              ),
-            if (_userRole == 1)
-              Semantics(
-                label: 'Yetkili Menüsü butonu',
-                button: true,
-                child: ListTile(
-                  leading: Icon(Icons.build, color: Theme.of(context).colorScheme.secondary, size: 30),
-                  title: Text('Yetkili Menüsü', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                        title: Row(
-                          children: [
-                            Icon(Icons.construction, color: Theme.of(context).colorScheme.primary),
-                            SizedBox(width: 10),
-                            Text('Uyarı', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-                          ],
-                        ),
-                        content: Text('Bu bölüm yapım aşamasındadır.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text('Tamam', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-          ],
-        ),
-      ),
-      floatingActionButton: _isProfileIncomplete ? null : Semantics(
-        label: 'Yeni Oda Oluştur butonu',
-        hint: 'Yeni bir sohbet odası başlatmak için dokunun',
-        button: true,
-        child: FloatingActionButton.extended(
-          onPressed: _showCreateRoomDialog,
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          icon: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary, size: 30),
-          label: Text('Oda Oluştur',
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold)),
-        ),
-      ),
-      body: _isProfileIncomplete
-        ? Container(color: Theme.of(context).colorScheme.onPrimary, child: Center(child: Text('Lütfen profilinizi tamamlayın', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20))))
-        : StreamBuilder<QuerySnapshot>(
-        stream: _roomsStream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Semantics(
-                label: 'Bir hata oluştu: ${snapshot.error}',
-                child: Text(
-                  'Bir hata oluştu.',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ),
-            );
-          }
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: Semantics(
-                label: 'Sohbet odaları yükleniyor, lütfen bekleyin',
-                child: CircularProgressIndicator(strokeWidth: 6),
-              ),
-            );
-          }
-
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(
+      drawer: _isProfileIncomplete
+          ? null
+          : Drawer(
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Semantics(
-                    label: 'Henüz aktif sunucu veya oda bulunmuyor.',
-                    child: Column(
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.zero,
                       children: [
-                        Icon(Icons.forum, size: 100, color: Theme.of(context).colorScheme.primary),
-                        SizedBox(height: 20),
+                        DrawerHeader(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          'Henüz bir sohbet odası bulunmuyor.',
-                          style: Theme.of(context).textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
+                          'Blind Social Menü',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        StreamBuilder<QuerySnapshot>(
+                          stream: _firestore
+                              .collection('users')
+                              .where('isOnline', isEqualTo: 1)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const SizedBox.shrink();
+                            }
+                            final onlineCount = snapshot.data!.docs.length;
+                            return Text(
+                              'Hasan\nÇevrimiçi kullanıcı sayısı: $onlineCount',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 80),
-            itemCount: snapshot.data!.docs.length,
-            itemBuilder: (context, index) {
-              var room = snapshot.data!.docs[index];
-              var roomData = room.data() as Map<String, dynamic>;
-              var roomName = roomData['name'] ?? 'İsimsiz Oda';
-              var roomId = room.id;
-              var maxCapacity = roomData['maxCapacity'] ?? 10;
-              var currentParticipants = roomData['currentParticipants'] ?? 0;
-              var isLocked =
-                  roomData['password'] != null && roomData['password'] != '';
-              var isCreator = roomData['creatorId'] == _auth.currentUser?.uid;
-
-              String semanticLabel = '$roomName sohbet odası. '
-                  'Kapasite: $currentParticipants bölü $maxCapacity. '
-                  '${isLocked ? "Şifreli oda." : "Açık oda."} '
-                  'Odaya girmek için iki kez dokunun.';
-
-              return Semantics(
-                label: semanticLabel,
-                button: true,
-                child: ListTile(
-                  leading: Stack(
-                    alignment: Alignment.bottomRight,
-                    children: [
-                      Icon(Icons.meeting_room,
-                          color: Theme.of(context).colorScheme.secondary, size: 40),
-                      if (isLocked && !isCreator)
-                        Icon(Icons.lock, color: Theme.of(context).colorScheme.primary, size: 20),
-                    ],
+                  ListTile(
+                    leading: Icon(
+                      Icons.forum,
+                      color: Theme.of(context).colorScheme.secondary,
+                      size: 30,
+                    ),
+                    title: Text(
+                      'Sesli Odalar',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 22,
+                      ),
+                    ),
+                    onTap: () => Navigator.pop(context),
                   ),
-                  title: Text(
-                    roomName,
-                    style: TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.public,
+                      color: Colors.cyan,
+                      size: 30,
+                    ),
+                    title: const Text(
+                      'BS Meydan',
+                      style: TextStyle(color: Colors.white, fontSize: 22),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/square');
+                    },
                   ),
-                  subtitle: Text(
-                    'Kapasite: $currentParticipants / $maxCapacity',
-                    style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18),
+                  ListTile(
+                    leading: Icon(
+                      Icons.sports_esports,
+                      color: Theme.of(context).colorScheme.secondary,
+                      size: 30,
+                    ),
+                    title: Text(
+                      'Oyun Odası',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 22,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/game_room');
+                    },
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (roomData['creatorId'] == _auth.currentUser?.uid)
-                        Semantics(
-                          label: 'Odayı Düzenle',
-                          button: true,
-                          child: IconButton(
-                            icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.secondary),
-                            onPressed: () => _showEditRoomDialog(room),
-                          ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.person,
+                      color: Theme.of(context).colorScheme.secondary,
+                      size: 30,
+                    ),
+                    title: Text(
+                      'Hesabım',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 22,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/profile');
+                    },
+                  ),
+                  if (_userRole == 0)
+                    ListTile(
+                      leading: Icon(
+                        Icons.admin_panel_settings,
+                        color: Theme.of(context).colorScheme.secondary,
+                        size: 30,
+                      ),
+                      title: Text(
+                        'Yönetici Paneli',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 22,
                         ),
-                      Icon(Icons.arrow_forward_ios, color: Theme.of(context).colorScheme.primary),
-                    ],
-                  ),
-                  onTap: () async {
-                    // Check capacity
-                    if (currentParticipants >= maxCapacity) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Oda dolu, lütfen başka bir odayı deneyin.'),
-                          backgroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, '/admin_panel');
+                      },
+                    ),
+                  if (_userRole == 1)
+                    ListTile(
+                      leading: Icon(
+                        Icons.build,
+                        color: Theme.of(context).colorScheme.secondary,
+                        size: 30,
+                      ),
+                      title: Text(
+                        'Yetkili Menüsü',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 22,
                         ),
-                      );
-                      return;
-                    }
-
-                    // Handle password
-                    if (isLocked && !isCreator) {
-                      final passwordController = TextEditingController();
-                      final correctPassword = roomData['password'];
-
-                      bool? success = await showDialog<bool>(
-                        context: context,
-                        builder: (context) {
-                          bool obscure = true;
-                          return StatefulBuilder(
-                            builder: (context, setDialogState) {
-                              return AlertDialog(
-                                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                                title: Text('Şifre Gerekli', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-                                content: TextField(
-                                  controller: passwordController,
-                                  obscureText: obscure,
-                                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                                  decoration: InputDecoration(
-                                    labelText: 'Oda Şifresi',
-                                    labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
-                                    suffixIcon: Semantics(
-                                      label: obscure ? 'Şifreyi göster' : 'Şifreyi gizle',
-                                      button: true,
-                                      child: IconButton(
-                                        icon: Icon(
-                                          obscure ? Icons.visibility : Icons.visibility_off,
-                                          color: Theme.of(context).colorScheme.secondary,
-                                        ),
-                                        onPressed: () {
-                                          setDialogState(() {
-                                            obscure = !obscure;
-                                          });
-                                        },
-                                      ),
-                                    ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: Theme.of(
+                              context,
+                            ).scaffoldBackgroundColor,
+                            title: Row(
+                              children: [
+                                Icon(
+                                  Icons.construction,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Uyarı',
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                                 ),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal')),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      if (passwordController.text == correctPassword) {
-                                        Navigator.pop(context, true);
-                                      } else {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Hatalı Şifre')),
-                                        );
-                                      }
-                                    },
-                                    child: const Text('Giriş'),
+                              ],
+                            ),
+                            content: Text(
+                              'Bu bölüm yapım aşamasındadır.',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text(
+                                  'Tamam',
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
                                   ),
-                                ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20, top: 20),
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        height: 100,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+      floatingActionButton: _isProfileIncomplete
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _showCreateRoomDialog,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              icon: Icon(
+                Icons.add,
+                color: Theme.of(context).colorScheme.onPrimary,
+                size: 30,
+              ),
+              label: Text(
+                'Oda Oluştur',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+      body: _isProfileIncomplete
+          ? Container(
+              color: Theme.of(context).colorScheme.onPrimary,
+              child: Center(
+                child: Text(
+                  'Lütfen profilinizi tamamlayın',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+            )
+          : StreamBuilder<QuerySnapshot>(
+              stream: _roomsStream,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Bir hata oluştu.',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  );
+                }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(strokeWidth: 6),
+                  );
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Column(
+                          children: [
+                            Icon(
+                              Icons.forum,
+                              size: 100,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            SizedBox(height: 20),
+                            Text(
+                              'Henüz bir sohbet odası bulunmuyor.',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
+                  itemCount: snapshot.data!.docs.length,
+                  itemBuilder: (context, index) {
+                    var room = snapshot.data!.docs[index];
+                    var roomData = room.data() as Map<String, dynamic>;
+                    var roomName = roomData['name'] ?? 'İsimsiz Oda';
+                    var roomId = room.id;
+                    var maxCapacity = roomData['maxCapacity'] ?? 10;
+                    var currentParticipants =
+                        roomData['currentParticipants'] ?? 0;
+                    var isLocked =
+                        roomData['password'] != null &&
+                        roomData['password'] != '';
+                    var isCreator =
+                        roomData['creatorId'] == _auth.currentUser?.uid;
+
+                    String semanticLabel =
+                        '$roomName sohbet odası. '
+                        'Kapasite: $currentParticipants bölü $maxCapacity. '
+                        '${isLocked ? "Şifreli oda." : "Açık oda."} '
+                        'Odaya girmek için iki kez dokunun.';
+
+                    return ListTile(
+                      leading: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Icon(
+                            Icons.meeting_room,
+                            color: Theme.of(context).colorScheme.secondary,
+                            size: 40,
+                          ),
+                          if (isLocked && !isCreator)
+                            Icon(
+                              Icons.lock,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 20,
+                            ),
+                        ],
+                      ),
+                      title: Text(
+                        roomName,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Kapasite: $currentParticipants / $maxCapacity',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.secondary,
+                          fontSize: 18,
+                        ),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (roomData['creatorId'] == _auth.currentUser?.uid)
+                            IconButton(
+                              icon: Icon(
+                                Icons.edit,
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                              onPressed: () => _showEditRoomDialog(room),
+                            ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ],
+                      ),
+                      onTap: () async {
+                        // Check capacity
+                        if (currentParticipants >= maxCapacity) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Oda dolu, lütfen başka bir odayı deneyin.',
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        // Handle password
+                        if (isLocked && !isCreator) {
+                          final passwordController = TextEditingController();
+                          final correctPassword = roomData['password'];
+
+                          bool? success = await showDialog<bool>(
+                            context: context,
+                            builder: (context) {
+                              bool obscure = true;
+                              return StatefulBuilder(
+                                builder: (context, setDialogState) {
+                                  return AlertDialog(
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).scaffoldBackgroundColor,
+                                    title: Text(
+                                      'Şifre Gerekli',
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                      ),
+                                    ),
+                                    content: TextField(
+                                      controller: passwordController,
+                                      obscureText: obscure,
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                      decoration: InputDecoration(
+                                        labelText: 'Oda Şifresi',
+                                        labelStyle: TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.secondary,
+                                        ),
+                                        suffixIcon: IconButton(
+                                          icon: Icon(
+                                            obscure
+                                                ? Icons.visibility
+                                                : Icons.visibility_off,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.secondary,
+                                          ),
+                                          onPressed: () {
+                                            setDialogState(() {
+                                              obscure = !obscure;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: const Text('İptal'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          if (passwordController.text ==
+                                              correctPassword) {
+                                            Navigator.pop(context, true);
+                                          } else {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Hatalı Şifre'),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                        child: const Text('Giriş'),
+                                      ),
+                                    ],
+                                  );
+                                },
                               );
                             },
                           );
-                        },
-                      );
 
-                      if (success != true) return;
-                    }
+                          if (success != true) return;
+                        }
 
-                    if (context.mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChatScreen(
-                            roomId: roomId,
-                            roomName: roomName,
-                          ),
-                        ),
-                      );
-                    }
+                        if (context.mounted) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreen(
+                                roomId: roomId,
+                                roomName: roomName,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    );
                   },
-                ),
-              );
-            },
-          );
-        },
-      ),
+                );
+              },
+            ),
     );
   }
 }

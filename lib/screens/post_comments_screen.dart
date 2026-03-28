@@ -1,0 +1,168 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class PostCommentsScreen extends StatefulWidget {
+  final String postId;
+
+  const PostCommentsScreen({Key? key, required this.postId}) : super(key: key);
+
+  @override
+  _PostCommentsScreenState createState() => _PostCommentsScreenState();
+}
+
+class _PostCommentsScreenState extends State<PostCommentsScreen> {
+  final TextEditingController _commentController = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  Future<void> _submitComment() async {
+    final text = _commentController.text.trim();
+    if (text.isEmpty) return;
+
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final userDoc = await _firestore.collection('users').doc(user.uid).get();
+    final username = userDoc.data()?['username'] ?? 'İsimsiz';
+
+    await _firestore.collection('meydan_posts').doc(widget.postId).collection('comments').add({
+      'content': text,
+      'authorId': user.uid,
+      'authorUsername': username,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    _commentController.clear();
+  }
+
+  Future<void> _deleteComment(String commentId) async {
+    await _firestore
+        .collection('meydan_posts')
+        .doc(widget.postId)
+        .collection('comments')
+        .doc(commentId)
+        .delete();
+  }
+
+  String _formatTimestamp(Timestamp timestamp) {
+    final now = DateTime.now();
+    final date = timestamp.toDate();
+    final diff = now.difference(date);
+
+    if (diff.inSeconds < 60) {
+      return '${diff.inSeconds}s önce';
+    } else if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}d önce';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours}s önce';
+    } else if (diff.inDays < 30) {
+      return '${diff.inDays}g önce';
+    } else if (diff.inDays < 365) {
+      return '${diff.inDays ~/ 30}a önce';
+    } else {
+      return '${diff.inDays ~/ 365}y önce';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUserUid = _auth.currentUser?.uid;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Yorumlar'),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore
+                  .collection('meydan_posts')
+                  .doc(widget.postId)
+                  .collection('comments')
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final comments = snapshot.data!.docs;
+                if (comments.isEmpty) {
+                  return const Center(
+                    child: Text('Henüz yorum yapılmamış.', style: TextStyle(color: Colors.white)),
+                  );
+                }
+
+                return ListView.builder(
+                  reverse: true,
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) {
+                    final commentDoc = comments[index];
+                    final data = commentDoc.data() as Map<String, dynamic>;
+                    final authorId = data['authorId'];
+                    final content = data['content'] ?? '';
+                    final authorUsername = data['authorUsername'] ?? 'Bilinmiyor';
+
+                    return Card(
+                      color: Colors.grey[850],
+                      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      child: ListTile(
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('@$authorUsername', style: const TextStyle(color: Colors.yellow)),
+                            if (data['createdAt'] != null)
+                              Text(
+                                _formatTimestamp(data['createdAt'] as Timestamp),
+                                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                              ),
+                          ],
+                        ),
+                        subtitle: Text(content, style: const TextStyle(color: Colors.white)),
+                        trailing: currentUserUid == authorId
+                            ? IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _deleteComment(commentDoc.id),
+                              )
+                            : null,
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _commentController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Yorum ekle...',
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      filled: true,
+                      fillColor: Colors.grey[900],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Colors.cyan),
+                  onPressed: _submitComment,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
