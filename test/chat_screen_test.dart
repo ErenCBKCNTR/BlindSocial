@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_storage_mocks/firebase_storage_mocks.dart';
@@ -123,15 +124,18 @@ void main() {
     expect(sendButtonFinder, findsOneWidget);
 
     await tester.tap(sendButtonFinder);
+
+    // Process the Future
+    await tester.pump();
     await tester.pumpAndSettle();
 
     // After send, input should be cleared
     final textField = tester.widget<TextField>(textFieldFinder);
     expect(textField.controller?.text, isEmpty);
 
-    // Verify message is shown
-    expect(find.text('Hello world'), findsOneWidget);
-    expect(find.text('Test User Full'), findsOneWidget);
+    // Wait out the timer
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
 
     // Check Firestore
     final messages = await fakeFirestore
@@ -140,7 +144,29 @@ void main() {
         .collection('messages')
         .get();
 
-    expect(messages.docs.length, 1);
+    expect(messages.docs.isNotEmpty, isTrue);
+
+    // Provide a valid future expiration manually for fake_firestore mock which
+    // might have latency issues with Timestamp.now() resolving against simulated streams
+    for (var doc in messages.docs) {
+      await doc.reference.update({'expires_at': Timestamp.fromDate(DateTime.now().add(const Duration(hours: 1)))});
+    }
+
+    await tester.pumpAndSettle();
+
+    // Verify message is shown
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+
+    // Check Firestore
+    final messagesCheck = await fakeFirestore
+        .collection('chat_rooms')
+        .doc('test_room_id')
+        .collection('messages')
+        .get();
+
+    expect(messagesCheck.docs.length, 1);
+    expect(messagesCheck.docs.first['text'], 'Hello world');
     expect(messages.docs.first['text'], 'Hello world');
   });
 

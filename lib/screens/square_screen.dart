@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'post_comments_screen.dart';
 
 class SquareScreen extends StatefulWidget {
@@ -25,6 +26,9 @@ class _SquareScreenState extends State<SquareScreen> {
 
   int _userRole = 2;
 
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +40,8 @@ class _SquareScreenState extends State<SquareScreen> {
     // ⚡ Bolt: Cache Firestore stream to prevent unnecessary queries on unrelated
     // widget rebuilds. Re-assign the stream only when _limit changes.
     _updateStream();
+
+    _speech = stt.SpeechToText();
 
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
@@ -260,49 +266,126 @@ class _SquareScreenState extends State<SquareScreen> {
     );
   }
 
+  void _listenForDictation() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) {
+          if (val == 'done' || val == 'notListening') {
+            setState(() => _isListening = false);
+          }
+        },
+        onError: (val) => setState(() => _isListening = false),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) {
+            setState(() {
+              _postController.text = val.recognizedWords;
+            });
+          },
+          localeId: 'tr_TR',
+        );
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
+  }
+
   void _showNewPostDialog() {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.black,
-          title: const Text(
-            'Yeni Gönderi',
-            style: TextStyle(color: Colors.yellow),
-          ),
-          content: TextField(
-            controller: _postController,
-            maxLines: 4,
-            maxLength: 280,
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              hintText: 'Neler düşünüyorsunuz?',
-              hintStyle: TextStyle(color: Colors.grey),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.cyan),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.black,
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Yeni Gönderi',
+                    style: TextStyle(color: Colors.yellow),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      _isListening ? Icons.mic : Icons.mic_none,
+                      color: _isListening ? Colors.red : Colors.cyan,
+                    ),
+                    tooltip: 'Konuşarak Yaz',
+                    onPressed: () async {
+                      if (!_isListening) {
+                        bool available = await _speech.initialize(
+                          onStatus: (val) {
+                            if (val == 'done' || val == 'notListening') {
+                              if (mounted) setDialogState(() => _isListening = false);
+                            }
+                          },
+                          onError: (val) {
+                            if (mounted) setDialogState(() => _isListening = false);
+                          },
+                        );
+                        if (available) {
+                          setDialogState(() => _isListening = true);
+                          _speech.listen(
+                            onResult: (val) {
+                              setDialogState(() {
+                                _postController.text = val.recognizedWords;
+                              });
+                            },
+                            localeId: 'tr_TR',
+                          );
+                        }
+                      } else {
+                        setDialogState(() => _isListening = false);
+                        _speech.stop();
+                      }
+                    },
+                  )
+                ],
               ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.yellow),
+              content: TextField(
+                controller: _postController,
+                maxLines: 4,
+                maxLength: 280,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: 'Neler düşünüyorsunuz?',
+                  hintStyle: TextStyle(color: Colors.grey),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.cyan),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.yellow),
+                  ),
+                ),
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('İptal', style: TextStyle(color: Colors.red)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _submitPost();
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
-              child: const Text(
-                'Paylaş',
-                style: TextStyle(color: Colors.black),
-              ),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    _speech.stop();
+                    _isListening = false;
+                    Navigator.pop(context);
+                  },
+                  child: const Text('İptal', style: TextStyle(color: Colors.red)),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    _speech.stop();
+                    _isListening = false;
+                    Navigator.pop(context);
+                    _submitPost();
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
+                  child: const Text(
+                    'Paylaş',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+              ],
+            );
+          }
         );
       },
     );

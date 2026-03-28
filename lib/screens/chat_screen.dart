@@ -60,6 +60,9 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isJoining = false;
   String _statusMessage = "";
 
+  String? _currentlyPlayingUrl;
+  bool _isPlaying = false;
+
   late final Stream<DocumentSnapshot> _roomStream;
   late final Stream<QuerySnapshot> _messagesStream;
 
@@ -85,6 +88,19 @@ class _ChatScreenState extends State<ChatScreen> {
         .orderBy('expires_at', descending: true)
         .snapshots();
     _addParticipant();
+
+    _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (mounted) {
+        setState(() {
+          if (state == PlayerState.completed || state == PlayerState.stopped) {
+            _isPlaying = false;
+            _currentlyPlayingUrl = null;
+          } else {
+            _isPlaying = state == PlayerState.playing;
+          }
+        });
+      }
+    });
   }
 
   Future<void> _addParticipant() async {
@@ -294,6 +310,77 @@ class _ChatScreenState extends State<ChatScreen> {
     _recordTimer?.cancel();
     _room?.disconnect();
     super.dispose();
+  }
+
+  void _showParticipantList() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (context) {
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('chat_rooms')
+              .doc(widget.roomId)
+              .collection('participants')
+              .orderBy('joinedAt')
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final participants = snapshot.data!.docs;
+            if (participants.isEmpty) {
+              return const Center(child: Text('Kanalda kimse yok', style: TextStyle(fontSize: 18, color: Colors.white)));
+            }
+
+            return ListView.builder(
+              itemCount: participants.length,
+              itemBuilder: (context, index) {
+                final participant = participants[index].data() as Map<String, dynamic>;
+                final name = participant['displayName'] ?? 'Bilinmeyen';
+                final uid = participant['uid'];
+
+                return FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance.collection('chat_rooms').doc(widget.roomId).get(),
+                  builder: (context, roomSnapshot) {
+                    final creatorId = roomSnapshot.data?.data() != null
+                        ? (roomSnapshot.data!.data() as Map<String, dynamic>)['creatorId']
+                        : null;
+                    final isCreator = widget.auth?.currentUser?.uid == creatorId;
+
+                    return ListTile(
+                      leading: const Icon(Icons.person, color: Colors.cyan),
+                      title: Text(name, style: const TextStyle(color: Colors.white, fontSize: 18)),
+                      trailing: isCreator && uid != creatorId
+                          ? IconButton(
+                              icon: const Icon(Icons.volume_off, color: Colors.red),
+                              onPressed: () {
+                                if (_room != null) {
+                                  for (final p in _room!.remoteParticipants.values) {
+                                    if (p.identity == uid || p.identity == participant['email']) {
+                                      for (final track in p.audioTrackPublications) {
+                                        track.track?.disable();
+                                      }
+                                    }
+                                  }
+                                }
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Bu kullanıcının sesi yerel olarak kapatıldı.')),
+                                );
+                                Navigator.pop(context);
+                              },
+                              tooltip: 'Mikrofonunu Kapat',
+                            )
+                          : null,
+                    );
+                  }
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _startRecording() async {
@@ -511,63 +598,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _showParticipantList() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      builder: (context) => StreamBuilder<QuerySnapshot>(
-        stream: (widget.firestore ?? FirebaseFirestore.instance)
-            .collection('chat_rooms')
-            .doc(widget.roomId)
-            .collection('participants')
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData)
-            return Center(child: CircularProgressIndicator());
-          final participants = snapshot.data!.docs;
-
-          return Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Katılımcılar',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: participants.length,
-                  itemBuilder: (context, index) {
-                    final p =
-                        participants[index].data() as Map<String, dynamic>;
-                    final name = p['displayName'] ?? 'Anonim';
-                    return ListTile(
-                      leading: Icon(
-                        Icons.person,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      title: Text(
-                        name,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: 18,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
 
   void _confirmDeleteRoom() {
     showDialog(
@@ -708,6 +738,13 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ),
                       ),
+                      SizedBox(width: 10),
+                      IconButton(
+                        onPressed: _showParticipantList,
+                        icon: const Icon(Icons.people, size: 30),
+                        tooltip: 'Katılımcı Listesi',
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ],
                   ),
                 // Status message for screen readers
@@ -774,7 +811,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ? 'Gönderen: $senderName, Mesaj: $text, Saat: $timeString'
                         : 'Gönderen: $senderName, Sesli Mesaj ($duration saniye), Saat: $timeString';
 
-                    return Padding(
+                    final messageWidget = Padding(
                       padding: const EdgeInsets.symmetric(
                         vertical: 8.0,
                         horizontal: 16.0,
@@ -814,7 +851,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                       children: [
                                         IconButton(
                                           icon: Icon(
-                                            Icons.play_arrow,
+                                            _currentlyPlayingUrl == audioUrl && _isPlaying
+                                                ? Icons.stop
+                                                : Icons.play_arrow,
                                             color: Theme.of(
                                               context,
                                             ).colorScheme.onPrimary,
@@ -822,9 +861,14 @@ class _ChatScreenState extends State<ChatScreen> {
                                           ),
                                           onPressed: () {
                                             if (audioUrl != null) {
-                                              _audioPlayer.play(
-                                                UrlSource(audioUrl),
-                                              );
+                                              if (_currentlyPlayingUrl == audioUrl && _isPlaying) {
+                                                _audioPlayer.stop();
+                                              } else {
+                                                _audioPlayer.play(UrlSource(audioUrl));
+                                                setState(() {
+                                                  _currentlyPlayingUrl = audioUrl;
+                                                });
+                                              }
                                             }
                                           },
                                         ),
@@ -836,16 +880,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                             ).colorScheme.onPrimary,
                                             fontSize: 18,
                                           ),
-                                        ),
-                                        IconButton(
-                                          icon: Icon(
-                                            Icons.stop,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onPrimary,
-                                            size: 30,
-                                          ),
-                                          onPressed: () => _audioPlayer.stop(),
                                         ),
                                       ],
                                     )
@@ -865,8 +899,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               Text(
                                 timeString,
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurface
-                                      .withValues(alpha: 0.54),
+                                  color: isMe ? Colors.black87 : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
                                   fontSize: 14,
                                 ),
                               ),

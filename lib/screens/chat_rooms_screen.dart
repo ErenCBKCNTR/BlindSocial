@@ -653,12 +653,33 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                               return const SizedBox.shrink();
                             }
                             final onlineCount = snapshot.data!.docs.length;
-                            return Text(
-                              'Hasan\nÇevrimiçi kullanıcı sayısı: $onlineCount',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.secondary,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.circle,
+                                    color: Colors.greenAccent,
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '$onlineCount Çevrimiçi',
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             );
                           },
@@ -819,11 +840,14 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 20, top: 20),
                     child: Center(
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        height: 100,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const SizedBox.shrink(),
+                      child: Opacity(
+                        opacity: 0.5,
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          height: 100,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const SizedBox.shrink(),
+                        ),
                       ),
                     ),
                   ),
