@@ -8,19 +8,12 @@ class GameRoomScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Semantics(
-          label: 'Oyun Odası Başlığı',
-          child: Text('Oyun Odası'),
-        ),
+        title: Text('Oyun Odası'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          Semantics(
-            label: 'Bilgi Yarışması Oyunu',
-            button: true,
-            hint: 'Bilgi yarışması oynamak için çift dokunun',
-            child: Card(
+          Card(
               color: Colors.grey[900],
               child: ListTile(
                 leading: Icon(Icons.quiz, color: Theme.of(context).colorScheme.primary, size: 40),
@@ -40,7 +33,6 @@ class GameRoomScreen extends StatelessWidget {
                 },
               ),
             ),
-          ),
         ],
       ),
     );

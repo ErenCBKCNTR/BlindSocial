@@ -175,10 +175,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Semantics(
-              label: 'Mikrofon izni verilmedi. Sesli sohbete katılmak için lütfen izin verin.',
-              child: Text('Mikrofon izni verilmedi. Sesli sohbete katılmak için lütfen izin verin.'),
-            ),
+            content: Text('Mikrofon izni verilmedi. Sesli sohbete katılmak için lütfen izin verin.'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -360,10 +357,7 @@ Future<void> _resumeRecording() async {
     }
 
     if (_recordDuration >= 60) {
-      // ignore: deprecated_member_use
-      SemanticsService.announce(
-          'Maksimum kayıt süresi olan 60 saniyeye ulaşıldı. Kayıt durduruldu ve gönderiliyor.',
-          TextDirection.ltr);
+
     }
   }
 
@@ -511,13 +505,10 @@ Future<void> _resumeRecording() async {
                   itemBuilder: (context, index) {
                     final p = participants[index].data() as Map<String, dynamic>;
                     final name = p['displayName'] ?? 'Anonim';
-                    return Semantics(
-                      label: 'Katılımcı: $name',
-                      child: ListTile(
+                    return ListTile(
                         leading: Icon(Icons.person, color: Theme.of(context).colorScheme.secondary),
                         title: Text(name, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18)),
-                      ),
-                    );
+                      );
                   },
                 ),
               ),
@@ -557,10 +548,7 @@ Future<void> _resumeRecording() async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Semantics(
-          label: '${widget.roomName} odası sohbet ekranı',
-          child: Text(widget.roomName),
-        ),
+        title: Text(widget.roomName),
         actions: [
           IconButton(
             icon: Icon(Icons.people, size: 30),
@@ -594,12 +582,7 @@ Future<void> _resumeRecording() async {
             child: Column(
               children: [
                 if (!_isJoined)
-                  Semantics(
-                    label: 'Sesli Kanala Katıl',
-                    hint: 'Sesli sohbete katıl, odadaki diğer kullanıcılarla konuşmak için dokunun',
-                    button: true,
-                    enabled: !_isJoining,
-                    child: ElevatedButton.icon(
+                  ElevatedButton.icon(
                       onPressed: _isJoining ? null : _joinVoiceChannel,
                       icon: _isJoining
                         ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary))
@@ -610,17 +593,12 @@ Future<void> _resumeRecording() async {
                         backgroundColor: Theme.of(context).colorScheme.secondary,
                         foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       ),
-                    ),
-                  )
+                    )
                 else
                   Row(
                     children: [
                       Expanded(
-                        child: Semantics(
-                          label: _isMuted ? 'Mikrofonu Aç' : 'Mikrofonu Sustur',
-                          hint: _isMuted ? 'Sesinizi iletmek için dokunun' : 'Sesinizi kapatmak için dokunun',
-                          button: true,
-                          child: ElevatedButton.icon(
+                        child: ElevatedButton.icon(
                             onPressed: _toggleMute,
                             icon: Icon(_isMuted ? Icons.mic_off : Icons.mic, size: 30),
                             label: Text(_isMuted ? 'Sesi Aç' : 'Sustur'),
@@ -629,15 +607,10 @@ Future<void> _resumeRecording() async {
                               foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
-                        ),
                       ),
                       SizedBox(width: 10),
                       Expanded(
-                        child: Semantics(
-                          label: 'Sesli Kanaldan Ayrıl',
-                          hint: 'Sesli sohbetten çıkmak için dokunun',
-                          button: true,
-                          child: ElevatedButton.icon(
+                        child: ElevatedButton.icon(
                             onPressed: _leaveVoiceChannel,
                             icon: Icon(Icons.call_end, size: 30),
                             label: Text('Ayrıl'),
@@ -646,18 +619,14 @@ Future<void> _resumeRecording() async {
                               foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
-                        ),
                       ),
                     ],
                   ),
                 // Status message for screen readers
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
+                Text(
                     _statusMessage,
                     style: TextStyle(color: Colors.transparent, fontSize: 1),
                   ),
-                ),
               ],
             ),
           ),
@@ -667,10 +636,7 @@ Future<void> _resumeRecording() async {
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
-                    child: Semantics(
-                      label: 'Mesajlar yüklenirken hata oluştu',
-                      child: Text('Bir hata oluştu.'),
-                    ),
+                    child: Text('Bir hata oluştu.'),
                   );
                 }
 
@@ -691,13 +657,10 @@ Future<void> _resumeRecording() async {
 
                 if (messages.isEmpty) {
                   return Center(
-                    child: Semantics(
-                      label: 'Henüz mesaj yok',
-                      child: Text(
+                    child: Text(
                         'Henüz mesaj bulunmuyor.',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                    ),
                   );
                 }
 
@@ -724,10 +687,7 @@ Future<void> _resumeRecording() async {
                         ? 'Gönderen: $senderName, Mesaj: $text, Saat: $timeString'
                         : 'Gönderen: $senderName, Sesli Mesaj ($duration saniye), Saat: $timeString';
 
-                    return Semantics(
-                      label: label,
-                      liveRegion: index == 0,
-                      child: Padding(
+                    return Padding(
                         padding: const EdgeInsets.symmetric(
                             vertical: 8.0, horizontal: 16.0),
                         child: Align(
@@ -758,10 +718,7 @@ Future<void> _resumeRecording() async {
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Semantics(
-                                            label: 'Sesli Mesajı Oynat',
-                                            button: true,
-                                            child: IconButton(
+                                          IconButton(
                                               icon: Icon(Icons.play_arrow,
                                                   color: Theme.of(context).colorScheme.onPrimary, size: 30),
                                               onPressed: () {
@@ -771,21 +728,16 @@ Future<void> _resumeRecording() async {
                                                 }
                                               },
                                             ),
-                                          ),
                                           Text('$duration sn',
                                               style: TextStyle(
                                                   color: Theme.of(context).colorScheme.onPrimary,
                                                   fontSize: 18)),
-                                          Semantics(
-                                            label: 'Sesli Mesajı Durdur',
-                                            button: true,
-                                            child: IconButton(
+                                          IconButton(
                                               icon: Icon(Icons.stop,
                                                   color: Theme.of(context).colorScheme.onPrimary, size: 30),
                                               onPressed: () =>
                                                   _audioPlayer.stop(),
                                             ),
-                                          ),
                                         ],
                                       )
                                     else
@@ -810,8 +762,7 @@ Future<void> _resumeRecording() async {
                             ),
                           ),
                         ),
-                      ),
-                    );
+                      );
                   },
                 );
               },
@@ -823,31 +774,19 @@ Future<void> _resumeRecording() async {
             child: SafeArea(
               child: Row(
                 children: [
-                  Semantics(
-                    label: _isRecording
-                        ? 'Kaydı Durdur ve Gönder'
-                        : 'Sesli Mesaj Kaydet',
-                    hint: _isRecording
-                        ? 'Kaydı bitirmek için dokunun'
-                        : '60 saniyeye kadar ses kaydetmek için dokunun',
-                    button: true,
-                    child: IconButton(
+                  IconButton(
                       icon: Icon(_isRecording ? Icons.stop : Icons.mic,
                           color: _isRecording ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.secondary,
                           size: 36),
                       onPressed: _isRecording ? _stopRecording : _startRecording,
+                      tooltip: _isRecording ? 'Kaydı Durdur ve Gönder' : 'Sesli Mesaj Kaydet',
                     ),
-                  ),
                   if (_isRecording) ...[
-                    Semantics(
-                      label: _isPaused ? 'Kayda Devam Et' : 'Kaydı Duraklat',
-                      button: true,
-                      child: IconButton(
+                    IconButton(
                         icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause,
                             color: Theme.of(context).colorScheme.primary, size: 36),
                         onPressed: _isPaused ? _resumeRecording : _pauseRecording,
                       ),
-                    ),
                     Expanded(
                       child: Center(
                         child: Text(
@@ -861,9 +800,7 @@ Future<void> _resumeRecording() async {
                     )
                   ] else ...[
                     Expanded(
-                      child: Semantics(
-                        label: 'Mesajınızı buraya yazın',
-                        child: TextField(
+                      child: TextField(
                           controller: _messageController,
                           decoration: const InputDecoration(
                             hintText: 'Mesaj...',
@@ -871,19 +808,14 @@ Future<void> _resumeRecording() async {
                           style:
                               TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20),
                         ),
-                      ),
                     ),
                     SizedBox(width: 12),
-                    Semantics(
-                      label: 'Mesajı Gönder butonu',
-                      hint: 'Yazdığınız mesajı odaya göndermek için dokunun',
-                      button: true,
-                      child: IconButton(
+                    IconButton(
                         icon: Icon(Icons.send,
                             color: Theme.of(context).colorScheme.primary, size: 36),
                         onPressed: () => _sendMessage(),
+                        tooltip: 'Gönder',
                       ),
-                    ),
                   ],
                 ],
               ),

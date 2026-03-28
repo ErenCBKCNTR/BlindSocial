@@ -146,10 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Semantics(
-          label: 'Kayıt Olma Ekranı Başlığı',
-          child: Text('Blind Social Hesabı Oluştur'),
-        ),
+        title: Text('Blind Social Hesabı Oluştur'),
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
@@ -160,45 +157,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Semantics(
-                      label: 'İsim Soyisim giriş alanı',
-                      child: TextFormField(
+                    TextFormField(
                         controller: _fullNameController,
                         decoration: const InputDecoration(labelText: 'İsim Soyisim'),
                         validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
                       ),
-                    ),
                     SizedBox(height: 20),
-                    Semantics(
-                      label: 'Kullanıcı Adı giriş alanı',
-                      child: TextFormField(
+                    TextFormField(
                         controller: _usernameController,
                         decoration: const InputDecoration(labelText: 'Kullanıcı Adı'),
                         validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
                       ),
-                    ),
                     const SizedBox(height: 20),
-                    Semantics(
-                      label: 'E-posta giriş alanı',
-                      child: TextFormField(
+                    TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(labelText: 'E-posta'),
                         validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
                       ),
-                    ),
                     const SizedBox(height: 20),
-                    Semantics(
-                      label: 'Şifre giriş alanı',
-                      child: TextFormField(
+                    TextFormField(
                         controller: _passwordController,
                           obscureText: _obscurePassword,
                           decoration: InputDecoration(
                             labelText: 'Şifre',
-                            suffixIcon: Semantics(
-                              label: _obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
-                              button: true,
-                              child: IconButton(
+                            suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword ? Icons.visibility : Icons.visibility_off,
                                   color: Theme.of(context).colorScheme.secondary,
@@ -209,56 +192,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   });
                                 },
                               ),
-                            ),
                           ),
                         validator: (v) => v!.length < 6 ? 'En az 6 karakter' : null,
                       ),
-                    ),
                     SizedBox(height: 20),
                     Text('Doğum Tarihi', style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18)),
                     Row(
                       children: [
                         Expanded(
-                          child: Semantics(
-                            label: 'Gün',
-                            child: TextFormField(
+                          child: TextFormField(
                               controller: _dayController,
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(hintText: 'Gün'),
                               onChanged: (_) => _checkAge(),
                             ),
-                          ),
                         ),
                         SizedBox(width: 10),
                         Expanded(
-                          child: Semantics(
-                            label: 'Ay',
-                            child: TextFormField(
+                          child: TextFormField(
                               controller: _monthController,
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(hintText: 'Ay'),
                               onChanged: (_) => _checkAge(),
                             ),
-                          ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Semantics(
-                            label: 'Yıl',
-                            child: TextFormField(
+                          child: TextFormField(
                               controller: _yearController,
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(hintText: 'Yıl'),
                               onChanged: (_) => _checkAge(),
                             ),
-                          ),
                         ),
                       ],
                     ),
                     if (_isUnderage)
-                      Semantics(
-                        label: 'Ebeveyn İzni onay kutusu',
-                        child: Row(
+                      Row(
                           children: [
                             Checkbox(
                               value: _parentalConsent,
@@ -269,16 +239,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             Expanded(child: Text('Bu hesabı ebeveynlerin izniyle oluşturuyorum.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface))),
                           ],
                         ),
-                      ),
                     const SizedBox(height: 40),
-                    Semantics(
-                      label: 'Hesabı Oluştur butonu',
-                      button: true,
-                      child: ElevatedButton(
+                    ElevatedButton(
                         onPressed: _handleRegister,
                         child: const Text('Kayıt Ol'),
                       ),
-                    ),
                   ],
                 ),
               ),

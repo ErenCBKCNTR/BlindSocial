@@ -33,9 +33,7 @@ class UpdateScreen extends StatelessWidget {
                   size: 100,
                 ),
                 SizedBox(height: 32),
-                Semantics(
-                  label: 'Güncelleme Gerekli başlığı',
-                  child: Text(
+                Text(
                     'Güncelleme Gerekli',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -44,11 +42,8 @@ class UpdateScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
                 SizedBox(height: 24),
-                Semantics(
-                  label: 'Uygulamanın daha iyi ve sorunsuz çalışması için yeni sürümü yüklemelisiniz içeriği',
-                  child: Text(
+                Text(
                     'Uygulamanın daha iyi ve sorunsuz çalışması için yeni sürümü yüklemelisiniz.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -56,13 +51,8 @@ class UpdateScreen extends StatelessWidget {
                       fontSize: 20,
                     ),
                   ),
-                ),
                 const Spacer(),
-                Semantics(
-                  label: 'Güncellemeyi İndir butonu',
-                  hint: 'Dış tarayıcıyı açarak yeni APK dosyasını indirmenizi sağlar',
-                  button: true,
-                  child: ElevatedButton(
+                ElevatedButton(
                     onPressed: _launchUpdate,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.primary,
@@ -77,7 +67,6 @@ class UpdateScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
                 const SizedBox(height: 24),
               ],
             ),

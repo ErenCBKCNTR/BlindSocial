@@ -191,10 +191,7 @@ class _TriviaGameScreenState extends State<TriviaGameScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Semantics(
-              label: 'Puan: $_score',
-              child: Center(child: Text('Puan: $_score', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-            ),
+            child: Center(child: Text('Puan: $_score', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
           ),
         ],
       ),
@@ -203,9 +200,7 @@ class _TriviaGameScreenState extends State<TriviaGameScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Semantics(
-              label: 'Kalan Süre: $_timeLeft saniye',
-              child: Container(
+            Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: _timeLeft <= 5 ? Colors.red.withValues(alpha: 0.2) : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
@@ -227,11 +222,8 @@ class _TriviaGameScreenState extends State<TriviaGameScreen> {
                   ],
                 ),
               ),
-            ),
             const SizedBox(height: 24),
-            Semantics(
-              label: 'Soru: ${currentQuestion['question']}',
-              child: Card(
+            Card(
                 color: Colors.grey[800],
                 elevation: 4,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -244,7 +236,6 @@ class _TriviaGameScreenState extends State<TriviaGameScreen> {
                   ),
                 ),
               ),
-            ),
             const SizedBox(height: 32),
             Expanded(
               child: ListView.builder(
@@ -265,10 +256,7 @@ class _TriviaGameScreenState extends State<TriviaGameScreen> {
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
-                    child: Semantics(
-                      label: 'Seçenek ${index + 1}: $option',
-                      button: true,
-                      child: ElevatedButton(
+                    child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: backgroundColor,
                           padding: const EdgeInsets.symmetric(vertical: 20),
@@ -281,7 +269,6 @@ class _TriviaGameScreenState extends State<TriviaGameScreen> {
                           textAlign: TextAlign.center,
                         ),
                       ),
-                    ),
                   );
                 },
               ),

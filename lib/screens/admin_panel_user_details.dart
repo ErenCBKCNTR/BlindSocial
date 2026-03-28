@@ -40,6 +40,42 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
     }
   }
 
+  Future<void> _deleteUser() async {
+    bool confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('Üyeyi Sil', style: TextStyle(color: Colors.red)),
+        content: const Text('Bu üyeyi kalıcı olarak silmek istediğinize emin misiniz?', style: TextStyle(color: Colors.white)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal', style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Sil', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      )
+    ) ?? false;
+
+    if (confirm) {
+      try {
+        final query = await FirebaseFirestore.instance.collection('users').where('numericId', isEqualTo: widget.user['numericId']).limit(1).get();
+        if (query.docs.isNotEmpty) {
+          await query.docs.first.reference.delete();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Üye başarıyla silindi.')));
+            Navigator.pop(context);
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Timestamp? birthTimestamp = widget.user['birthDate'] as Timestamp?;
@@ -106,6 +142,17 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
                 ),
                 onPressed: _updateUserRole,
                 child: Text('Yetkiyi Güncelle', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 16)),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                ),
+                onPressed: _deleteUser,
+                child: Text('Üyeyi Sil', style: TextStyle(color: Theme.of(context).colorScheme.onError, fontSize: 16)),
               ),
             ),
           ],

@@ -254,7 +254,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // 4. Find and tap the record button
-    final recordButtonFinder = find.bySemanticsLabel('Sesli Mesaj Kaydet');
+    final recordButtonFinder = find.byTooltip('Sesli Mesaj Kaydet');
     expect(recordButtonFinder, findsOneWidget);
 
     await tester.tap(recordButtonFinder);
@@ -264,8 +264,8 @@ void main() {
     // We expect the recording start to throw an error which should be caught.
     // As a result, _isRecording should still be false.
     // The UI should still show "Sesli Mesaj Kaydet" and not "Kaydı Durdur ve Gönder".
-    expect(find.bySemanticsLabel('Sesli Mesaj Kaydet'), findsOneWidget);
-    expect(find.bySemanticsLabel('Kaydı Durdur ve Gönder'), findsNothing);
+    expect(find.byTooltip('Sesli Mesaj Kaydet'), findsOneWidget);
+    expect(find.byTooltip('Kaydı Durdur ve Gönder'), findsNothing);
 
     // We also shouldn't see the red recording duration text
     expect(find.textContaining('Kayıt Yapılıyor:'), findsNothing);
@@ -348,7 +348,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // 4. Find and tap the record button to START recording
-    final startRecordButton = find.bySemanticsLabel('Sesli Mesaj Kaydet');
+    final startRecordButton = find.byTooltip('Sesli Mesaj Kaydet');
     expect(startRecordButton, findsOneWidget);
 
     // We invoke the internal _uploadVoiceMessage by triggering the state change.
@@ -366,7 +366,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Tap to stop and trigger upload
-    final stopRecordButton = find.bySemanticsLabel('Kaydı Durdur ve Gönder');
+    final stopRecordButton = find.byTooltip('Kaydı Durdur ve Gönder');
     expect(stopRecordButton, findsOneWidget);
     await tester.tap(stopRecordButton);
 

@@ -86,9 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showThemedError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Semantics(
-          label: 'Hata bildirimi: $message',
-          child: Text(
+        content: Text(
             message,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface,
@@ -96,7 +94,6 @@ class _LoginScreenState extends State<LoginScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-        ),
         backgroundColor: const Color(0xFF333333),
         behavior: SnackBarBehavior.floating,
         padding: const EdgeInsets.all(16),
@@ -174,19 +171,13 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Semantics(
-          label: 'Giriş Ekranı Başlığı',
-          child: Text('Blind Social - Giriş'),
-        ),
+        title: Text('Blind Social - Giriş'),
       ),
       body: _isLoading
           ? Center(
-              child: Semantics(
-                label: 'İşlem yapılıyor, lütfen bekleyin',
-                child: CircularProgressIndicator(
+              child: CircularProgressIndicator(
                   strokeWidth: 6,
                 ),
-              ),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
@@ -194,53 +185,37 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SizedBox(height: 40),
-                  Semantics(
-                    label: 'Hoş geldiniz mesajı',
-                    child: Text(
+                  Text(
                       'Blind Social\'a Hoş Geldiniz',
                       style: Theme.of(context).textTheme.displayMedium,
                       textAlign: TextAlign.center,
                     ),
-                  ),
                   SizedBox(height: 40),
-                  Semantics(
-                    label: 'E-posta veya Kullanıcı Adı giriş alanı',
-                    hint: 'E-posta adresinizi veya kullanıcı adınızı buraya yazın.',
-                    child: TextField(
+                  TextField(
                       controller: _identifierController,
                       decoration: const InputDecoration(
                         labelText: 'E-posta veya Kullanıcı Adı',
                         hintText: 'ornek@email.com veya kullanıcıadı',
                       ),
                     ),
-                  ),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton(
                       onPressed: _handleForgotPassword,
-                      child: Semantics(
-                        label: 'Şifrenizi mi unuttunuz?',
-                        child: Text(
+                      child: Text(
                           'Şifrenizi mi unuttunuz?',
                           style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18),
                         ),
-                      ),
                     ),
                   ),
                   SizedBox(height: 20),
-                  Semantics(
-                    label: 'Şifre giriş alanı',
-                    hint: 'Şifrenizi buraya yazın. En az 6 karakter olmalıdır.',
-                    child: TextField(
+                  TextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Şifre',
                         hintText: 'Şifreniz',
-                        suffixIcon: Semantics(
-                          label: _obscurePassword ? 'Şifreyi göster' : 'Şifreyi gizle',
-                          button: true,
-                          child: IconButton(
+                        suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword ? Icons.visibility : Icons.visibility_off,
                               color: Theme.of(context).colorScheme.secondary,
@@ -251,17 +226,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               });
                             },
                           ),
-                        ),
                       ),
                     ),
-                  ),
                   SizedBox(height: 20),
-                  Semantics(
-                    label: 'Beni Hatırla',
-                    hint: _rememberMe
-                        ? 'Beni hatırla seçili. Otomatik giriş yapmak için işaretli tutun.'
-                        : 'Beni hatırla seçili değil. Otomatik giriş yapmak için işaretleyin.',
-                    child: Row(
+                  Row(
                       children: [
                         Checkbox(
                           value: _rememberMe,
@@ -275,23 +243,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
                     ),
-                  ),
                   SizedBox(height: 40),
-                  Semantics(
-                    label: 'Giriş Yap butonu',
-                    hint: 'Sohbet odalarına gitmek için dokunun',
-                    button: true,
-                    child: ElevatedButton(
+                  ElevatedButton(
                       onPressed: _handleLogin,
                       child: Text('Giriş Yap'),
                     ),
-                  ),
                   const SizedBox(height: 20),
-                  Semantics(
-                    label: 'Blind Social Hesabı Oluştur butonu',
-                    hint: 'Yeni bir hesap oluşturmak için dokunun',
-                    button: true,
-                    child: OutlinedButton(
+                  OutlinedButton(
                       onPressed: () => Navigator.pushNamed(context, '/register'),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: Theme.of(context).colorScheme.secondary, width: 2),
@@ -305,7 +263,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             fontWeight: FontWeight.bold),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),

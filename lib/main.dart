@@ -130,12 +130,8 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
               if (ScaffoldMessenger.maybeOf(context) != null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Semantics(
-                      label:
-                          'Yeni bir sürüm mevcut, lütfen en iyi deneyim için uygulamayı güncelleyin',
-                      child: const Text(
+                    content: const Text(
                           'Yeni bir sürüm mevcut, lütfen en iyi deneyim için uygulamayı güncelleyin'),
-                    ),
                     backgroundColor: Colors.cyan,
                     action: SnackBarAction(
                         label: 'GÜNCELLE',
@@ -180,17 +176,12 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Semantics(
-              label: 'Yükleniyor, lütfen bekleyin',
-              child: const CircularProgressIndicator(
+            const CircularProgressIndicator(
                 strokeWidth: 10,
                 color: Colors.yellow,
               ),
-            ),
             const SizedBox(height: 40),
-            Semantics(
-              label: 'Uygulama başlatılıyor içeriği',
-              child: const Text(
+            const Text(
                 'Yükleniyor...',
                 style: TextStyle(
                   color: Colors.yellow,
@@ -198,7 +189,6 @@ class SplashScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
           ],
         ),
       ),

@@ -85,18 +85,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Semantics(
-                          label: 'Sayfa ${index + 1} ikonu',
-                          child: Icon(
+                        Icon(
                             _getIconData(_pages[index]['icon']!),
                             size: 100,
                             color: Theme.of(context).colorScheme.primary,
                           ),
-                        ),
                         SizedBox(height: 40),
-                        Semantics(
-                          label: '${_pages[index]['title']}',
-                          child: Text(
+                        Text(
                             _pages[index]['title']!,
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -105,11 +100,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
                         SizedBox(height: 20),
-                        Semantics(
-                          label: '${_pages[index]['description']}',
-                          child: Text(
+                        Text(
                             _pages[index]['description']!,
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -117,7 +109,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               fontSize: 20,
                             ),
                           ),
-                        ),
                       ],
                     ),
                   );
@@ -129,11 +120,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Semantics(
-                    button: true,
-                    label: 'Geri butonu',
-                    hint: 'Önceki sayfaya dönmek için çift dokunun',
-                    child: TextButton(
+                  TextButton(
                       onPressed: _currentPage == 0
                           ? null
                           : () {
@@ -150,13 +137,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ),
                     ),
-                  ),
                   Row(
                     children: List.generate(
                       _pages.length,
-                      (index) => Semantics(
-                        label: 'Sayfa göstergesi ${index + 1} / ${_pages.length}',
-                        child: Container(
+                      (index) => Container(
                           margin: const EdgeInsets.symmetric(horizontal: 4.0),
                           width: _currentPage == index ? 16.0 : 8.0,
                           height: 8.0,
@@ -165,16 +149,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             borderRadius: BorderRadius.circular(4.0),
                           ),
                         ),
-                      ),
                     ),
                   ),
-                  Semantics(
-                    button: true,
-                    label: _currentPage == _pages.length - 1 ? 'Başla butonu' : 'İleri butonu',
-                    hint: _currentPage == _pages.length - 1
-                        ? 'Uygulamaya başlamak için çift dokunun'
-                        : 'Sonraki sayfaya geçmek için çift dokunun',
-                    child: TextButton(
+                  TextButton(
                       onPressed: () {
                         if (_currentPage == _pages.length - 1) {
                           _completeOnboarding();
@@ -194,7 +171,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
