@@ -17,15 +17,23 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   bool _filterRoomsWithPassword = false;
   bool _filterRoomsWithoutPassword = false;
 
+  late final Stream<QuerySnapshot> _usersStream;
+  late final Stream<QuerySnapshot> _roomsStream;
+
   @override
   void initState() {
     super.initState();
     _firestore = widget.firestore ?? FirebaseFirestore.instance;
+    // ⚡ Bolt: Cache Firestore streams in initState rather than build() to prevent
+    // re-subscribing and fetching all historical documents on every widget rebuild
+    // (e.g., when toggling room filters).
+    _usersStream = _firestore.collection('users').orderBy('createdAt', descending: true).snapshots();
+    _roomsStream = _firestore.collection('chat_rooms').orderBy('createdAt', descending: true).snapshots();
   }
 
   Widget _buildMemberList() {
     return StreamBuilder<QuerySnapshot>(
-      stream: _firestore.collection('users').orderBy('createdAt', descending: true).snapshots(),
+      stream: _usersStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(child: Text('Bir hata oluştu.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)));
@@ -121,7 +129,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         ),
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: _firestore.collection('chat_rooms').orderBy('createdAt', descending: true).snapshots(),
+            stream: _roomsStream,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(child: Text('Bir hata oluştu.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)));

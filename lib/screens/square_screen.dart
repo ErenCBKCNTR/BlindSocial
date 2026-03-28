@@ -20,6 +20,7 @@ class _SquareScreenState extends State<SquareScreen> {
 
   bool _isPosting = false;
   int _limit = 20;
+  late Stream<QuerySnapshot> _postsStream;
 
   @override
   void initState() {
@@ -27,15 +28,28 @@ class _SquareScreenState extends State<SquareScreen> {
     _auth = widget.auth ?? FirebaseAuth.instance;
     _firestore = widget.firestore ?? FirebaseFirestore.instance;
 
+    // ⚡ Bolt: Cache Firestore stream to prevent unnecessary queries on unrelated
+    // widget rebuilds. Re-assign the stream only when _limit changes.
+    _updateStream();
+
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
         if (mounted) {
           setState(() {
             _limit += 20;
+            _updateStream();
           });
         }
       }
     });
+  }
+
+  void _updateStream() {
+    _postsStream = _firestore
+        .collection('meydan_posts')
+        .orderBy('createdAt', descending: true)
+        .limit(_limit)
+        .snapshots();
   }
 
   @override
@@ -194,11 +208,7 @@ class _SquareScreenState extends State<SquareScreen> {
           if (_isPosting) const LinearProgressIndicator(color: Colors.yellow),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore
-                  .collection('meydan_posts')
-                  .orderBy('createdAt', descending: true)
-                  .limit(_limit)
-                  .snapshots(),
+              stream: _postsStream,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return const Center(child: Text('Bir hata oluştu.'));
