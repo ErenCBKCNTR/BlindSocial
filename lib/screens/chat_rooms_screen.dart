@@ -22,11 +22,19 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
   bool _isProfileIncomplete = false;
   int? _userRole;
 
+  late final Stream<QuerySnapshot> _roomsStream;
+
   @override
   void initState() {
     super.initState();
     _auth = widget.auth ?? FirebaseAuth.instance;
     _firestore = widget.firestore ?? FirebaseFirestore.instance;
+    // ⚡ Bolt: Cache Firestore stream in initState rather than build() to prevent
+    // re-subscribing and fetching all historical documents on every widget rebuild.
+    _roomsStream = _firestore
+        .collection('chat_rooms')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
     _checkProfileCompletion();
   }
 
@@ -686,10 +694,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
       body: _isProfileIncomplete
         ? Container(color: Theme.of(context).colorScheme.onPrimary, child: Center(child: Text('Lütfen profilinizi tamamlayın', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 20))))
         : StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('chat_rooms')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
+        stream: _roomsStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
