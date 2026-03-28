@@ -19,6 +19,7 @@ import 'screens/profile_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/square_screen.dart';
 import 'screens/games/trivia_game_screen.dart';
+import 'screens/games/story_game_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -192,6 +193,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObse
             '/square': (context) => const SquareScreen(),
             '/game_room': (context) => const GameRoomScreen(),
             '/trivia': (context) => const TriviaGameScreen(),
+            '/story_game': (context) => const InteractiveStoryGameScreen(),
           },
         );
       },
