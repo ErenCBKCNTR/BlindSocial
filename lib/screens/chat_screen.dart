@@ -62,6 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   late final Stream<DocumentSnapshot> _roomStream;
   late final Stream<QuerySnapshot> _messagesStream;
+  String? _currentlyPlayingMessageId;
 
   @override
   void initState() {
@@ -85,6 +86,16 @@ class _ChatScreenState extends State<ChatScreen> {
         .orderBy('expires_at', descending: true)
         .snapshots();
     _addParticipant();
+
+    _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (state == PlayerState.completed || state == PlayerState.stopped) {
+        if (mounted) {
+          setState(() {
+            _currentlyPlayingMessageId = null;
+          });
+        }
+      }
+    });
   }
 
   Future<void> _addParticipant() async {
@@ -443,6 +454,29 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _deleteMessage(String messageId, String? audioUrl) async {
+    try {
+      await (widget.firestore ?? FirebaseFirestore.instance)
+          .collection('chat_rooms')
+          .doc(widget.roomId)
+          .collection('messages')
+          .doc(messageId)
+          .delete();
+
+      if (audioUrl != null) {
+        final ref = widget.storage?.refFromURL(audioUrl) ??
+            FirebaseStorage.instance.refFromURL(audioUrl);
+        await ref.delete();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mesaj silinirken bir hata oluştu.')),
+        );
+      }
+    }
+  }
+
   Future<void> _sendMessage({
     String type = 'text',
     String? audioUrl,
@@ -543,21 +577,46 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: ListView.builder(
                   itemCount: participants.length,
                   itemBuilder: (context, index) {
-                    final p =
-                        participants[index].data() as Map<String, dynamic>;
+                    final pDoc = participants[index];
+                    final p = pDoc.data() as Map<String, dynamic>;
                     final name = p['displayName'] ?? 'Anonim';
-                    return ListTile(
-                      leading: Icon(
-                        Icons.person,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      title: Text(
-                        name,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: 18,
-                        ),
-                      ),
+                    final uid = pDoc.id;
+                    final isMe = uid == _auth.currentUser?.uid;
+
+                    return StreamBuilder<DocumentSnapshot>(
+                      stream: (widget.firestore ?? FirebaseFirestore.instance)
+                          .collection('chat_rooms')
+                          .doc(widget.roomId)
+                          .snapshots(),
+                      builder: (context, roomSnap) {
+                        final isCreator = roomSnap.hasData &&
+                            (roomSnap.data!.data() as Map<String, dynamic>?)?['creatorId'] ==
+                                _auth.currentUser?.uid;
+
+                        return ListTile(
+                          leading: Icon(
+                            Icons.person,
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                          title: Text(
+                            name + (isMe ? ' (Sen)' : ''),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontSize: 18,
+                            ),
+                          ),
+                          trailing: (isCreator && !isMe)
+                              ? IconButton(
+                                  icon: Icon(Icons.mic_off, color: Theme.of(context).colorScheme.error),
+                                  onPressed: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Susturma özelliği eklenecektir.')),
+                                    );
+                                  },
+                                )
+                              : null,
+                        );
+                      },
                     );
                   },
                 ),
@@ -774,103 +833,133 @@ class _ChatScreenState extends State<ChatScreen> {
                         ? 'Gönderen: $senderName, Mesaj: $text, Saat: $timeString'
                         : 'Gönderen: $senderName, Sesli Mesaj ($duration saniye), Saat: $timeString';
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8.0,
-                        horizontal: 16.0,
-                      ),
-                      child: Align(
-                        alignment: isMe
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          padding: const EdgeInsets.all(12.0),
-                          decoration: BoxDecoration(
-                            color: isMe
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.secondary,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    senderName,
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onPrimary,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                    return GestureDetector(
+                      onLongPress: isMe
+                          ? () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                                  title: Text('Mesajı Sil', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                                  content: Text('Bu mesajı silmek istediğinize emin misiniz?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('İptal'),
                                     ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  if (type == 'audio')
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          icon: Icon(
-                                            Icons.play_arrow,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onPrimary,
-                                            size: 30,
-                                          ),
-                                          onPressed: () {
-                                            if (audioUrl != null) {
-                                              _audioPlayer.play(
-                                                UrlSource(audioUrl),
-                                              );
-                                            }
-                                          },
-                                        ),
-                                        Text(
-                                          '$duration sn',
-                                          style: TextStyle(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onPrimary,
-                                            fontSize: 18,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: Icon(
-                                            Icons.stop,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onPrimary,
-                                            size: 30,
-                                          ),
-                                          onPressed: () => _audioPlayer.stop(),
-                                        ),
-                                      ],
-                                    )
-                                  else
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        _deleteMessage(messages[index].id, audioUrl);
+                                      },
+                                      child: const Text('Sil'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                          : null,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8.0,
+                          horizontal: 16.0,
+                        ),
+                        child: Align(
+                          alignment: isMe
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
+                          child: Container(
+                            padding: const EdgeInsets.all(12.0),
+                            decoration: BoxDecoration(
+                              color: isMe
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).colorScheme.secondary,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
                                     Text(
-                                      text,
+                                      senderName,
                                       style: TextStyle(
                                         color: Theme.of(
                                           context,
                                         ).colorScheme.onPrimary,
-                                        fontSize: 20,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                ],
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                timeString,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurface
-                                      .withValues(alpha: 0.54),
-                                  fontSize: 14,
+                                    SizedBox(height: 4),
+                                    if (type == 'audio')
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(
+                                              _currentlyPlayingMessageId == messages[index].id
+                                                  ? Icons.stop
+                                                  : Icons.play_arrow,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onPrimary,
+                                              size: 30,
+                                            ),
+                                            onPressed: () async {
+                                              if (_currentlyPlayingMessageId == messages[index].id) {
+                                                await _audioPlayer.stop();
+                                                setState(() {
+                                                  _currentlyPlayingMessageId = null;
+                                                });
+                                              } else {
+                                                if (audioUrl != null) {
+                                                  await _audioPlayer.stop();
+                                                  setState(() {
+                                                    _currentlyPlayingMessageId = messages[index].id;
+                                                  });
+                                                  await _audioPlayer.play(
+                                                    UrlSource(audioUrl),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                          ),
+                                          Text(
+                                            '$duration sn',
+                                            style: TextStyle(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onPrimary,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    else
+                                      Text(
+                                        text,
+                                        style: TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimary,
+                                          fontSize: 20,
+                                        ),
+                                      ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                                SizedBox(height: 4),
+                                Text(
+                                  timeString,
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

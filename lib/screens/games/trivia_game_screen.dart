@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'local_trivia_questions.dart';
 
 class TriviaGameScreen extends StatefulWidget {
   final FirebaseFirestore? firestore;
@@ -71,17 +72,33 @@ class _TriviaGameScreenState extends State<TriviaGameScreen> {
         _prepareCurrentOptions();
         _startTimer();
       } else {
-        setState(() {
-          _isLoading = false;
-          _hasError = true;
-        });
+        _loadFallbackQuestions();
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-      });
+      _loadFallbackQuestions();
     }
+  }
+
+  void _loadFallbackQuestions() {
+    final localQuestions = LocalTriviaQuestions.fallbackQuestions[_selectedCategory];
+    if (localQuestions != null && localQuestions.isNotEmpty) {
+      final filteredQuestions = localQuestions.where((q) => q['difficulty'] == _selectedDifficulty).toList();
+      if (filteredQuestions.isNotEmpty) {
+        filteredQuestions.shuffle();
+        setState(() {
+          _questions = filteredQuestions;
+          _isLoading = false;
+          _hasError = false;
+        });
+        _prepareCurrentOptions();
+        _startTimer();
+        return;
+      }
+    }
+    setState(() {
+      _isLoading = false;
+      _hasError = true;
+    });
   }
 
   void _prepareCurrentOptions() {

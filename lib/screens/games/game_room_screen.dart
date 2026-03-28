@@ -39,6 +39,35 @@ class GameRoomScreen extends StatelessWidget {
               },
             ),
           ),
+          const SizedBox(height: 16),
+          Card(
+            color: Colors.grey[900],
+            child: ListTile(
+              leading: Icon(
+                Icons.book,
+                color: Theme.of(context).colorScheme.primary,
+                size: 40,
+              ),
+              title: Text(
+                'Etkileşimli Hikaye',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                'Kendi seçimlerinle hikayeni şekillendir',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.secondary,
+                  fontSize: 16,
+                ),
+              ),
+              onTap: () {
+                Navigator.pushNamed(context, '/story_game');
+              },
+            ),
+          ),
         ],
       ),
     );
