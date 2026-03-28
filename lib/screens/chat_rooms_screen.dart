@@ -22,12 +22,6 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
   bool _isProfileIncomplete = false;
   int? _userRole;
 
-  String _hashPassword(String password) {
-    var bytes = utf8.encode(password);
-    var digest = sha256.convert(bytes);
-    return digest.toString();
-  }
-
   @override
   void initState() {
     super.initState();
@@ -364,9 +358,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     await roomDoc.reference.update({
                       'name': nameController.text.trim(),
                       'maxCapacity': maxCap,
-                      'password': passwordController.text.isEmpty
-                          ? null
-                          : _hashPassword(passwordController.text),
+                      'password': passwordController.text.isEmpty ? null : passwordController.text,
                       'ttlPreference': ttlPreference,
                       'ttl': ttlHours,
                     });
@@ -513,9 +505,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   'name': nameController.text.trim(),
                   'numericId': numericId,
                   'maxCapacity': int.tryParse(capacityController.text) ?? 10,
-                  'password': passwordController.text.isEmpty
-                      ? null
-                      : _hashPassword(passwordController.text),
+                  'password': passwordController.text.isEmpty ? null : passwordController.text,
                   'plainPassword': passwordController.text.isEmpty ? null : passwordController.text,
                   'ttl': ttlPreference,
                   'creatorId': user.uid,
@@ -603,6 +593,18 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.pushNamed(context, '/square');
+                },
+              ),
+            ),
+            Semantics(
+              label: 'Oyun Odası butonu',
+              button: true,
+              child: ListTile(
+                leading: Icon(Icons.sports_esports, color: Theme.of(context).colorScheme.secondary, size: 30),
+                title: Text('Oyun Odası', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22)),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/game_room');
                 },
               ),
             ),
@@ -844,7 +846,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                                   TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal')),
                                   ElevatedButton(
                                     onPressed: () {
-                                      if (_hashPassword(passwordController.text) == correctPassword) {
+                                      if (passwordController.text == correctPassword) {
                                         Navigator.pop(context, true);
                                       } else {
                                         ScaffoldMessenger.of(context).showSnackBar(

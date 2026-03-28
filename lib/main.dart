@@ -11,6 +11,7 @@ import 'theme/theme_notifier.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_rooms_screen.dart';
 import 'screens/admin_panel_screen.dart';
+import 'screens/games/game_room_screen.dart';
 import 'screens/update_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
@@ -160,6 +161,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> {
         '/profile': (context) => const ProfileScreen(),
         '/admin_panel': (context) => const AdminPanelScreen(),
         '/square': (context) => const SquareScreen(),
+        '/game_room': (context) => const GameRoomScreen(),
       },
     );
       },

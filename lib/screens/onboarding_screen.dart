@@ -95,7 +95,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         SizedBox(height: 40),
                         Semantics(
-                          label: 'Başlık: ${_pages[index]['title']}',
+                          label: '${_pages[index]['title']}',
                           child: Text(
                             _pages[index]['title']!,
                             textAlign: TextAlign.center,
@@ -108,7 +108,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         SizedBox(height: 20),
                         Semantics(
-                          label: 'Açıklama: ${_pages[index]['description']}',
+                          label: '${_pages[index]['description']}',
                           child: Text(
                             _pages[index]['description']!,
                             textAlign: TextAlign.center,
