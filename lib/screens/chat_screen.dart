@@ -200,6 +200,26 @@ class _ChatScreenState extends State<ChatScreen> {
 
       await _room!.connect(liveKitUrl, token);
 
+      _room!.events.listen((event) {
+        if (event is ParticipantConnectedEvent) {
+          final participant = event.participant;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${participant.identity} sesli kanala katıldı.')),
+            );
+            SystemSound.play(SystemSoundType.click);
+          }
+        } else if (event is ParticipantDisconnectedEvent) {
+          final participant = event.participant;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${participant.identity} sesli kanaldan ayrıldı.')),
+            );
+            SystemSound.play(SystemSoundType.click);
+          }
+        }
+      });
+
       // Enable microphone immediately
       await _room!.localParticipant?.setMicrophoneEnabled(true);
 

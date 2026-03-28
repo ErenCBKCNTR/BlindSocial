@@ -55,7 +55,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               child: ListTile(
                 title: Text(
-                  'ID: U$userId - $username',
+                  'ID: $userId - $username',
                   style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
@@ -67,18 +67,56 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   button: true,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => AdminPanelUserDetails(user: user)),
-                      );
-                    },
+                    onPressed: () => _showUserDetails(context, user),
                     child: Text('Detaylar', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
                   ),
                 ),
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  void _showUserDetails(BuildContext context, Map<String, dynamic> user) {
+    Timestamp? birthTimestamp = user['birthDate'] as Timestamp?;
+    String birthDate = birthTimestamp != null
+        ? "${birthTimestamp.toDate().day}/${birthTimestamp.toDate().month}/${birthTimestamp.toDate().year}"
+        : "Bilinmiyor";
+
+    Timestamp? createdAtTimestamp = user['createdAt'] as Timestamp?;
+    String createdAt = createdAtTimestamp != null
+        ? "${createdAtTimestamp.toDate().day}/${createdAtTimestamp.toDate().month}/${createdAtTimestamp.toDate().year}"
+        : "Bilinmiyor";
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          title: Text('${user['username'] ?? 'Bilinmiyor'} Detayları', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('İsim Soyisim: ${user['fullName'] ?? 'Bilinmiyor'}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                SizedBox(height: 10),
+                Text('Kayıt Tarihi: $createdAt', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                SizedBox(height: 10),
+                Text('E-posta: ${user['email'] ?? 'Bilinmiyor'}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                SizedBox(height: 10),
+                Text('Doğum Tarihi: $birthDate', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Kapat', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
         );
       },
     );
@@ -161,7 +199,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     child: ListTile(
                       title: Text(
-                        'ID: R$roomId - $roomName',
+                        'ID: $roomId - $roomName',
                         style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
