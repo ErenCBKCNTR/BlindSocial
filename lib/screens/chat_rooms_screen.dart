@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
 import 'chat_screen.dart';
 import 'news_screen.dart';
+import 'bs_bib_call_screen.dart';
 
 class ChatRoomsScreen extends StatefulWidget {
   final FirebaseAuth? auth;
@@ -634,6 +635,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
@@ -643,39 +645,6 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        StreamBuilder<QuerySnapshot>(
-                          stream: _firestore
-                              .collection('users')
-                              .where('isOnline', isEqualTo: 1)
-                              .snapshots(),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData) {
-                              return const SizedBox.shrink();
-                            }
-                            final onlineCount = snapshot.data!.docs.length;
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.secondary,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                'Çevrimiçi Kullanıcı: $onlineCount',
-                                style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSecondary,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            );
-                          },
                         ),
                       ],
                     ),
@@ -848,52 +817,54 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 20, top: 20),
-                    child: Center(
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        height: 100,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const SizedBox.shrink(),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 20, top: 20),
-                    child: Center(
-                      child: Opacity(
-                        opacity: 0.5,
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          height: 100,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const SizedBox.shrink(),
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
       floatingActionButton: _isProfileIncomplete
           ? null
-          : FloatingActionButton.extended(
-              onPressed: _showCreateRoomDialog,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              icon: Icon(
-                Icons.add,
-                color: Theme.of(context).colorScheme.onPrimary,
-                size: 30,
-              ),
-              label: Text(
-                'Oda Oluştur',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (_userRole == 2)
+                  FloatingActionButton.extended(
+                    heroTag: 'bs_bib_btn',
+                    onPressed: () {
+                      final roomId = 'BIB_${_auth.currentUser?.uid}_${DateTime.now().millisecondsSinceEpoch}';
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BSBibCallScreen(roomId: roomId, isAdmin: false),
+                        ),
+                      );
+                    },
+                    backgroundColor: Colors.redAccent,
+                    icon: const Icon(Icons.support_agent, color: Colors.white, size: 30),
+                    label: const Text(
+                      'BS BiB - Canlı Destek İste',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                if (_userRole == 2) const SizedBox(height: 16),
+                FloatingActionButton.extended(
+                  heroTag: 'create_room_btn',
+                  onPressed: _showCreateRoomDialog,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  icon: Icon(
+                    Icons.add,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    size: 30,
+                  ),
+                  label: Text(
+                    'Oda Oluştur',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
       body: _isProfileIncomplete
           ? Container(

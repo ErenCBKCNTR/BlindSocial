@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_panel_room_details.dart';
 import 'admin_panel_user_details.dart';
 import 'reported_posts_screen.dart';
+import 'bs_bib_call_screen.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   final FirebaseFirestore? firestore;
@@ -20,6 +21,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   late final Stream<QuerySnapshot> _usersStream;
   late final Stream<QuerySnapshot> _roomsStream;
+  late final Stream<QuerySnapshot> _bsBibStream;
 
   @override
   void initState() {
@@ -34,6 +36,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         .snapshots();
     _roomsStream = _firestore
         .collection('chat_rooms')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+    _bsBibStream = _firestore
+        .collection('bs_bib_calls')
+        .where('status', isEqualTo: 'active')
         .orderBy('createdAt', descending: true)
         .snapshots();
   }
@@ -279,10 +286,96 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
+  Widget _buildBSBibCallsList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _bsBibStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Bir hata oluştu.',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+          );
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(
+            child: Text(
+              'Aktif çağrı bulunamadı.',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            var call = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+            String roomId = call['roomId'] ?? 'Bilinmiyor';
+            String callerName = call['callerName'] ?? 'İsimsiz';
+
+            Timestamp? createdAtTimestamp = call['createdAt'] as Timestamp?;
+            String createdAt = createdAtTimestamp != null
+                ? "${createdAtTimestamp.toDate().hour.toString().padLeft(2, '0')}:${createdAtTimestamp.toDate().minute.toString().padLeft(2, '0')}"
+                : "Bilinmiyor";
+
+            return Card(
+              color: Colors.grey[900],
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              child: ListTile(
+                leading: const Icon(Icons.videocam, color: Colors.green, size: 40),
+                title: Text(
+                  'Kullanıcı: $callerName',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  'Zaman: $createdAt\nOda: $roomId',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
+                ),
+                trailing: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BSBibCallScreen(
+                          roomId: roomId,
+                          isAdmin: true,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Katıl',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: Text(
@@ -293,10 +386,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             indicatorColor: Theme.of(context).colorScheme.primary,
             labelColor: Theme.of(context).colorScheme.primary,
             unselectedLabelColor: Theme.of(context).colorScheme.secondary,
+            isScrollable: true,
             tabs: [
               Tab(icon: Icon(Icons.dashboard), text: 'Pano'),
               Tab(icon: Icon(Icons.meeting_room), text: 'Odalar'),
               Tab(icon: Icon(Icons.people), text: 'Üyeler'),
+              Tab(icon: Icon(Icons.support_agent), text: 'BS BiB Çağrıları'),
             ],
           ),
         ),
@@ -305,6 +400,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             _buildDashboard(context),
             _buildRoomList(),
             _buildMemberList(),
+            _buildBSBibCallsList(),
           ],
         ),
       ),
@@ -316,6 +412,40 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore
+                .collection('users')
+                .where('isOnline', isEqualTo: 1)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const SizedBox.shrink();
+              }
+              final onlineCount = snapshot.data!.docs.length;
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.secondary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    'Çevrimiçi Kullanıcı: $onlineCount',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSecondary,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 20),
           StreamBuilder<QuerySnapshot>(
             stream: _roomsStream,
             builder: (context, snapshot) {
