@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'theme/theme_notifier.dart';
+import 'services/permission_manager.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_rooms_screen.dart';
 import 'screens/admin_panel_screen.dart';
@@ -111,6 +112,12 @@ class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObse
 
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+
+    // Request notification permission during initialization
+    // as per the requirement: "Uygulama ilk açıldığında veya giriş yapıldıktan hemen sonra Bildirim iznini..."
+    if (mounted) {
+      await PermissionManager.requestNotificationPermission(context);
+    }
 
     if (!hasSeenOnboarding) {
       return {'required': false, 'onboarding': true};
