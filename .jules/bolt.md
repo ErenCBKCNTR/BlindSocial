@@ -18,3 +18,7 @@
 ## 2026-03-29 - [Fix Livekit Client Compilation Error]
 **Learning:** The `livekit_client` dependency deprecated the `position` argument in favor of `cameraPosition` for `CameraCaptureOptions`. Neglecting these library changes can lead to build failures that may go unnoticed until deployment or deep testing, causing delays.
 **Action:** When an external dependency's compilation error mentions a missing named parameter, verify the changelog or update code to use the new parameter structure.
+
+## 2026-03-29 - [Optimize Collection Length Queries with count()]
+**Learning:** Using `snapshots().length` (or similar array-based methods after fetching docs) to get the total number of items in a Firestore collection is extremely inefficient and costly, because it downloads the entire collection structure and payloads to the client. This is a common performance bottleneck in admin dashboards.
+**Action:** Always utilize the server-side aggregation method `FirebaseFirestore.instance.collection('...').count().get()` wrapped in a `FutureBuilder<AggregateQuerySnapshot>`. This shifts the computation entirely to the database, avoids downloading massive payloads, and reduces Firestore read costs significantly.
