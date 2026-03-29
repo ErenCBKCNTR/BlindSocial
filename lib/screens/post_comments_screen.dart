@@ -135,7 +135,12 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: EdgeInsets.only(
+              left: 8.0,
+              right: 8.0,
+              top: 8.0,
+              bottom: 8.0 + MediaQuery.of(context).viewInsets.bottom,
+            ),
             child: Row(
               children: [
                 Expanded(

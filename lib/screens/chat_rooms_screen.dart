@@ -627,56 +627,41 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     child: ListView(
                       padding: EdgeInsets.zero,
                       children: [
-                        DrawerHeader(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Blind Social Menü',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onPrimary,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        StreamBuilder<QuerySnapshot>(
-                          stream: _firestore
-                              .collection('users')
-                              .where('isOnline', isEqualTo: 1)
-                              .snapshots(),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData) {
-                              return const SizedBox.shrink();
-                            }
-                            final onlineCount = snapshot.data!.docs.length;
-                            return Container(
+                        Container(
+                          width: double.infinity,
+                          color: Theme.of(context).colorScheme.primary,
+                          child: SafeArea(
+                            bottom: false,
+                            child: Padding(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.secondary,
-                                borderRadius: BorderRadius.circular(20),
+                                horizontal: 16.0,
+                                vertical: 24.0,
                               ),
                               child: Text(
-                                'Çevrimiçi Kullanıcı: $onlineCount',
+                                'Blind Social Menü',
                                 style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSecondary,
-                                  fontSize: 16,
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  fontSize: 32,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            );
-                          },
+                            ),
+                          ),
                         ),
-                      ],
+                  ListTile(
+                    leading: Icon(
+                      Icons.newspaper,
+                      color: Colors.orange,
+                      size: 30,
                     ),
+                    title: const Text(
+                      'Güncel Haberler',
+                      style: TextStyle(color: Colors.white, fontSize: 22),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/news');
+                    },
                   ),
                   ListTile(
                     leading: Icon(
@@ -826,31 +811,6 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       },
                     ),
                       ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 20, top: 20),
-                    child: Center(
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        height: 100,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const SizedBox.shrink(),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 20, top: 20),
-                    child: Center(
-                      child: Opacity(
-                        opacity: 0.5,
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          height: 100,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const SizedBox.shrink(),
-                        ),
-                      ),
                     ),
                   ),
                 ],

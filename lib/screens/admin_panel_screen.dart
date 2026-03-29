@@ -50,7 +50,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             ),
           );
         }
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
         }
 
@@ -185,7 +185,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   ),
                 );
               }
-              if (snapshot.connectionState == ConnectionState.waiting) {
+              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                 return Center(child: CircularProgressIndicator());
               }
 
@@ -316,6 +316,50 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore
+                .collection('users')
+                .where('isOnline', isEqualTo: 1)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const SizedBox.shrink();
+              }
+              final onlineCount = snapshot.data!.docs.length;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.secondary,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Çevrimiçi Kullanıcılar',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSecondary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '$onlineCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           StreamBuilder<QuerySnapshot>(
             stream: _roomsStream,
             builder: (context, snapshot) {

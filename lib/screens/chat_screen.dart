@@ -130,7 +130,7 @@ class _ChatScreenState extends State<ChatScreen> {
         });
       }
 
-      transaction.update(roomRef, {'currentParticipants': current + 1});
+      transaction.update(roomRef, {'currentParticipants': FieldValue.increment(1)});
 
       final participantRef = roomRef.collection('participants').doc(user.uid);
 
@@ -156,9 +156,8 @@ class _ChatScreenState extends State<ChatScreen> {
       final snapshot = await transaction.get(roomRef);
       if (!snapshot.exists) return;
 
-      int current = snapshot.data()?['currentParticipants'] ?? 0;
       transaction.update(roomRef, {
-        'currentParticipants': (current - 1).clamp(0, 999),
+        'currentParticipants': FieldValue.increment(-1),
       });
 
       final participantRef = roomRef.collection('participants').doc(user.uid);
@@ -564,13 +563,24 @@ class _ChatScreenState extends State<ChatScreen> {
             children: [
               Padding(
                 padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Katılımcılar',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const SizedBox(width: 48), // Spacer to center title
+                    Text(
+                      'Katılımcılar',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Theme.of(context).colorScheme.primary),
+                      onPressed: () => Navigator.pop(context),
+                      tooltip: 'Kullanıcılar listesini kapat',
+                    ),
+                  ],
                 ),
               ),
               Expanded(

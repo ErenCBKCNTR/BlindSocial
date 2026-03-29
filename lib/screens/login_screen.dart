@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   late final FirebaseAuth _auth;
   late final FirebaseFirestore _firestore;
   bool _isLoading = false;
-  bool _rememberMe = false;
+  bool _rememberMe = true;
   bool _obscurePassword = true;
 
   @override
@@ -33,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _checkRememberMe() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _rememberMe = prefs.getBool('remember_me') ?? false;
+      _rememberMe = prefs.getBool('remember_me') ?? true;
     });
 
     if (_rememberMe && _auth.currentUser != null) {

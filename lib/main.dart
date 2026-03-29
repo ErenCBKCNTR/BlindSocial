@@ -7,6 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pub_semver/pub_semver.dart' as semver;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'theme/theme_notifier.dart';
 import 'screens/login_screen.dart';
@@ -20,6 +21,7 @@ import 'screens/onboarding_screen.dart';
 import 'screens/square_screen.dart';
 import 'screens/games/trivia_game_screen.dart';
 import 'screens/games/story_game_screen.dart';
+import 'screens/news_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,6 +84,13 @@ class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObse
           FirebaseFirestore.instance.collection('users').doc(user.uid).update({'isOnline': 1}).catchError((_) {});
         }
       });
+
+      // Request runtime permissions
+      await [
+        Permission.microphone,
+        Permission.notification,
+        Permission.location,
+      ].request();
 
       // Step 2: Check for mandatory updates
       final packageInfo = await PackageInfo.fromPlatform();
@@ -191,6 +200,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObse
             '/profile': (context) => const ProfileScreen(),
             '/admin_panel': (context) => const AdminPanelScreen(),
             '/square': (context) => const SquareScreen(),
+            '/news': (context) => const NewsScreen(),
             '/game_room': (context) => const GameRoomScreen(),
             '/trivia': (context) => const TriviaGameScreen(),
             '/story_game': (context) => const InteractiveStoryGameScreen(),
