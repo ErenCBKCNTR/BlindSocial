@@ -257,6 +257,7 @@ class _ChatScreenState extends State<ChatScreen> {
         if (event is ParticipantConnectedEvent) {
           final participant = event.participant;
           if (mounted) {
+            setState(() {});
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('${participant.identity} sesli kanala katıldı.'),
@@ -267,6 +268,7 @@ class _ChatScreenState extends State<ChatScreen> {
         } else if (event is ParticipantDisconnectedEvent) {
           final participant = event.participant;
           if (mounted) {
+            setState(() {});
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -276,6 +278,14 @@ class _ChatScreenState extends State<ChatScreen> {
             );
             SystemSound.play(SystemSoundType.click);
           }
+        } else if (event is ActiveSpeakersChangedEvent) {
+           if (mounted) {
+             setState(() {});
+           }
+        } else if (event is TrackMutedEvent || event is TrackUnmutedEvent) {
+           if (mounted) {
+             setState(() {});
+           }
         }
       });
 
@@ -460,8 +470,8 @@ class _ChatScreenState extends State<ChatScreen> {
         roomNumericId = roomDoc.data()!['numericId'].toString();
       }
 
-      final fileName =
-          '${roomNumericId}_${userNumericId}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'R${roomNumericId}_U${userNumericId}_$timestamp.m4a';
 
       final ref = (widget.storage ?? FirebaseStorage.instance)
           .ref()
@@ -819,28 +829,46 @@ class _ChatScreenState extends State<ChatScreen> {
                       const SizedBox(height: 10),
                       ExpansionTile(
                         title: Text(
-                          'Sesli Kanal Kullanıcıları (${_room?.remoteParticipants.length ?? 0})',
+                          'Sesli Kanal Kullanıcıları (${(_room?.remoteParticipants.length ?? 0) + (_room?.localParticipant != null ? 1 : 0)})',
                           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                         ),
                         collapsedBackgroundColor: Colors.grey[800],
                         backgroundColor: Colors.grey[900],
-                        children: _room?.remoteParticipants.values.map((participant) {
-                          return ListTile(
-                            leading: Icon(
-                              participant.isSpeaking ? Icons.volume_up : Icons.person,
-                              color: participant.isSpeaking ? Colors.green : Theme.of(context).colorScheme.secondary,
-                            ),
-                            title: Text(
-                              participant.identity.isNotEmpty ? participant.identity : 'Kullanıcı',
-                              style: TextStyle(
-                                color: participant.isSpeaking ? Colors.green : Theme.of(context).colorScheme.onSurface,
+                        children: [
+                          if (_room?.localParticipant != null)
+                            ListTile(
+                              leading: Icon(
+                                _room!.localParticipant!.isSpeaking ? Icons.volume_up : Icons.person,
+                                color: _room!.localParticipant!.isSpeaking ? Colors.green : Theme.of(context).colorScheme.secondary,
                               ),
+                              title: Text(
+                                '${_room!.localParticipant!.identity.isNotEmpty ? _room!.localParticipant!.identity : 'Kullanıcı'} (Sen)',
+                                style: TextStyle(
+                                  color: _room!.localParticipant!.isSpeaking ? Colors.green : Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              trailing: _room!.localParticipant!.isMicrophoneEnabled()
+                                  ? const Icon(Icons.mic, color: Colors.yellow)
+                                  : const Icon(Icons.mic_off, color: Colors.red),
                             ),
-                            trailing: participant.isMicrophoneEnabled()
-                                ? const Icon(Icons.mic, color: Colors.yellow)
-                                : const Icon(Icons.mic_off, color: Colors.red),
-                          );
-                        }).toList() ?? [],
+                          ...(_room?.remoteParticipants.values.map((participant) {
+                            return ListTile(
+                              leading: Icon(
+                                participant.isSpeaking ? Icons.volume_up : Icons.person,
+                                color: participant.isSpeaking ? Colors.green : Theme.of(context).colorScheme.secondary,
+                              ),
+                              title: Text(
+                                participant.identity.isNotEmpty ? participant.identity : 'Kullanıcı',
+                                style: TextStyle(
+                                  color: participant.isSpeaking ? Colors.green : Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              trailing: participant.isMicrophoneEnabled()
+                                  ? const Icon(Icons.mic, color: Colors.yellow)
+                                  : const Icon(Icons.mic_off, color: Colors.red),
+                            );
+                          }).toList() ?? []),
+                        ],
                       ),
                     ],
                   ),

@@ -12,14 +12,11 @@ import 'theme/theme_notifier.dart';
 import 'screens/login_screen.dart';
 import 'screens/chat_rooms_screen.dart';
 import 'screens/admin_panel_screen.dart';
-import 'screens/games/game_room_screen.dart';
 import 'screens/update_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/square_screen.dart';
-import 'screens/games/trivia_game_screen.dart';
-import 'screens/games/story_game_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -191,9 +188,6 @@ class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObse
             '/profile': (context) => const ProfileScreen(),
             '/admin_panel': (context) => const AdminPanelScreen(),
             '/square': (context) => const SquareScreen(),
-            '/game_room': (context) => const GameRoomScreen(),
-            '/trivia': (context) => const TriviaGameScreen(),
-            '/story_game': (context) => const InteractiveStoryGameScreen(),
           },
         );
       },

@@ -29,11 +29,22 @@ class ReportedPostsScreen extends StatelessWidget {
                 builder: (context, postSnapshot) {
                   if (!postSnapshot.hasData) return const SizedBox.shrink();
 
+                  final numericId = report['reportedByNumericId']?.toString() ?? 'Bilinmiyor';
+                  final username = report['reportedByUsername'] ?? 'Bilinmiyor';
+                  final reporterInfo = 'Şikayet Eden: U$numericId ($username)';
+
                   if (!postSnapshot.data!.exists) {
                     // Post already deleted
                     return ListTile(
                       title: const Text('Silinmiş Gönderi', style: TextStyle(color: Colors.red)),
-                      subtitle: Text('Şikayet Eden: ${report['reportedByUserId']}'),
+                      subtitle: Text(reporterInfo),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.grey),
+                        tooltip: 'Şikayeti Yoksay/Sil',
+                        onPressed: () {
+                          FirebaseFirestore.instance.collection('reported_posts').doc(reports[index].id).delete();
+                        },
+                      ),
                     );
                   }
 
@@ -43,13 +54,26 @@ class ReportedPostsScreen extends StatelessWidget {
                     margin: const EdgeInsets.all(8.0),
                     child: ListTile(
                       title: Text(post['content'] ?? ''),
-                      subtitle: Text('Şikayet Eden: ${report['reportedByUserId']}'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          FirebaseFirestore.instance.collection('meydan_posts').doc(postId).delete();
-                          FirebaseFirestore.instance.collection('reported_posts').doc(reports[index].id).delete();
-                        },
+                      subtitle: Text(reporterInfo),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            tooltip: 'Gönderiyi Sil',
+                            onPressed: () {
+                              FirebaseFirestore.instance.collection('meydan_posts').doc(postId).delete();
+                              FirebaseFirestore.instance.collection('reported_posts').doc(reports[index].id).delete();
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.grey),
+                            tooltip: 'Şikayeti Yoksay/Sil',
+                            onPressed: () {
+                              FirebaseFirestore.instance.collection('reported_posts').doc(reports[index].id).delete();
+                            },
+                          ),
+                        ],
                       ),
                       onTap: () {
                         // View post isolated

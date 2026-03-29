@@ -168,10 +168,18 @@ class _SquareScreenState extends State<SquareScreen> {
       'reportedBy': FieldValue.arrayUnion([uid]),
     });
 
+    // Fetch numericId and username of the reporter
+    final reporterDoc = await _firestore.collection('users').doc(uid).get();
+    final reporterData = reporterDoc.data();
+    final reporterNumericId = reporterData?['numericId'];
+    final reporterUsername = reporterData?['username'] ?? 'İsimsiz';
+
     // Send report to reported_posts for admin
     await _firestore.collection('reported_posts').add({
       'postId': postId,
       'reportedByUserId': uid,
+      'reportedByNumericId': reporterNumericId,
+      'reportedByUsername': reporterUsername,
       'reportedAt': FieldValue.serverTimestamp(),
     });
 
@@ -436,12 +444,6 @@ class _SquareScreenState extends State<SquareScreen> {
                     final likes = data['likes'] as List<dynamic>? ?? [];
                     final reportedBy =
                         data['reportedBy'] as List<dynamic>? ?? [];
-
-                    // Basic client-side hide if current user reported it
-                    if (currentUserUid != null &&
-                        reportedBy.contains(currentUserUid)) {
-                      return const SizedBox.shrink();
-                    }
 
                     final isLiked =
                         currentUserUid != null &&

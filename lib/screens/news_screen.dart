@@ -65,7 +65,7 @@ class _NewsScreenState extends State<NewsScreen> {
 
   Future<void> _fetchFallbackNews() async {
     try {
-      final response = await http.get(Uri.parse('https://rss.nytimes.com/services/xml/rss/nyt/World.xml'));
+      final response = await http.get(Uri.parse('https://www.haberturk.com/rss/manset.xml'));
       if (response.statusCode == 200) {
         // Fix common XML escaping issues
         String body = response.body.replaceAll('&', '&amp;');
