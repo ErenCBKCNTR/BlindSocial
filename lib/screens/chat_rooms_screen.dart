@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,6 +5,7 @@ import 'dart:math' as math;
 import 'chat_screen.dart';
 import 'news_screen.dart';
 import 'bs_bib_call_screen.dart';
+import '../services/permission_manager.dart';
 
 class ChatRoomsScreen extends StatefulWidget {
   final FirebaseAuth? auth;
@@ -256,8 +255,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                                   context,
                                 ).showSnackBar(SnackBar(content: Text(msg)));
                               } finally {
-                                if (mounted)
+                                if (mounted) {
                                   setModalState(() => isSaving = false);
+                                }
                               }
                             },
                             child: Text('Bilgileri Kaydet'),
@@ -833,7 +833,12 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 if (_userRole == 2)
                   FloatingActionButton.extended(
                     heroTag: 'bs_bib_btn',
-                    onPressed: () {
+                    onPressed: () async {
+                      final hasPermissions = await PermissionManager.requestBsBibPermissions(context);
+                      if (!hasPermissions) return;
+
+                      if (!context.mounted) return;
+
                       final roomId = 'BIB_${_auth.currentUser?.uid}_${DateTime.now().millisecondsSinceEpoch}';
                       Navigator.push(
                         context,
