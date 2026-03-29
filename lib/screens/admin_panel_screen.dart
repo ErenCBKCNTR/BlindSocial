@@ -305,7 +305,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Center(
             child: Text(
-              'Aktif çağrı bulunamadı.',
+              'Şu an aktif çağrı bulunmuyor',
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
           );

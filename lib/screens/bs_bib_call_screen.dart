@@ -55,7 +55,15 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
 
         if (statuses[Permission.camera] != PermissionStatus.granted ||
             statuses[Permission.microphone] != PermissionStatus.granted) {
-          throw Exception('Kamera ve mikrofon izni reddedildi.');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Kamera ve mikrofon izni reddedildi.')),
+            );
+          }
+          setState(() {
+            _isConnecting = false;
+          });
+          return;
         }
       }
 
@@ -201,7 +209,7 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
     if (_hasError) {
       return Scaffold(
         backgroundColor: Colors.black,
-        appBar: AppBar(title: const Text('Hata')),
+        appBar: AppBar(title: const Text('BS BiB - Hata')),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

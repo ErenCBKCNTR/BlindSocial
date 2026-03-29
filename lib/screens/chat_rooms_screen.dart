@@ -712,7 +712,11 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     ),
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.pushNamed(context, '/game_room');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Bu özellik yakında aktif edilecektir.'),
+                        ),
+                      );
                     },
                   ),
                   ListTile(
