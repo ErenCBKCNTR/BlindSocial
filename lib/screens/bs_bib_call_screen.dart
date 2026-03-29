@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
+import '../services/permission_manager.dart';
 
 const String liveKitUrl = 'wss://bs-app-l1mgfyed.livekit.cloud';
 const String liveKitApiKey = 'APINTM3AUHp6ftW';
@@ -48,21 +48,14 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
       }
 
       if (!widget.isAdmin) {
-        final statuses = await [
-          Permission.camera,
-          Permission.microphone,
-        ].request();
-
-        if (statuses[Permission.camera] != PermissionStatus.granted ||
-            statuses[Permission.microphone] != PermissionStatus.granted) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Kamera ve mikrofon izni reddedildi.')),
-            );
-          }
+        final hasPermissions = await PermissionManager.requestBsBibPermissions(context);
+        if (!hasPermissions) {
           setState(() {
             _isConnecting = false;
           });
+          if (mounted) {
+            Navigator.pop(context);
+          }
           return;
         }
       }

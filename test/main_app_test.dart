@@ -40,6 +40,15 @@ void main() {
       await tester.pumpWidget(const BlindSocialApp());
       expect(find.byType(SplashScreen), findsOneWidget);
 
+      // The new initialization logic includes `await PermissionManager.requestNotificationPermission(context);`
+      // which uses `Permission.notification.status`. In tests, without a mock for permission_handler,
+      // it might hang or throw exceptions that aren't properly caught.
+      // We will mock the method channel for permission_handler.
+      const MethodChannel permissionChannel = MethodChannel('flutter.baseflow.com/permissions/methods');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(permissionChannel, (MethodCall methodCall) async {
+        return 0; // Return an integer representing PermissionStatus.denied
+      });
+
       await tester.pumpAndSettle(const Duration(seconds: 4)); // Wait for 3-second timeout in initialization
 
       // If we caught the "No Firebase App" error, it means the FutureBuilder completed

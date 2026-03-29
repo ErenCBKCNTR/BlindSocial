@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class PermissionManager {
+  static Future<void> requestNotificationPermission(BuildContext context) async {
+    final status = await Permission.notification.status;
+    if (status.isDenied) {
+      await Permission.notification.request();
+    }
+  }
+
   static Future<bool> requestBsBibPermissions(BuildContext context) async {
     final permissions = [
       Permission.camera,
