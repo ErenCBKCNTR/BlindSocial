@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math' as math;
 import 'chat_screen.dart';
+import 'news_screen.dart';
 
 class ChatRoomsScreen extends StatefulWidget {
   final FirebaseAuth? auth;
@@ -627,7 +628,8 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     child: ListView(
                       padding: EdgeInsets.zero,
                       children: [
-                        DrawerHeader(
+                        Container(
+                    padding: const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 16.0),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primary,
                     ),
@@ -706,6 +708,24 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.pushNamed(context, '/square');
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.article,
+                      color: Theme.of(context).colorScheme.secondary,
+                      size: 30,
+                    ),
+                    title: const Text(
+                      'Güncel Haberler',
+                      style: TextStyle(color: Colors.white, fontSize: 22),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const NewsScreen()),
+                      );
                     },
                   ),
                   ListTile(
