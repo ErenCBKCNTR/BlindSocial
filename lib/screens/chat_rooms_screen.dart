@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'chat_screen.dart';
 import 'news_screen.dart';
 import 'bs_bib_call_screen.dart';
+import 'live_media_screen.dart';
 import '../services/permission_manager.dart';
 
 class ChatRoomsScreen extends StatefulWidget {
@@ -688,6 +689,24 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   ),
                   ListTile(
                     leading: Icon(
+                      Icons.live_tv,
+                      color: Theme.of(context).colorScheme.secondary,
+                      size: 30,
+                    ),
+                    title: const Text(
+                      'Canlı Yayın',
+                      style: TextStyle(color: Colors.white, fontSize: 22),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LiveMediaScreen()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
                       Icons.sports_esports,
                       color: Theme.of(context).colorScheme.secondary,
                       size: 30,
@@ -937,45 +956,56 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     var isCreator =
                         roomData['creatorId'] == _auth.currentUser?.uid;
 
-                    String semanticLabel =
-                        '$roomName sohbet odası. '
-                        'Kapasite: $currentParticipants bölü $maxCapacity. '
-                        '${isLocked ? "Şifreli oda." : "Açık oda."} '
-                        'Odaya girmek için iki kez dokunun.';
+                    return StreamBuilder<QuerySnapshot>(
+                      stream: room.reference.collection('participants').snapshots(),
+                      builder: (context, participantSnapshot) {
+                        int realTimeParticipants = currentParticipants;
+                        if (participantSnapshot.hasData) {
+                          realTimeParticipants = participantSnapshot.data!.docs.length;
+                        }
 
-                    return ListTile(
-                      leading: Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          Icon(
-                            Icons.meeting_room,
-                            color: Theme.of(context).colorScheme.secondary,
-                            size: 40,
-                          ),
-                          if (isLocked && !isCreator)
-                            Icon(
-                              Icons.lock,
-                              color: Theme.of(context).colorScheme.primary,
-                              size: 20,
+                        String semanticLabel =
+                            '$roomName sohbet odası. '
+                            'Kapasite: $realTimeParticipants bölü $maxCapacity. '
+                            '${isLocked ? "Şifreli oda." : "Açık oda."} '
+                            'Odaya girmek için iki kez dokunun.';
+
+                        return Semantics(
+                          label: semanticLabel,
+                          button: true,
+                          child: ListTile(
+                            leading: Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                Icon(
+                                  Icons.meeting_room,
+                                  color: Theme.of(context).colorScheme.secondary,
+                                  size: 40,
+                                ),
+                                if (isLocked && !isCreator)
+                                  Icon(
+                                    Icons.lock,
+                                    color: Theme.of(context).colorScheme.primary,
+                                    size: 20,
+                                  ),
+                              ],
                             ),
-                        ],
-                      ),
-                      title: Text(
-                        roomName,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Kapasite: $currentParticipants / $maxCapacity',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.secondary,
-                          fontSize: 18,
-                        ),
-                      ),
-                      trailing: Row(
+                            title: Text(
+                              roomName,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Kapasite: $realTimeParticipants / $maxCapacity',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.secondary,
+                                fontSize: 18,
+                              ),
+                            ),
+                            trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (roomData['creatorId'] == _auth.currentUser?.uid)
@@ -1107,6 +1137,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                             ),
                           );
                         }
+                      },
+                          ),
+                        );
                       },
                     );
                   },

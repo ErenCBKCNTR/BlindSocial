@@ -40,7 +40,7 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final _messageController = TextEditingController();
   late final _auth = widget.auth ?? FirebaseAuth.instance;
   final _scrollController = ScrollController();
@@ -72,6 +72,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     _speech = stt.SpeechToText();
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // ⚡ Bolt: Cache Firestore streams in initState rather than build() to prevent
     // re-subscribing and fetching all historical documents on every widget rebuild
     // (e.g., when typing a message).
@@ -153,7 +154,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (!snapshot.exists) return;
 
-      int current = snapshot.data()?['currentParticipants'] ?? 0;
       final userData = userDoc.data() ?? {};
       final displayName = userData['display_preference'] == 'fullName'
           ? userData['fullName'] ?? 'Anonim'
@@ -165,7 +165,7 @@ class _ChatScreenState extends State<ChatScreen> {
         });
       }
 
-      transaction.update(roomRef, {'currentParticipants': current + 1});
+      transaction.update(roomRef, {'currentParticipants': FieldValue.increment(1)});
 
       final participantRef = roomRef.collection('participants').doc(user.uid);
 
@@ -185,20 +185,15 @@ class _ChatScreenState extends State<ChatScreen> {
         .collection('chat_rooms')
         .doc(widget.roomId);
 
-    await (widget.firestore ?? FirebaseFirestore.instance).runTransaction((
-      transaction,
-    ) async {
-      final snapshot = await transaction.get(roomRef);
-      if (!snapshot.exists) return;
-
-      int current = snapshot.data()?['currentParticipants'] ?? 0;
-      transaction.update(roomRef, {
-        'currentParticipants': (current - 1).clamp(0, 999),
+    try {
+      await roomRef.update({
+        'currentParticipants': FieldValue.increment(-1)
       });
-
       final participantRef = roomRef.collection('participants').doc(user.uid);
-      transaction.delete(participantRef);
-    });
+      await participantRef.delete();
+    } catch (e) {
+      debugPrint('Participant remove error: $e');
+    }
   }
 
   String _generateToken() {
@@ -341,7 +336,16 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      _removeParticipant();
+    }
+    super.didChangeAppLifecycleState(state);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _removeParticipant();
     _messageController.dispose();
     _scrollController.dispose();

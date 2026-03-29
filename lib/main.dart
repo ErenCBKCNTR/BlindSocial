@@ -18,6 +18,7 @@ import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/square_screen.dart';
+import 'widgets/global_background_wrapper.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -142,6 +143,9 @@ class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObse
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
+          builder: (context, child) {
+            return GlobalBackgroundWrapper(child: child!);
+          },
           home: FutureBuilder<Map<String, dynamic>>(
             future: _initFuture,
             builder: (context, snapshot) {

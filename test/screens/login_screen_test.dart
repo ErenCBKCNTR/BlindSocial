@@ -52,9 +52,9 @@ void main() {
 
     await tester.tap(loginButton);
     await tester.pump();
-    await tester.pump(const Duration(seconds: 1)); // allow SnackBar to appear
+    await tester.pumpAndSettle(); // allow AlertDialog to appear
 
-    expect(find.byType(SnackBar), findsOneWidget);
-    expect(find.text('Hatalı şifre girdiniz.'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.text('Girmiş olduğunuz bilgilerle eşleşen bir hesap bulunamadı.'), findsOneWidget);
   });
 }
