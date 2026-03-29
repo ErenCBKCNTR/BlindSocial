@@ -564,13 +564,23 @@ class _ChatScreenState extends State<ChatScreen> {
             children: [
               Padding(
                 padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Katılımcılar',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Katılımcılar',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                      tooltip: 'Katılımcılar listesini kapat',
+                    ),
+                  ],
                 ),
               ),
               Expanded(
