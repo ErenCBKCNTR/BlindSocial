@@ -145,6 +145,8 @@ class _NewsScreenState extends State<NewsScreen> {
                               builder: (context) => NewsDetailScreen(
                                 title: item['title']!,
                                 description: item['description']!,
+                                initialIndex: index,
+                                newsList: _newsItems,
                               ),
                             ),
                           );

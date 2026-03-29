@@ -71,6 +71,10 @@ void main() {
       'creatorId': 'some_other_uid',
     });
 
+    // Create subcollection for participants for real-time count
+    await fakeFirestore.collection('chat_rooms').doc('room1').collection('participants').doc('user1').set({'uid': 'user1'});
+    await fakeFirestore.collection('chat_rooms').doc('room1').collection('participants').doc('user2').set({'uid': 'user2'});
+
     await fakeFirestore.collection('chat_rooms').doc('room2').set({
       'name': 'Locked Room',
       'maxCapacity': 10,
@@ -79,6 +83,10 @@ void main() {
       'createdAt': DateTime.now(),
       'creatorId': 'some_other_uid',
     });
+
+    for (int i=0; i<9; i++) {
+        await fakeFirestore.collection('chat_rooms').doc('room2').collection('participants').doc('user$i').set({'uid': 'user$i'});
+    }
 
     // 2. Pump the ChatRoomsScreen
     await tester.pumpWidget(MaterialApp(
