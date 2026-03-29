@@ -12,6 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 const String liveKitUrl = 'wss://bs-app-l1mgfyed.livekit.cloud';
 const String liveKitApiKey = 'APINTM3AUHp6ftW';
@@ -64,8 +65,12 @@ class _ChatScreenState extends State<ChatScreen> {
   late final Stream<QuerySnapshot> _messagesStream;
   String? _currentlyPlayingMessageId;
 
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
+
   @override
   void initState() {
+    _speech = stt.SpeechToText();
     super.initState();
     // ⚡ Bolt: Cache Firestore streams in initState rather than build() to prevent
     // re-subscribing and fetching all historical documents on every widget rebuild
@@ -96,6 +101,36 @@ class _ChatScreenState extends State<ChatScreen> {
         }
       }
     });
+  }
+
+  Future<void> _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) {
+          if (val == 'done') {
+            setState(() => _isListening = false);
+          }
+        },
+        onError: (val) {
+          setState(() => _isListening = false);
+        },
+      );
+
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) => setState(() {
+            _messageController.text = val.recognizedWords;
+          }),
+          localeId: 'tr_TR',
+        );
+      } else {
+        await Permission.microphone.request();
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
   }
 
   Future<void> _addParticipant() async {
@@ -741,41 +776,71 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   )
                 else
-                  Row(
+                  Column(
                     children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _toggleMute,
-                          icon: Icon(
-                            _isMuted ? Icons.mic_off : Icons.mic,
-                            size: 30,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _toggleMute,
+                              icon: Icon(
+                                _isMuted ? Icons.mic_off : Icons.mic,
+                                size: 30,
+                              ),
+                              label: Text(_isMuted ? 'Sesi Aç' : 'Sustur'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _isMuted
+                                    ? Theme.of(context).colorScheme.error
+                                    : Theme.of(context).colorScheme.primary,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimary,
+                              ),
+                            ),
                           ),
-                          label: Text(_isMuted ? 'Sesi Aç' : 'Sustur'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _isMuted
-                                ? Theme.of(context).colorScheme.error
-                                : Theme.of(context).colorScheme.primary,
-                            foregroundColor: Theme.of(
-                              context,
-                            ).colorScheme.onPrimary,
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _leaveVoiceChannel,
+                              icon: Icon(Icons.call_end, size: 30),
+                              label: Text('Ayrıl'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.error,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimary,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _leaveVoiceChannel,
-                          icon: Icon(Icons.call_end, size: 30),
-                          label: Text('Ayrıl'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.error,
-                            foregroundColor: Theme.of(
-                              context,
-                            ).colorScheme.onPrimary,
-                          ),
+                      const SizedBox(height: 10),
+                      ExpansionTile(
+                        title: Text(
+                          'Sesli Kanal Kullanıcıları (${_room?.remoteParticipants.length ?? 0})',
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                         ),
+                        collapsedBackgroundColor: Colors.grey[800],
+                        backgroundColor: Colors.grey[900],
+                        children: _room?.remoteParticipants.values.map((participant) {
+                          return ListTile(
+                            leading: Icon(
+                              participant.isSpeaking ? Icons.volume_up : Icons.person,
+                              color: participant.isSpeaking ? Colors.green : Theme.of(context).colorScheme.secondary,
+                            ),
+                            title: Text(
+                              participant.identity.isNotEmpty ? participant.identity : 'Kullanıcı',
+                              style: TextStyle(
+                                color: participant.isSpeaking ? Colors.green : Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            trailing: participant.isMicrophoneEnabled()
+                                ? const Icon(Icons.mic, color: Colors.yellow)
+                                : const Icon(Icons.mic_off, color: Colors.red),
+                          );
+                        }).toList() ?? [],
                       ),
                     ],
                   ),
@@ -1029,7 +1094,16 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 12),
+                    IconButton(
+                      icon: Icon(
+                        _isListening ? Icons.mic : Icons.mic_none,
+                        color: _isListening ? Colors.red : Theme.of(context).colorScheme.secondary,
+                        size: 30,
+                      ),
+                      onPressed: _listen,
+                      tooltip: 'Dikte',
+                    ),
+                    SizedBox(width: 6),
                     IconButton(
                       icon: Icon(
                         Icons.send,

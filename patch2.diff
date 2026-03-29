@@ -1,0 +1,30 @@
+--- lib/screens/bs_bib_call_screen.dart
++++ lib/screens/bs_bib_call_screen.dart
+@@ -4,6 +4,7 @@
+ import 'package:cloud_firestore/cloud_firestore.dart';
+ import 'package:firebase_auth/firebase_auth.dart';
+ import 'package:permission_handler/permission_handler.dart';
++import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
+
+ const String liveKitUrl = 'wss://bs-app-l1mgfyed.livekit.cloud';
+ const String liveKitApiKey = 'APINTM3AUHp6ftW';
+@@ -105,8 +106,8 @@
+         // User: Publish camera (rear, 480p, 15fps) and microphone
+         await _room!.localParticipant?.setCameraEnabled(true,
+             cameraCaptureOptions: const CameraCaptureOptions(
+-              position: CameraPosition.back,
+               params: VideoParameters(
+-                dimensions: VideoDimensions(width: 640, height: 480),
++                dimensions: VideoDimensions(640, 480),
+                 encoding: VideoEncoding(maxBitrate: 400 * 1000, maxFramerate: 15),
+               ),
+             ));
+@@ -140,8 +141,6 @@
+   // Token generation helper (simplified for client-side demo)
+   String _generateToken(
+       String roomName, String participantName, String apiKey, String apiSecret) {
+-    import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
+-
+     final jwt = JWT(
+       {
+         'video': {
