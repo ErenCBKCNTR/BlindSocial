@@ -14,3 +14,7 @@
 ## 2026-03-27 - [Cache Inline Firestore Streams in StatefulWidget]
 **Learning:** Using `StreamBuilder` with `FirebaseFirestore.instance.collection(...).snapshots()` directly in the `stream:` property inside a `build()` method is a major performance anti-pattern. Every time the widget rebuilds (e.g., from navigating or local `setState`), the inline expression is re-evaluated, tearing down the existing stream subscription and creating a completely new one. This causes a massive spike in unnecessary Firestore document reads, UI flickering, and heavy latency.
 **Action:** Always extract the stream initialization from the `build()` method. Declare it as a `late final Stream<QuerySnapshot> _stream;` variable and assign it once inside `initState()`. If the query relies on a variable that changes (like a pagination limit), explicitly re-assign the stream only within the specific `setState` block where that variable is updated.
+
+## 2026-03-29 - [Fix Livekit Client Compilation Error]
+**Learning:** The `livekit_client` dependency deprecated the `position` argument in favor of `cameraPosition` for `CameraCaptureOptions`. Neglecting these library changes can lead to build failures that may go unnoticed until deployment or deep testing, causing delays.
+**Action:** When an external dependency's compilation error mentions a missing named parameter, verify the changelog or update code to use the new parameter structure.

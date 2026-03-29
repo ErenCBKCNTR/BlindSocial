@@ -91,9 +91,10 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
            }
         } else if (event is ParticipantConnectedEvent) {
           if (!widget.isAdmin) {
+            // Bolt: Replaced deprecated 'position' with 'cameraPosition' for livekit_client compatibility
             _room!.localParticipant?.setCameraEnabled(true,
               cameraCaptureOptions: const CameraCaptureOptions(
-                position: CameraPosition.back,
+                cameraPosition: CameraPosition.back,
                 params: VideoParameters(
                   dimensions: VideoDimensions(640, 480),
                   encoding: VideoEncoding(maxBitrate: 400 * 1000, maxFramerate: 15),
@@ -117,9 +118,10 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
       if (!widget.isAdmin) {
         // User: Publish microphone only initially. Wait for admin to join before publishing camera
         if (_room!.remoteParticipants.isNotEmpty) {
+           // Bolt: Replaced deprecated 'position' with 'cameraPosition' for livekit_client compatibility
            await _room!.localParticipant?.setCameraEnabled(true,
              cameraCaptureOptions: const CameraCaptureOptions(
-               position: CameraPosition.back,
+               cameraPosition: CameraPosition.back,
                params: VideoParameters(
                  dimensions: VideoDimensions(640, 480),
                  encoding: VideoEncoding(maxBitrate: 400 * 1000, maxFramerate: 15),
