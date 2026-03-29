@@ -204,7 +204,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String _generateToken() {
     final user = _auth.currentUser;
     final identity =
-        user?.email ??
+        _cachedDisplayName ??
         user?.uid ??
         'anonymous_${DateTime.now().millisecondsSinceEpoch}';
 

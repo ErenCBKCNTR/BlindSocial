@@ -333,6 +333,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 40),
                   _buildVersionText(theme),
                   const SizedBox(height: 20),
+                  _buildLogoutButton(theme),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -390,6 +392,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildPasswordSection(theme),
               const SizedBox(height: 40),
               _buildVersionText(theme),
+              const SizedBox(height: 20),
+              _buildLogoutButton(theme),
             ],
           ),
         ),
@@ -427,10 +431,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 40),
             _buildVersionText(theme),
             const SizedBox(height: 20),
+            _buildLogoutButton(theme),
+            const SizedBox(height: 20),
           ],
         ),
       );
     }
+  }
+
+  Widget _buildLogoutButton(ThemeData theme) {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.redAccent,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        minimumSize: const Size(double.infinity, 50),
+      ),
+      onPressed: () async {
+        await _auth.signOut();
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/');
+      },
+      icon: const Icon(Icons.logout),
+      label: const Text(
+        'Oturumu Kapat',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+    );
   }
 
   Widget _buildTextField(

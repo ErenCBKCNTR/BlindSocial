@@ -31,7 +31,15 @@ class ReportedPostsScreen extends StatelessWidget {
 
                   final numericId = report['reportedByNumericId']?.toString() ?? 'Bilinmiyor';
                   final username = report['reportedByUsername'] ?? 'Bilinmiyor';
-                  final reporterInfo = 'Şikayet Eden: U$numericId ($username)';
+
+                  String reporterInfo = 'Şikayet Eden: U$numericId ($username)';
+
+                  if (postSnapshot.data!.exists) {
+                    final post = postSnapshot.data!.data() as Map<String, dynamic>;
+                    final authorUsername = post['authorUsername'] ?? 'Bilinmiyor';
+                    // We only have authorId which is Firebase UID, but maybe we can just show the username
+                    reporterInfo += '\nŞikayet Edilen: @$authorUsername';
+                  }
 
                   if (!postSnapshot.data!.exists) {
                     // Post already deleted

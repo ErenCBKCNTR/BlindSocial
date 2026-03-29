@@ -192,7 +192,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   ),
                 );
               }
-              if (snapshot.connectionState == ConnectionState.waiting) {
+              if (!snapshot.hasData) {
                 return Center(child: CircularProgressIndicator());
               }
 
@@ -298,11 +298,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             ),
           );
         }
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        if (snapshot.data!.docs.isEmpty) {
           return Center(
             child: Text(
               'Şu an aktif çağrı bulunmuyor',
