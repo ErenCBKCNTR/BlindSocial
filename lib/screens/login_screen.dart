@@ -132,7 +132,39 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        _showThemedError(_translateAuthError(e.code));
+        if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              content: Text(
+                'Girmiş olduğunuz bilgilerle eşleşen bir hesap bulunamadı.',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Tekrar Dene',
+                    style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/register');
+                  },
+                  child: Text(
+                    'Yeni Hesap Aç',
+                    style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                  ),
+                ),
+              ],
+            ),
+          );
+        } else {
+          _showThemedError(_translateAuthError(e.code));
+        }
       }
     } finally {
       if (mounted) {

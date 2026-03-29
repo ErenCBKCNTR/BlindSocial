@@ -607,17 +607,6 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   tooltip: 'Menüyü Aç',
                 ),
               ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, size: 30),
-            onPressed: () async {
-              await _auth.signOut();
-              if (!mounted) return;
-              // ignore: use_build_context_synchronously
-              Navigator.pushReplacementNamed(context, '/');
-            },
-          ),
-        ],
       ),
       drawer: _isProfileIncomplete
           ? null

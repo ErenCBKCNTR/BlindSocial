@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
@@ -26,7 +27,8 @@ class _NewsScreenState extends State<NewsScreen> {
       final response = await http.get(Uri.parse('https://www.trthaber.com/xml_mobile.php'));
       if (response.statusCode == 200) {
         // Fix common XML escaping issues
-        String body = response.body.replaceAll('&', '&amp;');
+        // Ensure UTF-8 decoding for Turkish characters
+        String body = utf8.decode(response.bodyBytes).replaceAll('&', '&amp;');
         // Avoid double escaping if it was already &amp;
         body = body.replaceAll('&amp;amp;', '&amp;');
 
@@ -68,7 +70,8 @@ class _NewsScreenState extends State<NewsScreen> {
       final response = await http.get(Uri.parse('https://www.haberturk.com/rss/manset.xml'));
       if (response.statusCode == 200) {
         // Fix common XML escaping issues
-        String body = response.body.replaceAll('&', '&amp;');
+        // Ensure UTF-8 decoding for Turkish characters
+        String body = utf8.decode(response.bodyBytes).replaceAll('&', '&amp;');
         body = body.replaceAll('&amp;amp;', '&amp;');
 
         final document = XmlDocument.parse(body);

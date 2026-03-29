@@ -89,6 +89,17 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
                SnackBar(content: Text('${event.participant.identity} çağrıdan ayrıldı.'))
              );
            }
+        } else if (event is ParticipantConnectedEvent) {
+          if (!widget.isAdmin) {
+            _room!.localParticipant?.setCameraEnabled(true,
+              cameraCaptureOptions: const CameraCaptureOptions(
+                position: CameraPosition.back,
+                params: VideoParameters(
+                  dimensions: VideoDimensions(640, 480),
+                  encoding: VideoEncoding(maxBitrate: 400 * 1000, maxFramerate: 15),
+                ),
+              ));
+          }
         }
       });
 
@@ -104,14 +115,18 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
       await _room!.connect(liveKitUrl, token);
 
       if (!widget.isAdmin) {
-        // User: Publish camera (rear, 480p, 15fps) and microphone
-        await _room!.localParticipant?.setCameraEnabled(true,
-            cameraCaptureOptions: const CameraCaptureOptions(
-              params: VideoParameters(
-                dimensions: VideoDimensions(640, 480),
-                encoding: VideoEncoding(maxBitrate: 400 * 1000, maxFramerate: 15),
-              ),
-            ));
+        // User: Publish microphone only initially. Wait for admin to join before publishing camera
+        if (_room!.remoteParticipants.isNotEmpty) {
+           await _room!.localParticipant?.setCameraEnabled(true,
+             cameraCaptureOptions: const CameraCaptureOptions(
+               position: CameraPosition.back,
+               params: VideoParameters(
+                 dimensions: VideoDimensions(640, 480),
+                 encoding: VideoEncoding(maxBitrate: 400 * 1000, maxFramerate: 15),
+               ),
+             ));
+        }
+
         await _room!.localParticipant?.setMicrophoneEnabled(true);
 
         // Write to Firestore
