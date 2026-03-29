@@ -23,6 +23,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   late final Stream<QuerySnapshot> _roomsStream;
   late final Stream<QuerySnapshot> _bsBibStream;
 
+  late Future<AggregateQuerySnapshot> _onlineUsersCountFuture;
+  late Future<AggregateQuerySnapshot> _roomsCountFuture;
+  late Future<AggregateQuerySnapshot> _usersCountFuture;
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +47,16 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         .where('status', isEqualTo: 'active')
         .orderBy('createdAt', descending: true)
         .snapshots();
+
+    _refreshDashboardCounts();
+  }
+
+  void _refreshDashboardCounts() {
+    setState(() {
+      _onlineUsersCountFuture = _firestore.collection('users').where('isOnline', isEqualTo: 1).count().get();
+      _roomsCountFuture = _firestore.collection('chat_rooms').count().get();
+      _usersCountFuture = _firestore.collection('users').count().get();
+    });
   }
 
   Widget _buildMemberList() {
@@ -412,16 +426,32 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          StreamBuilder<QuerySnapshot>(
-            stream: _firestore
-                .collection('users')
-                .where('isOnline', isEqualTo: 1)
-                .snapshots(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Genel İstatistikler',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.refresh, color: Theme.of(context).colorScheme.primary),
+                tooltip: 'İstatistikleri Yenile',
+                onPressed: _refreshDashboardCounts,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          FutureBuilder<AggregateQuerySnapshot>(
+            future: _onlineUsersCountFuture,
             builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const SizedBox.shrink();
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
               }
-              final onlineCount = snapshot.data!.docs.length;
+              final onlineCount = snapshot.hasData ? (snapshot.data!.count ?? 0) : 0;
               return Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
@@ -446,10 +476,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             },
           ),
           const SizedBox(height: 20),
-          StreamBuilder<QuerySnapshot>(
-            stream: _roomsStream,
+          FutureBuilder<AggregateQuerySnapshot>(
+            future: _roomsCountFuture,
             builder: (context, snapshot) {
-              final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final count = snapshot.hasData ? (snapshot.data!.count ?? 0) : 0;
               return InkWell(
                 onTap: () {
                   DefaultTabController.of(context).animateTo(1);
@@ -477,10 +510,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             },
           ),
           const SizedBox(height: 20),
-          StreamBuilder<QuerySnapshot>(
-            stream: _usersStream,
+          FutureBuilder<AggregateQuerySnapshot>(
+            future: _usersCountFuture,
             builder: (context, snapshot) {
-              final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final count = snapshot.hasData ? (snapshot.data!.count ?? 0) : 0;
               return InkWell(
                 onTap: () {
                   DefaultTabController.of(context).animateTo(2);
