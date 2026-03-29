@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'local_trivia_questions.dart';
 
 class TriviaGameScreen extends StatefulWidget {
@@ -38,10 +40,12 @@ class _TriviaGameScreenState extends State<TriviaGameScreen> {
   Timer? _timer;
   String _selectedAnswer = '';
   List<String> _shuffledOptions = [];
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void dispose() {
     _timer?.cancel();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -139,21 +143,36 @@ class _TriviaGameScreenState extends State<TriviaGameScreen> {
     });
   }
 
-  void _checkAnswer(String answer) {
+  void _checkAnswer(String answer) async {
     if (_isAnswered) return;
 
     _timer?.cancel();
+
+    bool isCorrect = answer == _questions[_currentQuestionIndex]['correctAnswer'];
+
     setState(() {
       _isAnswered = true;
       _selectedAnswer = answer;
-      if (answer == _questions[_currentQuestionIndex]['correctAnswer']) {
+      if (isCorrect) {
         _score += 10;
       }
     });
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) _nextQuestion();
-    });
+    if (isCorrect) {
+      try {
+        await _audioPlayer.play(AssetSource('audio/dogrucevap.mp3'));
+      } catch (e) {
+        SystemSound.play(SystemSoundType.click);
+      }
+
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) _nextQuestion();
+      });
+    } else {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) _nextQuestion();
+      });
+    }
   }
 
   void _nextQuestion() {
