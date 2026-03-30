@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:livekit_client/livekit_client.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import '../services/permission_manager.dart';
-
-const String liveKitUrl = 'wss://bs-app-l1mgfyed.livekit.cloud';
-const String liveKitApiKey = 'APINTM3AUHp6ftW';
-const String liveKitApiSecret = 'lQTO4G5gD9rGBFx94LoAl2bh0yaMBAaR6VgHN45ZeoO';
 
 class BSBibCallScreen extends StatefulWidget {
   final String roomId;
@@ -24,12 +19,17 @@ class BSBibCallScreen extends StatefulWidget {
 }
 
 class _BSBibCallScreenState extends State<BSBibCallScreen> {
-  Room? _room;
   bool _isConnecting = true;
   bool _hasError = false;
   String _errorMessage = '';
-  VideoTrack? _remoteVideoTrack;
-  bool _isFrozen = false;
+
+  RTCPeerConnection? _peerConnection;
+  MediaStream? _localStream;
+  final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
+  final RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
+
+  bool _isMicMuted = false;
+  bool _isCameraFront = false;
 
   late final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -37,7 +37,12 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
   @override
   void initState() {
     super.initState();
-    _connect();
+    _initRenderers().then((_) => _connect());
+  }
+
+  Future<void> _initRenderers() async {
+    await _localRenderer.initialize();
+    await _remoteRenderer.initialize();
   }
 
   Future<void> _connect() async {
@@ -60,93 +65,14 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
         }
       }
 
-      final userDoc = await _firestore.collection('users').doc(user.uid).get();
-      final username = userDoc.data()?['username'] ?? 'Kullanıcı';
-
-      final roomOptions = RoomOptions(
-        adaptiveStream: true,
-        dynacast: true,
-      );
-
-      _room = Room(roomOptions: roomOptions);
-
-      _room!.events.listen((event) {
-        if (event is TrackSubscribedEvent) {
-          if (event.track is VideoTrack) {
-            setState(() {
-              _remoteVideoTrack = event.track as VideoTrack;
-            });
-          }
-        } else if (event is TrackUnsubscribedEvent) {
-          if (event.track.sid == _remoteVideoTrack?.sid) {
-            setState(() {
-              _remoteVideoTrack = null;
-            });
-          }
-        } else if (event is ParticipantDisconnectedEvent) {
-           if(mounted){
-             ScaffoldMessenger.of(context).showSnackBar(
-               SnackBar(content: Text('${event.participant.identity} çağrıdan ayrıldı.'))
-             );
-           }
-        } else if (event is ParticipantConnectedEvent) {
-          if (!widget.isAdmin) {
-            // Bolt: Replaced deprecated 'position' with 'cameraPosition' for livekit_client compatibility
-            _room!.localParticipant?.setCameraEnabled(true,
-              cameraCaptureOptions: const CameraCaptureOptions(
-                cameraPosition: CameraPosition.back,
-                params: VideoParameters(
-                  dimensions: VideoDimensions(640, 480),
-                  encoding: VideoEncoding(maxBitrate: 400 * 1000, maxFramerate: 15),
-                ),
-              ));
-          }
-        }
-      });
-
-      // Token generated simply on client for demonstration
-      // Normally, this should be done on the server-side
-      final token = _generateToken(
-        widget.roomId,
-        username,
-        liveKitApiKey,
-        liveKitApiSecret,
-      );
-
-      await _room!.connect(liveKitUrl, token);
+      await _initWebRTC();
 
       if (!widget.isAdmin) {
-        // User: Publish microphone only initially. Wait for admin to join before publishing camera
-        if (_room!.remoteParticipants.isNotEmpty) {
-           // Bolt: Replaced deprecated 'position' with 'cameraPosition' for livekit_client compatibility
-           await _room!.localParticipant?.setCameraEnabled(true,
-             cameraCaptureOptions: const CameraCaptureOptions(
-               cameraPosition: CameraPosition.back,
-               params: VideoParameters(
-                 dimensions: VideoDimensions(640, 480),
-                 encoding: VideoEncoding(maxBitrate: 400 * 1000, maxFramerate: 15),
-               ),
-             ));
-        }
-
-        await _room!.localParticipant?.setMicrophoneEnabled(true);
-
-        // Write to Firestore
-        await _firestore.collection('bs_bib_calls').doc(widget.roomId).set({
-          'roomId': widget.roomId,
-          'callerId': user.uid,
-          'callerName': username,
-          'status': 'active',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        await _createOffer();
       } else {
-        // Admin: Only microphone
-        await _room!.localParticipant?.setMicrophoneEnabled(true);
+        await _joinRoom();
       }
 
-      setState(() {
-        _isConnecting = false;
-      });
     } catch (e) {
       setState(() {
         _hasError = true;
@@ -156,34 +82,193 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
     }
   }
 
-  // Token generation helper (simplified for client-side demo)
-  String _generateToken(
-      String roomName, String participantName, String apiKey, String apiSecret) {
+  Future<void> _initWebRTC() async {
+    final Map<String, dynamic> mediaConstraints = {
+      'audio': true,
+      'video': {
+        'facingMode': widget.isAdmin ? 'user' : 'environment', // User starts with rear camera by default
+      }
+    };
 
-    final jwt = JWT(
-      {
-        'video': {
-          'room': roomName,
-          'roomJoin': true,
-        },
-        'name': participantName,
-      },
-      issuer: apiKey,
-      subject: participantName,
-    );
+    _localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    _localRenderer.srcObject = _localStream;
 
-    return jwt.sign(SecretKey(apiSecret),
-        expiresIn: const Duration(hours: 2));
+    final configuration = {
+      'iceServers': [
+        {'urls': 'stun:stun.l.google.com:19302'},
+      ]
+    };
+
+    _peerConnection = await createPeerConnection(configuration);
+
+    _localStream?.getTracks().forEach((track) {
+      _peerConnection?.addTrack(track, _localStream!);
+    });
+
+    _peerConnection?.onAddStream = (stream) {
+      setState(() {
+        _remoteRenderer.srcObject = stream;
+      });
+    };
+
+    _peerConnection?.onIceConnectionState = (state) {
+      if (state == RTCIceConnectionState.RTCIceConnectionStateConnected) {
+         setState(() {
+           _isConnecting = false;
+         });
+      }
+    };
+  }
+
+  Future<void> _createOffer() async {
+    final roomRef = _firestore.collection('bs_bib_calls').doc(widget.roomId);
+
+    _peerConnection?.onIceCandidate = (candidate) {
+      roomRef.collection('caller_candidates').add({
+        'candidate': candidate.candidate,
+        'sdpMid': candidate.sdpMid,
+        'sdpMLineIndex': candidate.sdpMLineIndex,
+      });
+    };
+
+    final offer = await _peerConnection?.createOffer();
+    await _peerConnection?.setLocalDescription(offer!);
+
+    await roomRef.set({
+      'roomId': widget.roomId,
+      'callerId': _auth.currentUser?.uid,
+      'status': 'active',
+      'createdAt': FieldValue.serverTimestamp(),
+      'offer': {
+        'type': offer!.type,
+        'sdp': offer.sdp,
+      }
+    });
+
+    setState(() {
+        _isConnecting = false;
+    });
+
+    roomRef.snapshots().listen((snapshot) async {
+      final data = snapshot.data();
+      final remoteDesc = await _peerConnection?.getRemoteDescription();
+      if (remoteDesc == null && data != null && data['answer'] != null) {
+        var answer = RTCSessionDescription(
+          data['answer']['sdp'],
+          data['answer']['type'],
+        );
+        await _peerConnection?.setRemoteDescription(answer);
+      }
+    });
+
+    roomRef.collection('callee_candidates').snapshots().listen((snapshot) {
+      for (var change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          final data = change.doc.data() as Map<String, dynamic>;
+          _peerConnection?.addCandidate(
+            RTCIceCandidate(
+              data['candidate'],
+              data['sdpMid'],
+              data['sdpMLineIndex'],
+            ),
+          );
+        }
+      }
+    });
+  }
+
+  Future<void> _joinRoom() async {
+    final roomRef = _firestore.collection('bs_bib_calls').doc(widget.roomId);
+
+    _peerConnection?.onIceCandidate = (candidate) {
+      roomRef.collection('callee_candidates').add({
+        'candidate': candidate.candidate,
+        'sdpMid': candidate.sdpMid,
+        'sdpMLineIndex': candidate.sdpMLineIndex,
+      });
+    };
+
+    final roomDoc = await roomRef.get();
+    if (!roomDoc.exists) {
+      throw Exception('Oda bulunamadı.');
+    }
+
+    final offer = roomDoc.data()?['offer'];
+    if (offer != null) {
+      await _peerConnection?.setRemoteDescription(
+        RTCSessionDescription(offer['sdp'], offer['type']),
+      );
+    }
+
+    final answer = await _peerConnection?.createAnswer();
+    await _peerConnection?.setLocalDescription(answer!);
+
+    await roomRef.update({
+      'answer': {
+        'type': answer!.type,
+        'sdp': answer.sdp,
+      }
+    });
+
+    roomRef.collection('caller_candidates').snapshots().listen((snapshot) {
+      for (var change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          final data = change.doc.data() as Map<String, dynamic>;
+          _peerConnection?.addCandidate(
+            RTCIceCandidate(
+              data['candidate'],
+              data['sdpMid'],
+              data['sdpMLineIndex'],
+            ),
+          );
+        }
+      }
+    });
+  }
+
+  void _toggleMic() {
+    if (_localStream != null) {
+      final audioTrack = _localStream!.getAudioTracks().first;
+      audioTrack.enabled = !audioTrack.enabled;
+      setState(() {
+        _isMicMuted = !audioTrack.enabled;
+      });
+    }
+  }
+
+  void _switchCamera() async {
+    if (_localStream != null) {
+      final videoTrack = _localStream!.getVideoTracks().first;
+      await Helper.switchCamera(videoTrack);
+      setState(() {
+        _isCameraFront = !_isCameraFront;
+      });
+    }
   }
 
   Future<void> _endCall() async {
-    await _room?.disconnect();
+    await _localStream?.dispose();
+    await _peerConnection?.close();
+    await _peerConnection?.dispose();
+    await _localRenderer.dispose();
+    await _remoteRenderer.dispose();
+
     if (!widget.isAdmin) {
-      await _firestore.collection('bs_bib_calls').doc(widget.roomId).update({
-        'status': 'ended',
-        'endedAt': FieldValue.serverTimestamp(),
-      }).catchError((_) {});
+      final roomRef = _firestore.collection('bs_bib_calls').doc(widget.roomId);
+
+      final callerCandidates = await roomRef.collection('caller_candidates').get();
+      for (var doc in callerCandidates.docs) {
+        await doc.reference.delete();
+      }
+
+      final calleeCandidates = await roomRef.collection('callee_candidates').get();
+      for (var doc in calleeCandidates.docs) {
+        await doc.reference.delete();
+      }
+
+      await roomRef.delete();
     }
+
     if (mounted) {
       Navigator.pop(context);
     }
@@ -191,13 +276,17 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
 
   @override
   void dispose() {
-    _room?.disconnect();
+    _localStream?.dispose();
+    _peerConnection?.close();
+    _peerConnection?.dispose();
+    _localRenderer.dispose();
+    _remoteRenderer.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isConnecting) {
+    if (_isConnecting && _remoteRenderer.srcObject == null) {
       return Scaffold(
         backgroundColor: Colors.black,
         body: Center(
@@ -250,19 +339,36 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Video Area
-            if (widget.isAdmin && _remoteVideoTrack != null)
-               _isFrozen
-                ? const Center(child: Text("Görüntü Donduruldu", style: TextStyle(color: Colors.yellow, fontSize: 24, fontWeight: FontWeight.bold)))
-                : Positioned.fill(
-                    child: VideoTrackRenderer(_remoteVideoTrack!),
-                  )
-            else if (!widget.isAdmin && _room?.localParticipant?.videoTrackPublications.isNotEmpty == true)
-               Positioned.fill(
-                   child: VideoTrackRenderer(_room!.localParticipant!.videoTrackPublications.first.track as VideoTrack),
-               )
-            else
-               const Center(child: Text('Görüntü Bekleniyor...', style: TextStyle(color: Colors.white))),
+            // Remote Video Area (Full Screen)
+            Positioned.fill(
+              child: RTCVideoView(
+                _remoteRenderer,
+                objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+              ),
+            ),
+
+            // Local Video Area (PiP)
+            Positioned(
+              right: 20,
+              bottom: 120,
+              child: Container(
+                width: 100,
+                height: 150,
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: RTCVideoView(
+                    _localRenderer,
+                    mirror: _isCameraFront,
+                    objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                  ),
+                ),
+              ),
+            ),
 
             // Controls
             Positioned(
@@ -270,31 +376,47 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
               left: 0,
               right: 0,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  if (widget.isAdmin && _remoteVideoTrack != null)
-                     ElevatedButton.icon(
-                        onPressed: () {
-                           setState(() {
-                              _isFrozen = !_isFrozen;
-                           });
-                        },
-                        icon: Icon(_isFrozen ? Icons.play_arrow : Icons.pause),
-                        label: Text(_isFrozen ? 'Görüntüyü Çöz' : 'Görüntüyü Dondur'),
-                        style: ElevatedButton.styleFrom(
-                           backgroundColor: Colors.blue,
-                           foregroundColor: Colors.white,
-                        )
-                     ),
-                  const SizedBox(width: 20),
+                  Semantics(
+                    label: _isMicMuted ? 'Mikrofonu Aç' : 'Mikrofonu Kapat',
+                    child: CircleAvatar(
+                      radius: 25,
+                      backgroundColor: _isMicMuted ? Colors.red : Colors.white24,
+                      child: IconButton(
+                        icon: Icon(
+                          _isMicMuted ? Icons.mic_off : Icons.mic,
+                          color: Colors.white,
+                        ),
+                        onPressed: _toggleMic,
+                      ),
+                    ),
+                  ),
+                  Semantics(
+                    label: 'Kamerayı Çevir',
+                    child: CircleAvatar(
+                      radius: 25,
+                      backgroundColor: Colors.white24,
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.switch_camera,
+                          color: Colors.white,
+                        ),
+                        onPressed: _switchCamera,
+                      ),
+                    ),
+                  ),
                   ElevatedButton(
                     onPressed: _endCall,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                     ),
-                    child: const Text('Aramayı Sonlandır', style: TextStyle(fontSize: 18)),
+                    child: const Text('Aramayı Sonlandır', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
