@@ -402,10 +402,14 @@ class _SquareScreenState extends State<SquareScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('BS Meydan')),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _showNewPostDialog,
         backgroundColor: Colors.yellow,
-        child: const Icon(Icons.edit, color: Colors.black),
+        icon: const Icon(Icons.edit, color: Colors.black),
+        label: const Text(
+          'Yeni Gönderi Oluştur',
+          style: TextStyle(color: Colors.black),
+        ),
       ),
       body: Column(
         children: [

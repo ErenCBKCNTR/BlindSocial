@@ -101,31 +101,27 @@ class _LiveRadioPlayerScreenState extends State<LiveRadioPlayerScreen> {
                         child: CircularProgressIndicator(),
                       )
                     else
-                      Semantics(
-                        label: playing ? "Radyoyu Durdur" : "Radyoyu Başlat",
-                        button: true,
-                        child: IconButton(
-                          icon: Icon(playing ? Icons.pause_circle_filled : Icons.play_circle_filled),
-                          color: Theme.of(context).colorScheme.primary,
-                          iconSize: 80,
-                          onPressed: () {
-                            if (playing) {
-                              audioHandler.pause();
-                            } else {
-                              audioHandler.play();
-                            }
-                          },
+                      TextButton.icon(
+                        icon: Icon(playing ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 40),
+                        label: Text(playing ? "Radyoyu Durdur" : "Radyoyu Başlat", style: const TextStyle(fontSize: 18)),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Theme.of(context).colorScheme.primary,
                         ),
+                        onPressed: () {
+                          if (playing) {
+                            audioHandler.pause();
+                          } else {
+                            audioHandler.play();
+                          }
+                        },
                       ),
-                    Semantics(
-                      label: "Yayını Kapat",
-                      button: true,
-                      child: IconButton(
-                        icon: const Icon(Icons.stop_circle_outlined),
-                        color: Theme.of(context).colorScheme.error,
-                        iconSize: 80,
-                        onPressed: _stopRadio,
+                    TextButton.icon(
+                      icon: const Icon(Icons.stop_circle_outlined, size: 40),
+                      label: const Text("Yayını Kapat", style: TextStyle(fontSize: 18)),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
                       ),
+                      onPressed: _stopRadio,
                     ),
                   ],
                 );
