@@ -92,17 +92,17 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
     final diff = now.difference(date);
 
     if (diff.inSeconds < 60) {
-      return '${diff.inSeconds}s önce';
+      return '${diff.inSeconds} saniye önce';
     } else if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}d önce';
+      return '${diff.inMinutes} dakika önce';
     } else if (diff.inHours < 24) {
-      return '${diff.inHours}s önce';
+      return '${diff.inHours} saat önce';
     } else if (diff.inDays < 30) {
-      return '${diff.inDays}g önce';
+      return '${diff.inDays} gün önce';
     } else if (diff.inDays < 365) {
-      return '${diff.inDays ~/ 30}a önce';
+      return '${diff.inDays ~/ 30} ay önce';
     } else {
-      return '${diff.inDays ~/ 365}y önce';
+      return '${diff.inDays ~/ 365} yıl önce';
     }
   }
 

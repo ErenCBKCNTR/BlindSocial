@@ -597,6 +597,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('Sohbet Odaları'),
         leading: _isProfileIncomplete
@@ -727,24 +728,6 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       );
                     },
                   ),
-                  ListTile(
-                    leading: Icon(
-                      Icons.person,
-                      color: Theme.of(context).colorScheme.secondary,
-                      size: 30,
-                    ),
-                    title: Text(
-                      'Hesabım',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontSize: 22,
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, '/profile');
-                    },
-                  ),
                   if (_userRole == 0)
                     ListTile(
                       leading: Icon(
@@ -829,6 +812,97 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       ],
                     ),
                   ),
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: AspectRatio(
+                              aspectRatio: 1.0,
+                              child: Card(
+                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.pushNamed(context, '/profile');
+                                  },
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.person,
+                                        size: 40,
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Hesabım',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (_userRole != 0) ...[
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: AspectRatio(
+                                aspectRatio: 1.0,
+                                child: Card(
+                                  color: Colors.redAccent,
+                                  clipBehavior: Clip.antiAlias,
+                                  child: InkWell(
+                                    onTap: () async {
+                                      Navigator.pop(context);
+                                      final hasPermissions = await PermissionManager.requestBsBibPermissions(context);
+                                      if (!hasPermissions) return;
+                                      if (!context.mounted) return;
+                                      final roomId = 'BIB_${_auth.currentUser?.uid}_${DateTime.now().millisecondsSinceEpoch}';
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => BSBibCallScreen(roomId: roomId, isAdmin: false),
+                                        ),
+                                      );
+                                    },
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.support_agent,
+                                          size: 40,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const Text(
+                                          'BS BiB\nÇağrı',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -838,30 +912,6 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                if (_userRole == 2)
-                  FloatingActionButton.extended(
-                    heroTag: 'bs_bib_btn',
-                    onPressed: () async {
-                      final hasPermissions = await PermissionManager.requestBsBibPermissions(context);
-                      if (!hasPermissions) return;
-
-                      if (!context.mounted) return;
-
-                      final roomId = 'BIB_${_auth.currentUser?.uid}_${DateTime.now().millisecondsSinceEpoch}';
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => BSBibCallScreen(roomId: roomId, isAdmin: false),
-                        ),
-                      );
-                    },
-                    backgroundColor: Colors.redAccent,
-                    icon: const Icon(Icons.support_agent, color: Colors.white, size: 30),
-                    label: const Text(
-                      'BS BiB - Canlı Destek İste',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
                 if (_userRole == 2) const SizedBox(height: 16),
                 FloatingActionButton.extended(
                   heroTag: 'create_room_btn',

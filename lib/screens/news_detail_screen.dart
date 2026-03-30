@@ -98,46 +98,39 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                         color: Colors.white,
                       ),
                     ),
+                    if (hasList) ...[
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _currentIndex > 0 ? _goToPrevious : null,
+                              icon: const Icon(Icons.arrow_back),
+                              label: const Text('Önceki Haber'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _currentIndex < widget.newsList.length - 1 ? _goToNext : null,
+                              icon: const Icon(Icons.arrow_forward),
+                              label: const Text('Sonraki Haber'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
           ),
-          if (hasList)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Semantics(
-                    label: "Bir önceki habere geçiş yap",
-                    button: true,
-                    enabled: _currentIndex > 0,
-                    child: ElevatedButton.icon(
-                      onPressed: _currentIndex > 0 ? _goToPrevious : null,
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text('Önceki Haber'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                    ),
-                  ),
-                  Semantics(
-                    label: "Sıradaki haberi oku",
-                    button: true,
-                    enabled: _currentIndex < widget.newsList.length - 1,
-                    child: ElevatedButton.icon(
-                      onPressed: _currentIndex < widget.newsList.length - 1 ? _goToNext : null,
-                      icon: const Icon(Icons.arrow_forward),
-                      label: const Text('Sonraki Haber'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
