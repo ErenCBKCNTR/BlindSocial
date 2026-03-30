@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
-import 'package:video_player/video_player.dart';
-import 'package:chewie/chewie.dart';
-import 'package:audio_service/audio_service.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
+import 'live_radio_player_screen.dart';
 import '../services/audio_handler.dart';
 
 class LiveMediaScreen extends StatefulWidget {
@@ -19,10 +18,8 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
   bool isLoadingRadios = true;
   bool isLoadingTvs = true;
 
-  int? _playingRadioIndex;
-
-  VideoPlayerController? _videoPlayerController;
-  ChewieController? _chewieController;
+  Player? _player;
+  VideoController? _videoController;
   int? _playingTvIndex;
 
   @override
@@ -41,14 +38,14 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
   Future<void> _fetchRadios() async {
     final List<Map<String, String>> predefinedRadios = [
       {'name': 'Alem FM', 'url': 'http://scturkmedya.radyotvonline.com/stream/80/'},
-      {'name': 'Best FM', 'url': 'http://46.20.7.126/bestfm'},
       {'name': 'JoyTürk', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_TURK_SC'},
-      {'name': 'Kral FM', 'url': 'https://kralfm.radyotvonline.net/kralfm'},
+      {'name': 'Joy FM', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_FM_SC'},
+      {'name': 'Kafa Radyo', 'url': 'https://moondigitaledge.radyotvonline.net/kafaradyo/playlist.m3u8'},
       {'name': 'Metro FM', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/METRO_FM_SC'},
+      {'name': 'NTV Radyo', 'url': 'https://moondigitaledge.radyotvonline.net/ntvradyo/playlist.m3u8'},
+      {'name': 'Pal FM', 'url': 'https://moondigitaledge.radyotvonline.net/palfm/playlist.m3u8'},
       {'name': 'PowerTürk', 'url': 'https://listen.powerapp.com.tr/powerturk/mpeg/icecast.audio'},
-      {'name': 'Radyo Fenomen', 'url': 'https://listen.radyofenomen.com/fenomen/128/icecast.audio'},
       {'name': 'Süper FM', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/SUPER_FM_SC'},
-      {'name': 'TRT FM', 'url': 'http://trtcanlifm-lh.akamaihd.net/i/TRTFM_1@182346/master.m3u8'},
       {'name': 'Virgin Radio', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/VIRGIN_RADIO_SC'}
     ];
 
@@ -62,16 +59,14 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
 
   Future<void> _fetchTvs() async {
     final List<Map<String, String>> predefinedTvs = [
-      {'name': 'ATV', 'url': 'https://video.haber7.com/video_player/livestream/atv.m3u8'},
-      {'name': 'CNN Türk', 'url': 'https://live.dogannet.tv/S2/HLS_LIVE/cnnturk/cnnturk.m3u8'},
-      {'name': 'HaberTürk', 'url': 'https://ciner-live.ercdn.net/haberturk/haberturk.m3u8'},
-      {'name': 'Kanal D', 'url': 'https://live.dogannet.tv/S1/HLS_LIVE/kanaldnp/track_4000/chunklist.m3u8'},
-      {'name': 'NTV', 'url': 'https://ntv-live-nmd1.sozcu.com.tr/out/v1/a29e4ba6f5ed42fe8bd320dae278f24b/index.m3u8'},
-      {'name': 'Now TV', 'url': 'https://tr-now.ercdn.net/now/now_720p.m3u8'},
-      {'name': 'Show TV', 'url': 'https://ciner-live.ercdn.net/showtv/showtv.m3u8'},
-      {'name': 'Star TV', 'url': 'https://dogus-live.ercdn.net/startv/startv_720p.m3u8'},
       {'name': 'TRT 1', 'url': 'https://tv-trt1.medya.trt.com.tr/master_720.m3u8'},
-      {'name': 'TV8', 'url': 'https://tv8-live.ercdn.net/tv8/tv8_720p.m3u8'}
+      {'name': 'TRT Haber', 'url': 'https://tv-trthaber.medya.trt.com.tr/master_720.m3u8'},
+      {'name': 'TRT Müzik', 'url': 'https://tv-trtmuzik.medya.trt.com.tr/master_720.m3u8'},
+      {'name': 'TRT Çocuk', 'url': 'https://tv-trtcocuk.medya.trt.com.tr/master_720.m3u8'},
+      {'name': 'TRT Kurdî', 'url': 'https://tv-trtkurdi.medya.trt.com.tr/master_720.m3u8'},
+      {'name': 'TRT Türk', 'url': 'https://tv-trtturk.medya.trt.com.tr/master_720.m3u8'},
+      {'name': 'TRT Avaz', 'url': 'https://tv-trtavaz.medya.trt.com.tr/master_720.m3u8'},
+      {'name': 'TRT World', 'url': 'https://tv-trtworld.medya.trt.com.tr/master_720.m3u8'}
     ];
 
     predefinedTvs.sort((a, b) => a['name']!.compareTo(b['name']!));
@@ -84,48 +79,10 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
 
   @override
   void dispose() {
-    _videoPlayerController?.dispose();
-    _chewieController?.dispose();
+    _player?.dispose();
     super.dispose();
   }
 
-  Future<void> _playRadio(int index) async {
-    try {
-      if (_playingRadioIndex == index) {
-        if (audioHandler.player.playing) {
-          await audioHandler.pause();
-        } else {
-          await audioHandler.play();
-        }
-        setState(() {});
-        return;
-      }
-
-      // Stop TV if playing
-      _stopTv();
-
-      setState(() {
-        _playingRadioIndex = index;
-      });
-      await audioHandler.stop();
-      final item = MediaItem(
-        id: radioList[index]['url']!,
-        title: radioList[index]['name']!,
-        artist: 'Blind Social Live Radio',
-      );
-      await audioHandler.setUrl(radioList[index]['url']!, mediaItem: item);
-      await audioHandler.play();
-    } catch (e) {
-      debugPrint("Radio Play Error: $e");
-    }
-  }
-
-  void _stopRadio() {
-    audioHandler.stop();
-    setState(() {
-      _playingRadioIndex = null;
-    });
-  }
 
   Future<void> _playTv(int index) async {
     try {
@@ -135,7 +92,7 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
       }
 
       // Stop radio if playing
-      _stopRadio();
+      audioHandler.stop();
 
       // Stop previous TV
       _stopTv();
@@ -144,34 +101,28 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
         _playingTvIndex = index;
       });
 
-      _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(tvList[index]['url']!));
-      await _videoPlayerController!.initialize();
-      _chewieController = ChewieController(
-        videoPlayerController: _videoPlayerController!,
-        autoPlay: true,
-        looping: true,
-        isLive: true,
-        showControls: false, // We'll use custom controls below the player
-        errorBuilder: (context, errorMessage) {
-          return Center(
-            child: Text(
-              errorMessage,
-              style: const TextStyle(color: Colors.white),
-            ),
-          );
-        },
-      );
+      _player = Player();
+      _videoController = VideoController(_player!);
+
+      await _player!.open(Media(tvList[index]['url']!));
+      await _player!.play();
+
       setState(() {});
     } catch (e) {
       debugPrint("TV Play Error: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Yayın şu an kullanılamıyor')),
+        );
+      }
+      _stopTv();
     }
   }
 
   void _stopTv() {
-    _chewieController?.dispose();
-    _chewieController = null;
-    _videoPlayerController?.dispose();
-    _videoPlayerController = null;
+    _player?.dispose();
+    _player = null;
+    _videoController = null;
     setState(() {
       _playingTvIndex = null;
     });
@@ -219,55 +170,17 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: radioList.length,
                 itemBuilder: (context, index) {
-                  final isPlaying = _playingRadioIndex == index;
-                  return StreamBuilder<PlaybackState>(
-                    stream: audioHandler.playbackState,
-                    builder: (context, snapshot) {
-                      final state = snapshot.data;
-                      final playing = state?.playing ?? false;
-                      final isAudioPlaying = isPlaying && playing;
-
-                      return ExpansionTile(
-                        leading: const Icon(Icons.headset),
-                        title: Text(radioList[index]['name']!, style: const TextStyle(fontSize: 18)),
-                        trailing: Icon(isAudioPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, size: 36, color: Theme.of(context).colorScheme.secondary),
-                        onExpansionChanged: (expanded) {
-                          if (expanded) {
-                            _playRadio(index);
-                          }
-                        },
-                        children: [
-                          if (isPlaying)
-                            Container(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              padding: const EdgeInsets.all(16.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Semantics(
-                                    label: isAudioPlaying ? "Radyoyu Durdur" : "Radyoyu Başlat",
-                                    button: true,
-                                    child: IconButton(
-                                      icon: Icon(isAudioPlaying ? Icons.pause : Icons.play_arrow),
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      iconSize: 40,
-                                      onPressed: () => _playRadio(index),
-                                    ),
-                                  ),
-                                  Semantics(
-                                    label: "Yayını Kapat",
-                                    button: true,
-                                    child: IconButton(
-                                      icon: const Icon(Icons.stop),
-                                      color: Theme.of(context).colorScheme.error,
-                                      iconSize: 40,
-                                      onPressed: _stopRadio,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                        ],
+                  return ListTile(
+                    leading: const Icon(Icons.headset),
+                    title: Text(radioList[index]['name']!, style: const TextStyle(fontSize: 18)),
+                    trailing: Icon(Icons.chevron_right, size: 36, color: Theme.of(context).colorScheme.secondary),
+                    onTap: () {
+                      _stopTv();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LiveRadioPlayerScreen(radio: radioList[index]),
+                        ),
                       );
                     },
                   );
@@ -326,8 +239,26 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
                             Container(
                               height: 200,
                               color: Colors.black,
-                              child: _chewieController != null && _chewieController!.videoPlayerController.value.isInitialized
-                                  ? Chewie(controller: _chewieController!)
+                              child: _videoController != null
+                                  ? Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        Video(
+                                          controller: _videoController!,
+                                          controls: NoVideoControls,
+                                        ),
+                                        StreamBuilder<bool>(
+                                          stream: _player?.stream.buffering,
+                                          builder: (context, snapshot) {
+                                            final isBuffering = snapshot.data ?? true;
+                                            if (isBuffering) {
+                                              return const CircularProgressIndicator();
+                                            }
+                                            return const SizedBox.shrink();
+                                          },
+                                        ),
+                                      ],
+                                    )
                                   : const Center(child: CircularProgressIndicator()),
                             ),
                             Container(
@@ -336,28 +267,27 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  Semantics(
-                                    label: "Televizyonu Durdur/Başlat",
-                                    button: true,
-                                    child: IconButton(
-                                      icon: Icon(
-                                        _videoPlayerController?.value.isPlaying ?? false
-                                            ? Icons.pause
-                                            : Icons.play_arrow
-                                      ),
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      iconSize: 40,
-                                      onPressed: () {
-                                        if (_videoPlayerController != null) {
-                                          if (_videoPlayerController!.value.isPlaying) {
-                                            _videoPlayerController!.pause();
-                                          } else {
-                                            _videoPlayerController!.play();
-                                          }
-                                          setState(() {});
-                                        }
-                                      },
-                                    ),
+                                  StreamBuilder<bool>(
+                                    stream: _player?.stream.playing,
+                                    builder: (context, snapshot) {
+                                      final playing = snapshot.data ?? false;
+                                      return Semantics(
+                                        label: playing ? "Televizyonu Durdur" : "Televizyonu Başlat",
+                                        button: true,
+                                        child: IconButton(
+                                          icon: Icon(
+                                            playing ? Icons.pause : Icons.play_arrow
+                                          ),
+                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          iconSize: 40,
+                                          onPressed: () {
+                                            if (_player != null) {
+                                              _player!.playOrPause();
+                                            }
+                                          },
+                                        ),
+                                      );
+                                    },
                                   ),
                                   Semantics(
                                     label: "Yayını Kapat",
