@@ -3,6 +3,8 @@ import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class LiveMediaScreen extends StatefulWidget {
   const LiveMediaScreen({super.key});
@@ -12,32 +14,25 @@ class LiveMediaScreen extends StatefulWidget {
 }
 
 class _LiveMediaScreenState extends State<LiveMediaScreen> {
-  final List<Map<String, String>> radioList = [
-    {'name': 'TRT FM', 'url': 'https://trtcanlifm-s3.mncdn.com/trtfm/trtfm.stream/playlist.m3u8'},
-    {'name': 'Kral FM', 'url': 'http://46.20.3.204:80/kralfm'},
-    {'name': 'JoyTürk', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_TURK_SC'},
-    {'name': 'NTV Radyo', 'url': 'http://ntvradyo.medyacdn.com/ntvradyo/ntvradyo_1/playlist.m3u8'},
-    {'name': 'TRT Spor', 'url': 'https://trtcanlifm-s3.mncdn.com/trtsporradyo/trtsporradyo.stream/playlist.m3u8'},
-    {'name': 'TRT Müzik', 'url': 'https://tv-trtmuzik.medya.trt.com.tr/master.m3u8'},
-    {'name': 'Süper FM', 'url': 'https://listen.karnaval.com/superfm128.mp3'},
-    {'name': 'Alem FM', 'url': 'http://scturkey.com:8010/;stream.mp3'},
-  ];
-
-  final List<Map<String, String>> tvList = [
-    {'name': 'TRT 1', 'url': 'https://tv-trt1.medya.trt.com.tr/master.m3u8'},
-    {'name': 'TRT Haber', 'url': 'https://tv-trthaber.medya.trt.com.tr/master.m3u8'},
-    {'name': 'TRT Belgesel', 'url': 'https://tv-trtbelgesel.medya.trt.com.tr/master.m3u8'},
-    {'name': 'HaberTürk', 'url': 'https://ciner-live.daioncdn.net/haberturk/haberturk.m3u8'},
-  ];
+  List<Map<String, String>> radioList = [];
+  List<Map<String, String>> tvList = [];
+  bool isLoadingRadios = true;
+  bool isLoadingTvs = true;
 
   late AudioPlayer _audioPlayer;
   int? _playingRadioIndex;
+
+  VideoPlayerController? _videoPlayerController;
+  ChewieController? _chewieController;
+  int? _playingTvIndex;
 
   @override
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
     _initAudioSession();
+    _fetchRadios();
+    _fetchTvs();
   }
 
   Future<void> _initAudioSession() async {
@@ -45,9 +40,80 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
     await session.configure(const AudioSessionConfiguration.music());
   }
 
+  Future<void> _fetchRadios() async {
+    try {
+      final response = await http.get(Uri.parse('http://de1.api.radio-browser.info/json/stations/search?countrycode=TR&limit=20'));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          radioList = data.map((item) {
+            return {
+              'name': (item['name'] ?? 'İsimsiz Radyo').toString().trim(),
+              'url': item['url'].toString()
+            };
+          }).toList();
+          isLoadingRadios = false;
+        });
+      } else {
+        setState(() {
+          isLoadingRadios = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Radio fetch error: $e");
+      setState(() {
+        isLoadingRadios = false;
+      });
+    }
+  }
+
+  Future<void> _fetchTvs() async {
+    try {
+      final response = await http.get(Uri.parse('https://iptv-org.github.io/iptv/countries/tr.m3u'));
+      if (response.statusCode == 200) {
+        final lines = response.body.split('\n');
+        List<Map<String, String>> parsedList = [];
+        String? currentName;
+
+        for (final line in lines) {
+          if (line.startsWith('#EXTINF:')) {
+            final commaIndex = line.indexOf(',');
+            if (commaIndex != -1) {
+              currentName = line.substring(commaIndex + 1).trim();
+            }
+          } else if (line.isNotEmpty && !line.startsWith('#')) {
+            if (currentName != null) {
+              parsedList.add({
+                'name': currentName,
+                'url': line.trim(),
+              });
+              currentName = null;
+            }
+          }
+        }
+
+        setState(() {
+          tvList = parsedList.take(20).toList(); // Limit to 20 for performance
+          isLoadingTvs = false;
+        });
+      } else {
+        setState(() {
+          isLoadingTvs = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("TV fetch error: $e");
+      setState(() {
+        isLoadingTvs = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _audioPlayer.dispose();
+    _videoPlayerController?.dispose();
+    _chewieController?.dispose();
     super.dispose();
   }
 
@@ -63,6 +129,9 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
         return;
       }
 
+      // Stop TV if playing
+      _stopTv();
+
       setState(() {
         _playingRadioIndex = index;
       });
@@ -70,112 +139,83 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
       await _audioPlayer.setUrl(radioList[index]['url']!);
       await _audioPlayer.play();
     } catch (e) {
-      debugPrint("Radio Play Error: \$e");
+      debugPrint("Radio Play Error: $e");
     }
   }
 
-  void _openTvPlayer(BuildContext context, String title, String url) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TvPlayerScreen(title: title, url: url),
-      ),
-    );
+  void _stopRadio() {
+    _audioPlayer.stop();
+    setState(() {
+      _playingRadioIndex = null;
+    });
+  }
+
+  Future<void> _playTv(int index) async {
+    try {
+      if (_playingTvIndex == index) {
+        // Just expanding/collapsing logic handles play state
+        return;
+      }
+
+      // Stop radio if playing
+      _stopRadio();
+
+      // Stop previous TV
+      _stopTv();
+
+      setState(() {
+        _playingTvIndex = index;
+      });
+
+      _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(tvList[index]['url']!));
+      await _videoPlayerController!.initialize();
+      _chewieController = ChewieController(
+        videoPlayerController: _videoPlayerController!,
+        autoPlay: true,
+        looping: true,
+        isLive: true,
+        showControls: false, // We'll use custom controls below the player
+        errorBuilder: (context, errorMessage) {
+          return Center(
+            child: Text(
+              errorMessage,
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        },
+      );
+      setState(() {});
+    } catch (e) {
+      debugPrint("TV Play Error: $e");
+    }
+  }
+
+  void _stopTv() {
+    _chewieController?.dispose();
+    _chewieController = null;
+    _videoPlayerController?.dispose();
+    _videoPlayerController = null;
+    setState(() {
+      _playingTvIndex = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Canlı Yayın')),
-      body: SingleChildScrollView(
+      body: ListView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildRadioCard(),
-            const SizedBox(height: 20),
-            _buildTvCard(),
-          ],
-        ),
-      ),
-      bottomNavigationBar: _playingRadioIndex != null ? _buildMiniPlayer() : null,
-    );
-  }
-
-  Widget _buildMiniPlayer() {
-    return Container(
-      color: Theme.of(context).colorScheme.surfaceVariant,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: SafeArea(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                radioList[_playingRadioIndex!]['name']!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Semantics(
-                  label: _audioPlayer.playing ? "Radyoyu Durdur" : "Radyoyu Başlat",
-                  button: true,
-                  child: IconButton(
-                    icon: Icon(_audioPlayer.playing ? Icons.pause : Icons.play_arrow),
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    iconSize: 32,
-                    onPressed: () {
-                      if (_audioPlayer.playing) {
-                        _audioPlayer.pause();
-                      } else {
-                        _audioPlayer.play();
-                      }
-                      setState(() {});
-                    },
-                  ),
-                ),
-                Semantics(
-                  label: "Yayını Kapat",
-                  button: true,
-                  child: IconButton(
-                    icon: const Icon(Icons.stop),
-                    color: Theme.of(context).colorScheme.error,
-                    iconSize: 32,
-                    onPressed: () {
-                      _audioPlayer.stop();
-                      setState(() {
-                        _playingRadioIndex = null;
-                      });
-                    },
-                  ),
-                ),
-                Semantics(
-                  label: "Arka Plana Al",
-                  button: true,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_downward),
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    iconSize: 32,
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+        children: [
+          _buildRadioSection(),
+          const SizedBox(height: 20),
+          _buildTvSection(),
+        ],
       ),
     );
   }
 
-  Widget _buildRadioCard() {
+  Widget _buildRadioSection() {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -192,22 +232,70 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            ...List.generate(radioList.length, (index) {
-              final isPlaying = _playingRadioIndex == index && _audioPlayer.playing;
-              return ListTile(
-                leading: const Icon(Icons.headset),
-                title: Text(radioList[index]['name']!, style: const TextStyle(fontSize: 18)),
-                trailing: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, size: 36, color: Theme.of(context).colorScheme.secondary),
-                onTap: () => _playRadio(index),
-              );
-            }),
+            if (isLoadingRadios)
+              const Center(child: CircularProgressIndicator())
+            else if (radioList.isEmpty)
+              const Center(child: Text("Radyo kanalları bulunamadı."))
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: radioList.length,
+                itemBuilder: (context, index) {
+                  final isPlaying = _playingRadioIndex == index;
+                  final isAudioPlaying = isPlaying && _audioPlayer.playing;
+
+                  return ExpansionTile(
+                    leading: const Icon(Icons.headset),
+                    title: Text(radioList[index]['name']!, style: const TextStyle(fontSize: 18)),
+                    trailing: Icon(isAudioPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, size: 36, color: Theme.of(context).colorScheme.secondary),
+                    onExpansionChanged: (expanded) {
+                      if (expanded) {
+                        _playRadio(index);
+                      }
+                    },
+                    children: [
+                      if (isPlaying)
+                        Container(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Semantics(
+                                label: isAudioPlaying ? "Radyoyu Durdur" : "Radyoyu Başlat",
+                                button: true,
+                                child: IconButton(
+                                  icon: Icon(isAudioPlaying ? Icons.pause : Icons.play_arrow),
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  iconSize: 40,
+                                  onPressed: () => _playRadio(index),
+                                ),
+                              ),
+                              Semantics(
+                                label: "Yayını Kapat",
+                                button: true,
+                                child: IconButton(
+                                  icon: const Icon(Icons.stop),
+                                  color: Theme.of(context).colorScheme.error,
+                                  iconSize: 40,
+                                  onPressed: _stopRadio,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                    ],
+                  );
+                },
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTvCard() {
+  Widget _buildTvSection() {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -224,77 +312,90 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            ...List.generate(tvList.length, (index) {
-              return ListTile(
-                leading: const Icon(Icons.live_tv),
-                title: Text(tvList[index]['name']!, style: const TextStyle(fontSize: 18)),
-                trailing: Icon(Icons.play_arrow, size: 36, color: Theme.of(context).colorScheme.secondary),
-                onTap: () => _openTvPlayer(context, tvList[index]['name']!, tvList[index]['url']!),
-              );
-            }),
+            if (isLoadingTvs)
+              const Center(child: CircularProgressIndicator())
+            else if (tvList.isEmpty)
+              const Center(child: Text("Televizyon kanalları bulunamadı."))
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: tvList.length,
+                itemBuilder: (context, index) {
+                  final isPlaying = _playingTvIndex == index;
+
+                  return ExpansionTile(
+                    leading: const Icon(Icons.live_tv),
+                    title: Text(tvList[index]['name']!, style: const TextStyle(fontSize: 18)),
+                    trailing: Icon(isPlaying ? Icons.tv_off : Icons.play_arrow, size: 36, color: Theme.of(context).colorScheme.secondary),
+                    onExpansionChanged: (expanded) {
+                      if (expanded) {
+                        _playTv(index);
+                      } else if (isPlaying) {
+                        _stopTv();
+                      }
+                    },
+                    children: [
+                      if (isPlaying)
+                        Column(
+                          children: [
+                            Container(
+                              height: 200,
+                              color: Colors.black,
+                              child: _chewieController != null && _chewieController!.videoPlayerController.value.isInitialized
+                                  ? Chewie(controller: _chewieController!)
+                                  : const Center(child: CircularProgressIndicator()),
+                            ),
+                            Container(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              padding: const EdgeInsets.all(16.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Semantics(
+                                    label: "Televizyonu Durdur/Başlat",
+                                    button: true,
+                                    child: IconButton(
+                                      icon: Icon(
+                                        _videoPlayerController?.value.isPlaying ?? false
+                                            ? Icons.pause
+                                            : Icons.play_arrow
+                                      ),
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      iconSize: 40,
+                                      onPressed: () {
+                                        if (_videoPlayerController != null) {
+                                          if (_videoPlayerController!.value.isPlaying) {
+                                            _videoPlayerController!.pause();
+                                          } else {
+                                            _videoPlayerController!.play();
+                                          }
+                                          setState(() {});
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                  Semantics(
+                                    label: "Yayını Kapat",
+                                    button: true,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.stop),
+                                      color: Theme.of(context).colorScheme.error,
+                                      iconSize: 40,
+                                      onPressed: _stopTv,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        )
+                    ],
+                  );
+                },
+              ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class TvPlayerScreen extends StatefulWidget {
-  final String title;
-  final String url;
-  const TvPlayerScreen({super.key, required this.title, required this.url});
-
-  @override
-  State<TvPlayerScreen> createState() => _TvPlayerScreenState();
-}
-
-class _TvPlayerScreenState extends State<TvPlayerScreen> {
-  late VideoPlayerController _videoPlayerController;
-  ChewieController? _chewieController;
-
-  @override
-  void initState() {
-    super.initState();
-    _initPlayer();
-  }
-
-  Future<void> _initPlayer() async {
-    _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(widget.url));
-    await _videoPlayerController.initialize();
-    _chewieController = ChewieController(
-      videoPlayerController: _videoPlayerController,
-      autoPlay: true,
-      looping: true,
-      isLive: true,
-      fullScreenByDefault: true,
-      errorBuilder: (context, errorMessage) {
-        return Center(
-          child: Text(
-            errorMessage,
-            style: const TextStyle(color: Colors.white),
-          ),
-        );
-      },
-    );
-    setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _videoPlayerController.dispose();
-    _chewieController?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
-      backgroundColor: Colors.black,
-      body: Center(
-        child: _chewieController != null && _chewieController!.videoPlayerController.value.isInitialized
-            ? Chewie(controller: _chewieController!)
-            : const CircularProgressIndicator(),
       ),
     );
   }

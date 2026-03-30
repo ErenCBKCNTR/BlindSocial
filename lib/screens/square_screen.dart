@@ -497,23 +497,32 @@ class _SquareScreenState extends State<SquareScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    IconButton(
-                                      icon: Icon(
-                                        isLiked
-                                            ? Icons.favorite
-                                            : Icons.favorite_border,
-                                        color: isLiked
-                                            ? Colors.red
-                                            : Colors.grey,
+                                    Semantics(
+                                      label: likeCount > 0
+                                          ? 'Gönderiyi beğen. Bu gönderiyi $likeCount kişi beğendi.'
+                                          : 'Gönderiyi beğen',
+                                      button: true,
+                                      child: IconButton(
+                                        tooltip: 'Gönderiyi beğen',
+                                        icon: Icon(
+                                          isLiked
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color: isLiked
+                                              ? Colors.red
+                                              : Colors.grey,
+                                        ),
+                                        onPressed: () =>
+                                            _toggleLike(doc.id, likes),
                                       ),
-                                      onPressed: () =>
-                                          _toggleLike(doc.id, likes),
                                     ),
-                                    Text(
-                                      '$likeCount',
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 16,
+                                    ExcludeSemantics(
+                                      child: Text(
+                                        '$likeCount',
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 16,
+                                        ),
                                       ),
                                     ),
                                   ],
