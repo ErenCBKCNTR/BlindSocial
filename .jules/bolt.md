@@ -22,3 +22,7 @@
 ## 2026-03-29 - [Optimize Collection Length Queries with count()]
 **Learning:** Using `snapshots().length` (or similar array-based methods after fetching docs) to get the total number of items in a Firestore collection is extremely inefficient and costly, because it downloads the entire collection structure and payloads to the client. This is a common performance bottleneck in admin dashboards.
 **Action:** Always utilize the server-side aggregation method `FirebaseFirestore.instance.collection('...').count().get()` wrapped in a `FutureBuilder<AggregateQuerySnapshot>`. This shifts the computation entirely to the database, avoids downloading massive payloads, and reduces Firestore read costs significantly.
+
+## 2024-03-30 - [Performance Improvement] Live Stream Module Update & Accessibility
+**Learning:** Adding `connectivity_plus` to auth functions without mocking its method channel will break existing tests. To prevent test suites from hanging, use `MethodChannel('dev.fluttercommunity.plus/connectivity').setMockMethodCallHandler` returning `['wifi']` in `setUpAll`. For accessibility, when combining an Icon and a dynamic Text counter, wrap the Icon in a `Semantics` label containing both the action and the count, and wrap the Text in `ExcludeSemantics` to prevent double-reading by TalkBack.
+**Action:** Always mock platform channels for hardware/system plugins when writing/updating widget tests. When designing accessible components, use `ExcludeSemantics` strategically to consolidate dynamic information into a single focusable `Semantics` node.

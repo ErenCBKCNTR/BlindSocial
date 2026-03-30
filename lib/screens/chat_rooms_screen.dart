@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import 'chat_screen.dart';
 import 'news_screen.dart';
 import 'bs_bib_call_screen.dart';
 import 'live_media_screen.dart';
+import 'radio_theater_screen.dart';
 import '../services/permission_manager.dart';
 
 class ChatRoomsScreen extends StatefulWidget {
@@ -594,9 +596,53 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
     );
   }
 
+  Future<void> _showExitConfirmation() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        title: Text(
+          'Çıkış',
+          style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        ),
+        content: Text(
+          'Uygulamadan çıkmak istediğinize emin misiniz?',
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Hayır',
+              style: TextStyle(color: Theme.of(context).colorScheme.secondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              SystemNavigator.pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(
+              'Evet',
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _showExitConfirmation();
+      },
+      child: Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('Sohbet Odaları'),
@@ -668,6 +714,24 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.pushNamed(context, '/square');
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      Icons.radio,
+                      color: Theme.of(context).colorScheme.secondary,
+                      size: 30,
+                    ),
+                    title: const Text(
+                      'Radyo Tiyatrosu',
+                      style: TextStyle(color: Colors.white, fontSize: 22),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const RadioTheaterScreen()),
+                      );
                     },
                   ),
                   ListTile(
@@ -1059,12 +1123,17 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (roomData['creatorId'] == _auth.currentUser?.uid)
-                            IconButton(
-                              icon: Icon(
-                                Icons.edit,
-                                color: Theme.of(context).colorScheme.secondary,
+                            Semantics(
+                              label: 'Odayı düzenle',
+                              button: true,
+                              child: IconButton(
+                                tooltip: 'Odayı düzenle',
+                                icon: Icon(
+                                  Icons.edit,
+                                  color: Theme.of(context).colorScheme.secondary,
+                                ),
+                                onPressed: () => _showEditRoomDialog(room),
                               ),
-                              onPressed: () => _showEditRoomDialog(room),
                             ),
                           Icon(
                             Icons.arrow_forward_ios,
@@ -1196,6 +1265,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 );
               },
             ),
+      ),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:math' as math;
 
 class RegisterScreen extends StatefulWidget {
@@ -64,6 +65,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult.contains(ConnectivityResult.none)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Lütfen internet bağlantınızı kontrol ediniz.')),
+        );
+      }
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
     if (_isUnderage && !_parentalConsent) {
       ScaffoldMessenger.of(context).showSnackBar(

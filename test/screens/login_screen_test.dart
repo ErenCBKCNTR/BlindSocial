@@ -4,6 +4,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
 
 import 'package:blind_social/screens/login_screen.dart';
 
@@ -12,6 +13,14 @@ class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 void main() {
   setUpAll(() {
     SharedPreferences.setMockInitialValues({});
+
+    // Mock the permission channel to prevent hangs/errors in Connectivity checks
+    const MethodChannel('dev.fluttercommunity.plus/connectivity').setMockMethodCallHandler((MethodCall methodCall) async {
+      if (methodCall.method == 'check') {
+        return ['wifi']; // Mock as connected
+      }
+      return null;
+    });
   });
 
   testWidgets('LoginScreen shows SnackBar with translated error on FirebaseAuthException', (WidgetTester tester) async {
