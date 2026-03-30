@@ -21,9 +21,11 @@ import 'screens/square_screen.dart';
 import 'widgets/global_background_wrapper.dart';
 import 'widgets/global_call_overlay.dart';
 import 'services/audio_handler.dart';
+import 'package:media_kit/media_kit.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   audioHandler = await initAudioService();
   runApp(const BlindSocialApp());
 }
