@@ -26,3 +26,7 @@
 ## 2024-03-30 - [Performance Improvement] Live Stream Module Update & Accessibility
 **Learning:** Adding `connectivity_plus` to auth functions without mocking its method channel will break existing tests. To prevent test suites from hanging, use `MethodChannel('dev.fluttercommunity.plus/connectivity').setMockMethodCallHandler` returning `['wifi']` in `setUpAll`. For accessibility, when combining an Icon and a dynamic Text counter, wrap the Icon in a `Semantics` label containing both the action and the count, and wrap the Text in `ExcludeSemantics` to prevent double-reading by TalkBack.
 **Action:** Always mock platform channels for hardware/system plugins when writing/updating widget tests. When designing accessible components, use `ExcludeSemantics` strategically to consolidate dynamic information into a single focusable `Semantics` node.
+
+## 2024-03-30 - Firestore Indexing & Unblocking UI
+**Learning:** Combining inequality (`where('field', isNotEqualTo: true)`) or multi-field equality (`where`) with `orderBy` on different fields requires a composite index, causing silent drops or StreamBuilder errors in production without it. Awaiting multiple Firebase deletes sequentially on close routines blocks the main UI thread during navigation.
+**Action:** Always prefer server-side sorting (`orderBy`) and filter data client-side in the `StreamBuilder` if the resulting dataset is small. For component teardown, dispatch asynchronous operations (like `collection.get().then(...)`) and allow `Navigator.pop()` to execute immediately to ensure UI fluidity.

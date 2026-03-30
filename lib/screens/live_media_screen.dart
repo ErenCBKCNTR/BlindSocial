@@ -3,8 +3,8 @@ import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:audio_service/audio_service.dart';
+import '../services/audio_handler.dart';
 
 class LiveMediaScreen extends StatefulWidget {
   const LiveMediaScreen({super.key});
@@ -19,7 +19,6 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
   bool isLoadingRadios = true;
   bool isLoadingTvs = true;
 
-  late AudioPlayer _audioPlayer;
   int? _playingRadioIndex;
 
   VideoPlayerController? _videoPlayerController;
@@ -29,7 +28,6 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
   @override
   void initState() {
     super.initState();
-    _audioPlayer = AudioPlayer();
     _initAudioSession();
     _fetchRadios();
     _fetchTvs();
@@ -41,77 +39,51 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
   }
 
   Future<void> _fetchRadios() async {
-    try {
-      final response = await http.get(Uri.parse('http://de1.api.radio-browser.info/json/stations/search?countrycode=TR&limit=20'));
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          radioList = data.map((item) {
-            return {
-              'name': (item['name'] ?? 'İsimsiz Radyo').toString().trim(),
-              'url': item['url'].toString()
-            };
-          }).toList();
-          isLoadingRadios = false;
-        });
-      } else {
-        setState(() {
-          isLoadingRadios = false;
-        });
-      }
-    } catch (e) {
-      debugPrint("Radio fetch error: $e");
-      setState(() {
-        isLoadingRadios = false;
-      });
-    }
+    final List<Map<String, String>> predefinedRadios = [
+      {'name': 'Alem FM', 'url': 'http://scturkmedya.radyotvonline.com/stream/80/'},
+      {'name': 'Best FM', 'url': 'http://46.20.7.126/bestfm'},
+      {'name': 'JoyTürk', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_TURK_SC'},
+      {'name': 'Kral FM', 'url': 'https://kralfm.radyotvonline.net/kralfm'},
+      {'name': 'Metro FM', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/METRO_FM_SC'},
+      {'name': 'PowerTürk', 'url': 'https://listen.powerapp.com.tr/powerturk/mpeg/icecast.audio'},
+      {'name': 'Radyo Fenomen', 'url': 'https://listen.radyofenomen.com/fenomen/128/icecast.audio'},
+      {'name': 'Süper FM', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/SUPER_FM_SC'},
+      {'name': 'TRT FM', 'url': 'http://trtcanlifm-lh.akamaihd.net/i/TRTFM_1@182346/master.m3u8'},
+      {'name': 'Virgin Radio', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/VIRGIN_RADIO_SC'}
+    ];
+
+    predefinedRadios.sort((a, b) => a['name']!.compareTo(b['name']!));
+
+    setState(() {
+      radioList = predefinedRadios;
+      isLoadingRadios = false;
+    });
   }
 
   Future<void> _fetchTvs() async {
-    try {
-      final response = await http.get(Uri.parse('https://iptv-org.github.io/iptv/countries/tr.m3u'));
-      if (response.statusCode == 200) {
-        final lines = response.body.split('\n');
-        List<Map<String, String>> parsedList = [];
-        String? currentName;
+    final List<Map<String, String>> predefinedTvs = [
+      {'name': 'ATV', 'url': 'https://video.haber7.com/video_player/livestream/atv.m3u8'},
+      {'name': 'CNN Türk', 'url': 'https://live.dogannet.tv/S2/HLS_LIVE/cnnturk/cnnturk.m3u8'},
+      {'name': 'HaberTürk', 'url': 'https://ciner-live.ercdn.net/haberturk/haberturk.m3u8'},
+      {'name': 'Kanal D', 'url': 'https://live.dogannet.tv/S1/HLS_LIVE/kanaldnp/track_4000/chunklist.m3u8'},
+      {'name': 'NTV', 'url': 'https://ntv-live-nmd1.sozcu.com.tr/out/v1/a29e4ba6f5ed42fe8bd320dae278f24b/index.m3u8'},
+      {'name': 'Now TV', 'url': 'https://tr-now.ercdn.net/now/now_720p.m3u8'},
+      {'name': 'Show TV', 'url': 'https://ciner-live.ercdn.net/showtv/showtv.m3u8'},
+      {'name': 'Star TV', 'url': 'https://dogus-live.ercdn.net/startv/startv_720p.m3u8'},
+      {'name': 'TRT 1', 'url': 'https://tv-trt1.medya.trt.com.tr/master_720.m3u8'},
+      {'name': 'TV8', 'url': 'https://tv8-live.ercdn.net/tv8/tv8_720p.m3u8'}
+    ];
 
-        for (final line in lines) {
-          if (line.startsWith('#EXTINF:')) {
-            final commaIndex = line.indexOf(',');
-            if (commaIndex != -1) {
-              currentName = line.substring(commaIndex + 1).trim();
-            }
-          } else if (line.isNotEmpty && !line.startsWith('#')) {
-            if (currentName != null) {
-              parsedList.add({
-                'name': currentName,
-                'url': line.trim(),
-              });
-              currentName = null;
-            }
-          }
-        }
+    predefinedTvs.sort((a, b) => a['name']!.compareTo(b['name']!));
 
-        setState(() {
-          tvList = parsedList.take(20).toList(); // Limit to 20 for performance
-          isLoadingTvs = false;
-        });
-      } else {
-        setState(() {
-          isLoadingTvs = false;
-        });
-      }
-    } catch (e) {
-      debugPrint("TV fetch error: $e");
-      setState(() {
-        isLoadingTvs = false;
-      });
-    }
+    setState(() {
+      tvList = predefinedTvs;
+      isLoadingTvs = false;
+    });
   }
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
     _videoPlayerController?.dispose();
     _chewieController?.dispose();
     super.dispose();
@@ -120,10 +92,10 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
   Future<void> _playRadio(int index) async {
     try {
       if (_playingRadioIndex == index) {
-        if (_audioPlayer.playing) {
-          await _audioPlayer.pause();
+        if (audioHandler.player.playing) {
+          await audioHandler.pause();
         } else {
-          await _audioPlayer.play();
+          await audioHandler.play();
         }
         setState(() {});
         return;
@@ -135,16 +107,21 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
       setState(() {
         _playingRadioIndex = index;
       });
-      await _audioPlayer.stop();
-      await _audioPlayer.setUrl(radioList[index]['url']!);
-      await _audioPlayer.play();
+      await audioHandler.stop();
+      final item = MediaItem(
+        id: radioList[index]['url']!,
+        title: radioList[index]['name']!,
+        artist: 'Blind Social Live Radio',
+      );
+      await audioHandler.setUrl(radioList[index]['url']!, mediaItem: item);
+      await audioHandler.play();
     } catch (e) {
       debugPrint("Radio Play Error: $e");
     }
   }
 
   void _stopRadio() {
-    _audioPlayer.stop();
+    audioHandler.stop();
     setState(() {
       _playingRadioIndex = null;
     });
@@ -243,49 +220,56 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
                 itemCount: radioList.length,
                 itemBuilder: (context, index) {
                   final isPlaying = _playingRadioIndex == index;
-                  final isAudioPlaying = isPlaying && _audioPlayer.playing;
+                  return StreamBuilder<PlaybackState>(
+                    stream: audioHandler.playbackState,
+                    builder: (context, snapshot) {
+                      final state = snapshot.data;
+                      final playing = state?.playing ?? false;
+                      final isAudioPlaying = isPlaying && playing;
 
-                  return ExpansionTile(
-                    leading: const Icon(Icons.headset),
-                    title: Text(radioList[index]['name']!, style: const TextStyle(fontSize: 18)),
-                    trailing: Icon(isAudioPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, size: 36, color: Theme.of(context).colorScheme.secondary),
-                    onExpansionChanged: (expanded) {
-                      if (expanded) {
-                        _playRadio(index);
-                      }
+                      return ExpansionTile(
+                        leading: const Icon(Icons.headset),
+                        title: Text(radioList[index]['name']!, style: const TextStyle(fontSize: 18)),
+                        trailing: Icon(isAudioPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, size: 36, color: Theme.of(context).colorScheme.secondary),
+                        onExpansionChanged: (expanded) {
+                          if (expanded) {
+                            _playRadio(index);
+                          }
+                        },
+                        children: [
+                          if (isPlaying)
+                            Container(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              padding: const EdgeInsets.all(16.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Semantics(
+                                    label: isAudioPlaying ? "Radyoyu Durdur" : "Radyoyu Başlat",
+                                    button: true,
+                                    child: IconButton(
+                                      icon: Icon(isAudioPlaying ? Icons.pause : Icons.play_arrow),
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      iconSize: 40,
+                                      onPressed: () => _playRadio(index),
+                                    ),
+                                  ),
+                                  Semantics(
+                                    label: "Yayını Kapat",
+                                    button: true,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.stop),
+                                      color: Theme.of(context).colorScheme.error,
+                                      iconSize: 40,
+                                      onPressed: _stopRadio,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                        ],
+                      );
                     },
-                    children: [
-                      if (isPlaying)
-                        Container(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Semantics(
-                                label: isAudioPlaying ? "Radyoyu Durdur" : "Radyoyu Başlat",
-                                button: true,
-                                child: IconButton(
-                                  icon: Icon(isAudioPlaying ? Icons.pause : Icons.play_arrow),
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  iconSize: 40,
-                                  onPressed: () => _playRadio(index),
-                                ),
-                              ),
-                              Semantics(
-                                label: "Yayını Kapat",
-                                button: true,
-                                child: IconButton(
-                                  icon: const Icon(Icons.stop),
-                                  color: Theme.of(context).colorScheme.error,
-                                  iconSize: 40,
-                                  onPressed: _stopRadio,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                    ],
                   );
                 },
               ),

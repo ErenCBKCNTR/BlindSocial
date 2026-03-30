@@ -247,6 +247,7 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
   }
 
   Future<void> _endCall() async {
+    _localStream?.getTracks().forEach((track) => track.stop());
     await _localStream?.dispose();
     await _peerConnection?.close();
     await _peerConnection?.dispose();
@@ -256,21 +257,23 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
     if (!widget.isAdmin) {
       final roomRef = _firestore.collection('bs_bib_calls').doc(widget.roomId);
 
-      final callerCandidates = await roomRef.collection('caller_candidates').get();
-      for (var doc in callerCandidates.docs) {
-        await doc.reference.delete();
-      }
+      roomRef.collection('caller_candidates').get().then((callerCandidates) {
+        for (var doc in callerCandidates.docs) {
+          doc.reference.delete();
+        }
+      });
 
-      final calleeCandidates = await roomRef.collection('callee_candidates').get();
-      for (var doc in calleeCandidates.docs) {
-        await doc.reference.delete();
-      }
+      roomRef.collection('callee_candidates').get().then((calleeCandidates) {
+        for (var doc in calleeCandidates.docs) {
+          doc.reference.delete();
+        }
+      });
 
-      await roomRef.delete();
+      roomRef.delete();
     }
 
     if (mounted) {
-      Navigator.pop(context);
+      Navigator.of(context).pop();
     }
   }
 
