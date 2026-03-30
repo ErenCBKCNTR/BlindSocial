@@ -9,6 +9,7 @@ class GlobalBackgroundWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        Container(color: Theme.of(context).scaffoldBackgroundColor),
         Center(
           child: IgnorePointer(
             child: Opacity(

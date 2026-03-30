@@ -17,6 +17,10 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
     {'name': 'Kral FM', 'url': 'http://46.20.3.204:80/kralfm'},
     {'name': 'JoyTürk', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_TURK_SC'},
     {'name': 'NTV Radyo', 'url': 'http://ntvradyo.medyacdn.com/ntvradyo/ntvradyo_1/playlist.m3u8'},
+    {'name': 'TRT Spor', 'url': 'https://trtcanlifm-s3.mncdn.com/trtsporradyo/trtsporradyo.stream/playlist.m3u8'},
+    {'name': 'TRT Müzik', 'url': 'https://tv-trtmuzik.medya.trt.com.tr/master.m3u8'},
+    {'name': 'Süper FM', 'url': 'https://listen.karnaval.com/superfm128.mp3'},
+    {'name': 'Alem FM', 'url': 'http://scturkey.com:8010/;stream.mp3'},
   ];
 
   final List<Map<String, String>> tvList = [
@@ -93,6 +97,81 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: _playingRadioIndex != null ? _buildMiniPlayer() : null,
+    );
+  }
+
+  Widget _buildMiniPlayer() {
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceVariant,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: SafeArea(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                radioList[_playingRadioIndex!]['name']!,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Semantics(
+                  label: _audioPlayer.playing ? "Radyoyu Durdur" : "Radyoyu Başlat",
+                  button: true,
+                  child: IconButton(
+                    icon: Icon(_audioPlayer.playing ? Icons.pause : Icons.play_arrow),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    iconSize: 32,
+                    onPressed: () {
+                      if (_audioPlayer.playing) {
+                        _audioPlayer.pause();
+                      } else {
+                        _audioPlayer.play();
+                      }
+                      setState(() {});
+                    },
+                  ),
+                ),
+                Semantics(
+                  label: "Yayını Kapat",
+                  button: true,
+                  child: IconButton(
+                    icon: const Icon(Icons.stop),
+                    color: Theme.of(context).colorScheme.error,
+                    iconSize: 32,
+                    onPressed: () {
+                      _audioPlayer.stop();
+                      setState(() {
+                        _playingRadioIndex = null;
+                      });
+                    },
+                  ),
+                ),
+                Semantics(
+                  label: "Arka Plana Al",
+                  button: true,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_downward),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    iconSize: 32,
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -115,15 +194,11 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
             const SizedBox(height: 16),
             ...List.generate(radioList.length, (index) {
               final isPlaying = _playingRadioIndex == index && _audioPlayer.playing;
-              return Semantics(
-                button: true,
-                label: "\${radioList[index]['name']} radyosunu dinle",
-                child: ListTile(
-                  leading: const Icon(Icons.headset),
-                  title: Text(radioList[index]['name']!, style: const TextStyle(fontSize: 18)),
-                  trailing: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, size: 36, color: Theme.of(context).colorScheme.secondary),
-                  onTap: () => _playRadio(index),
-                ),
+              return ListTile(
+                leading: const Icon(Icons.headset),
+                title: Text(radioList[index]['name']!, style: const TextStyle(fontSize: 18)),
+                trailing: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, size: 36, color: Theme.of(context).colorScheme.secondary),
+                onTap: () => _playRadio(index),
               );
             }),
           ],
@@ -150,15 +225,11 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
             ),
             const SizedBox(height: 16),
             ...List.generate(tvList.length, (index) {
-              return Semantics(
-                button: true,
-                label: "\${tvList[index]['name']} kanalını izle",
-                child: ListTile(
-                  leading: const Icon(Icons.live_tv),
-                  title: Text(tvList[index]['name']!, style: const TextStyle(fontSize: 18)),
-                  trailing: Icon(Icons.play_arrow, size: 36, color: Theme.of(context).colorScheme.secondary),
-                  onTap: () => _openTvPlayer(context, tvList[index]['name']!, tvList[index]['url']!),
-                ),
+              return ListTile(
+                leading: const Icon(Icons.live_tv),
+                title: Text(tvList[index]['name']!, style: const TextStyle(fontSize: 18)),
+                trailing: Icon(Icons.play_arrow, size: 36, color: Theme.of(context).colorScheme.secondary),
+                onTap: () => _openTvPlayer(context, tvList[index]['name']!, tvList[index]['url']!),
               );
             }),
           ],
