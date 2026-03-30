@@ -237,19 +237,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: 'ornek@email.com veya kullanıcıadı',
                     ),
                   ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: _handleForgotPassword,
-                      child: Text(
-                        'Şifrenizi mi unuttunuz?',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.secondary,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
-                  ),
                   SizedBox(height: 20),
                   TextField(
                     controller: _passwordController,
@@ -269,6 +256,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             _obscurePassword = !_obscurePassword;
                           });
                         },
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: _handleForgotPassword,
+                      child: Text(
+                        'Şifrenizi mi unuttunuz?',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.secondary,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
                   ),
