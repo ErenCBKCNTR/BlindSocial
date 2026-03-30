@@ -1,8 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ReportedPostsScreen extends StatelessWidget {
+class ReportedPostsScreen extends StatefulWidget {
   const ReportedPostsScreen({super.key});
+
+  @override
+  State<ReportedPostsScreen> createState() => _ReportedPostsScreenState();
+}
+
+class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
+  late final Stream<QuerySnapshot> _reportedPostsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    // ⚡ Bolt: Cache Firestore stream to prevent redundant database reads
+    // on every widget rebuild
+    _reportedPostsStream = FirebaseFirestore.instance
+        .collection('reported_posts')
+        .orderBy('reportedAt', descending: true)
+        .snapshots();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +29,7 @@ class ReportedPostsScreen extends StatelessWidget {
         title: const Text('Şikayet Edilen Gönderiler'),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('reported_posts').orderBy('reportedAt', descending: true).snapshots(),
+        stream: _reportedPostsStream,
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
 
