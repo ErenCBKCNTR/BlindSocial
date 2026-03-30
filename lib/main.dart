@@ -19,9 +19,12 @@ import 'screens/profile_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/square_screen.dart';
 import 'widgets/global_background_wrapper.dart';
+import 'widgets/global_call_overlay.dart';
+import 'services/audio_handler.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  audioHandler = await initAudioService();
   runApp(const BlindSocialApp());
 }
 
@@ -31,6 +34,8 @@ class BlindSocialApp extends StatefulWidget {
   @override
   State<BlindSocialApp> createState() => _BlindSocialAppState();
 }
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObserver {
   late Future<Map<String, dynamic>> _initFuture;
@@ -134,6 +139,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObse
       builder: (context, theme, child) {
         return MaterialApp(
           title: 'Blind Social',
+          navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
           theme: theme,
           locale: const Locale('tr', 'TR'),
@@ -144,7 +150,9 @@ class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObse
             GlobalCupertinoLocalizations.delegate,
           ],
           builder: (context, child) {
-            return GlobalBackgroundWrapper(child: child!);
+            return GlobalCallOverlay(
+              child: GlobalBackgroundWrapper(child: child!),
+            );
           },
           home: FutureBuilder<Map<String, dynamic>>(
             future: _initFuture,

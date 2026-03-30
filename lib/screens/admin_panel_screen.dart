@@ -44,7 +44,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         .snapshots();
     _bsBibStream = _firestore
         .collection('bs_bib_calls')
-        .where('status', isEqualTo: 'active')
         .orderBy('createdAt', descending: true)
         .snapshots();
 
@@ -316,7 +315,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (snapshot.data!.docs.isEmpty) {
+        var activeDocs = snapshot.data!.docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return data['status'] == 'active';
+        }).toList();
+
+        if (activeDocs.isEmpty) {
           return Center(
             child: Text(
               'Şu an aktif çağrı bulunmuyor',
@@ -326,9 +330,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         }
 
         return ListView.builder(
-          itemCount: snapshot.data!.docs.length,
+          itemCount: activeDocs.length,
           itemBuilder: (context, index) {
-            var call = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+            var call = activeDocs[index].data() as Map<String, dynamic>;
             String roomId = call['roomId'] ?? 'Bilinmiyor';
             String callerName = call['callerName'] ?? 'İsimsiz';
 

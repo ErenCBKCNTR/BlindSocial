@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:audio_service/audio_service.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import '../services/audio_handler.dart';
 
 class RadioTheaterScreen extends StatefulWidget {
   const RadioTheaterScreen({super.key});
@@ -26,12 +28,9 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
   double downloadProgress = 0.0;
   String? localFilePath;
 
-  late AudioPlayer _audioPlayer;
-
   @override
   void initState() {
     super.initState();
-    _audioPlayer = AudioPlayer();
     _initData();
   }
 
@@ -40,7 +39,12 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
       videoId = VideoId(videoUrl);
       var video = await yt.videos.get(videoId!);
       var manifest = await yt.videos.streamsClient.getManifest(videoId!);
-      var audioStreamInfo = manifest.audioOnly.withHighestBitrate();
+      StreamInfo audioStreamInfo;
+      try {
+        audioStreamInfo = manifest.audioOnly.withHighestBitrate();
+      } catch (e) {
+        audioStreamInfo = manifest.muxed.withHighestBitrate();
+      }
 
       final dir = await getApplicationDocumentsDirectory();
       localFilePath = '${dir.path}/${videoId!.value}.m4a';
@@ -57,10 +61,17 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
         });
       }
 
+      final item = MediaItem(
+        id: audioUrl!,
+        title: video.title,
+        artist: 'Blind Social',
+        artUri: Uri.parse('https://img.youtube.com/vi/${videoId!.value}/0.jpg'),
+      );
+
       if (fileExists) {
-        await _audioPlayer.setFilePath(localFilePath!);
+        await audioHandler.setFilePath(localFilePath!, mediaItem: item);
       } else {
-        await _audioPlayer.setUrl(audioUrl!);
+        await audioHandler.setUrl(audioUrl!, mediaItem: item);
       }
     } catch (e) {
       debugPrint("Error fetching YouTube info: $e");
@@ -84,7 +95,12 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
         isDownloaded = false;
         downloadProgress = 0.0;
       });
-      await _audioPlayer.setUrl(audioUrl!); // Switch back to streaming
+      final item = MediaItem(
+        id: audioUrl!,
+        title: videoTitle,
+        artist: 'Blind Social',
+      );
+      await audioHandler.setUrl(audioUrl!, mediaItem: item); // Switch back to streaming
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Dosya cihazdan silindi. Çevrimiçi dinlemeye dönüldü.')),
@@ -121,12 +137,18 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
         });
 
         // Switch to playing from local file
-        final currentPosition = _audioPlayer.position;
-        final playing = _audioPlayer.playing;
+        final currentPosition = audioHandler.player.position;
+        final playing = audioHandler.player.playing;
 
-        await _audioPlayer.setFilePath(localFilePath!);
-        await _audioPlayer.seek(currentPosition);
-        if (playing) await _audioPlayer.play();
+        final item = MediaItem(
+          id: localFilePath!,
+          title: videoTitle,
+          artist: 'Blind Social',
+        );
+
+        await audioHandler.setFilePath(localFilePath!, mediaItem: item);
+        await audioHandler.seek(currentPosition);
+        if (playing) await audioHandler.play();
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -150,7 +172,6 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
   @override
   void dispose() {
     yt.close();
-    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -194,6 +215,33 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
                       ],
                     ),
                   const SizedBox(height: 40),
+                  StreamBuilder<Duration>(
+                    stream: audioHandler.player.positionStream,
+                    builder: (context, snapshot) {
+                      final position = snapshot.data ?? Duration.zero;
+                      final duration = audioHandler.player.duration ?? Duration.zero;
+
+                      return Column(
+                        children: [
+                          Slider(
+                            value: position.inMilliseconds.toDouble().clamp(0.0, duration.inMilliseconds.toDouble()),
+                            max: duration.inMilliseconds.toDouble() > 0 ? duration.inMilliseconds.toDouble() : 1.0,
+                            onChanged: (value) {
+                              audioHandler.seek(Duration(milliseconds: value.round()));
+                            },
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(_formatDuration(position)),
+                              Text(_formatDuration(duration)),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -205,27 +253,26 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
                           icon: const Icon(Icons.replay_10),
                           color: Theme.of(context).colorScheme.secondary,
                           onPressed: () {
-                            final newPosition = _audioPlayer.position - const Duration(seconds: 10);
-                            _audioPlayer.seek(newPosition < Duration.zero ? Duration.zero : newPosition);
+                            audioHandler.rewind();
                           },
                         ),
                       ),
-                      StreamBuilder<PlayerState>(
-                        stream: _audioPlayer.playerStateStream,
+                      StreamBuilder<PlaybackState>(
+                        stream: audioHandler.playbackState,
                         builder: (context, snapshot) {
-                          final playerState = snapshot.data;
-                          final processingState = playerState?.processingState;
-                          final playing = playerState?.playing;
+                          final state = snapshot.data;
+                          final playing = state?.playing ?? false;
+                          final processingState = state?.processingState ?? AudioProcessingState.idle;
 
-                          if (processingState == ProcessingState.loading ||
-                              processingState == ProcessingState.buffering) {
+                          if (processingState == AudioProcessingState.loading ||
+                              processingState == AudioProcessingState.buffering) {
                             return Container(
                               margin: const EdgeInsets.all(8.0),
                               width: 64.0,
                               height: 64.0,
                               child: const CircularProgressIndicator(),
                             );
-                          } else if (playing != true) {
+                          } else if (!playing) {
                             return Semantics(
                               label: 'Oynat',
                               button: true,
@@ -233,10 +280,10 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
                                 icon: const Icon(Icons.play_circle_filled),
                                 iconSize: 80,
                                 color: Theme.of(context).colorScheme.primary,
-                                onPressed: _audioPlayer.play,
+                                onPressed: audioHandler.play,
                               ),
                             );
-                          } else if (processingState != ProcessingState.completed) {
+                          } else if (processingState != AudioProcessingState.completed) {
                             return Semantics(
                               label: 'Duraklat',
                               button: true,
@@ -244,7 +291,7 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
                                 icon: const Icon(Icons.pause_circle_filled),
                                 iconSize: 80,
                                 color: Theme.of(context).colorScheme.primary,
-                                onPressed: _audioPlayer.pause,
+                                onPressed: audioHandler.pause,
                               ),
                             );
                           } else {
@@ -255,7 +302,7 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
                                 icon: const Icon(Icons.replay),
                                 iconSize: 80,
                                 color: Theme.of(context).colorScheme.primary,
-                                onPressed: () => _audioPlayer.seek(Duration.zero),
+                                onPressed: () => audioHandler.seek(Duration.zero),
                               ),
                             );
                           }
@@ -269,9 +316,7 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
                           icon: const Icon(Icons.forward_10),
                           color: Theme.of(context).colorScheme.secondary,
                           onPressed: () {
-                            final newPosition = _audioPlayer.position + const Duration(seconds: 10);
-                            final duration = _audioPlayer.duration ?? Duration.zero;
-                            _audioPlayer.seek(newPosition > duration ? duration : newPosition);
+                            audioHandler.fastForward();
                           },
                         ),
                       ),
@@ -301,5 +346,13 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
               ),
             ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(duration.inHours);
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return [if (duration.inHours > 0) hours, minutes, seconds].join(':');
   }
 }
