@@ -20,11 +20,21 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
 
   late stt.SpeechToText _speech;
   bool _isListening = false;
+  late final Stream<QuerySnapshot> _commentsStream;
 
   @override
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
+
+    // ⚡ Bolt: Cache Firestore stream to prevent redundant database reads
+    // on every widget rebuild (e.g. when typing or using speech-to-text)
+    _commentsStream = _firestore
+        .collection('meydan_posts')
+        .doc(widget.postId)
+        .collection('comments')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
   }
 
   Future<void> _listen() async {
@@ -118,12 +128,7 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
         children: [
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore
-                  .collection('meydan_posts')
-                  .doc(widget.postId)
-                  .collection('comments')
-                  .orderBy('createdAt', descending: true)
-                  .snapshots(),
+              stream: _commentsStream,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
