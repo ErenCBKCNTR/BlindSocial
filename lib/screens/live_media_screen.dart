@@ -40,13 +40,13 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
       {'name': 'Alem FM', 'url': 'http://scturkmedya.radyotvonline.com/stream/80/'},
       {'name': 'JoyTürk', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_TURK_SC'},
       {'name': 'Joy FM', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_FM_SC'},
-      {'name': 'Kafa Radyo', 'url': 'https://moondigitaledge.radyotvonline.net/kafaradyo/playlist.m3u8'},
       {'name': 'Metro FM', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/METRO_FM_SC'},
-      {'name': 'NTV Radyo', 'url': 'https://moondigitaledge.radyotvonline.net/ntvradyo/playlist.m3u8'},
       {'name': 'Pal FM', 'url': 'https://moondigitaledge.radyotvonline.net/palfm/playlist.m3u8'},
       {'name': 'PowerTürk', 'url': 'https://listen.powerapp.com.tr/powerturk/mpeg/icecast.audio'},
       {'name': 'Süper FM', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/SUPER_FM_SC'},
-      {'name': 'Virgin Radio', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/VIRGIN_RADIO_SC'}
+      {'name': 'Virgin Radio', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/VIRGIN_RADIO_SC'},
+      {'name': 'Radyo D', 'url': 'http://17733.live.streamtheworld.com/RADYO_D.mp3'},
+      {'name': 'Show Radyo', 'url': 'http://46.20.7.104:8020/stream'}
     ];
 
     predefinedRadios.sort((a, b) => a['name']!.compareTo(b['name']!));
@@ -59,14 +59,11 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
 
   Future<void> _fetchTvs() async {
     final List<Map<String, String>> predefinedTvs = [
-      {'name': 'TRT 1', 'url': 'https://tv-trt1.medya.trt.com.tr/master_720.m3u8'},
-      {'name': 'TRT Haber', 'url': 'https://tv-trthaber.medya.trt.com.tr/master_720.m3u8'},
-      {'name': 'TRT Müzik', 'url': 'https://tv-trtmuzik.medya.trt.com.tr/master_720.m3u8'},
-      {'name': 'TRT Çocuk', 'url': 'https://tv-trtcocuk.medya.trt.com.tr/master_720.m3u8'},
-      {'name': 'TRT Kurdî', 'url': 'https://tv-trtkurdi.medya.trt.com.tr/master_720.m3u8'},
-      {'name': 'TRT Türk', 'url': 'https://tv-trtturk.medya.trt.com.tr/master_720.m3u8'},
-      {'name': 'TRT Avaz', 'url': 'https://tv-trtavaz.medya.trt.com.tr/master_720.m3u8'},
-      {'name': 'TRT World', 'url': 'https://tv-trtworld.medya.trt.com.tr/master_720.m3u8'}
+      {'name': 'TRT 1', 'url': 'https://trt.daioncdn.net/trt-1/master.m3u8?app=web'},
+      {'name': 'ATV', 'url': 'http://89.187.191.41/ATV-HD-TR/video.m3u8'},
+      {'name': 'Kanal D', 'url': 'https://demiroren.daioncdn.net/kanald/kanald.m3u8?app=kanald_web&ce=3'},
+      {'name': 'Show TV', 'url': 'https://jmp2.uk/plu-5db6a697d5f34a000934cd13.m3u8'},
+      {'name': 'Star TV', 'url': 'https://viamotionhsi.netplus.ch/live/eds/startv/browser-HLS8/startv.m3u8'}
     ];
 
     predefinedTvs.sort((a, b) => a['name']!.compareTo(b['name']!));
@@ -147,47 +144,39 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.radio, size: 40, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 10),
-                Text('Radyo Dinle', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (isLoadingRadios)
-              const Center(child: CircularProgressIndicator())
-            else if (radioList.isEmpty)
-              const Center(child: Text("Radyo kanalları bulunamadı."))
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: radioList.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    leading: const Icon(Icons.headset),
-                    title: Text(radioList[index]['name']!, style: const TextStyle(fontSize: 18)),
-                    trailing: Icon(Icons.chevron_right, size: 36, color: Theme.of(context).colorScheme.secondary),
-                    onTap: () {
-                      _stopTv();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => LiveRadioPlayerScreen(radio: radioList[index]),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-          ],
-        ),
+      child: ExpansionTile(
+        leading: Icon(Icons.radio, size: 40, color: Theme.of(context).colorScheme.primary),
+        title: Text('Radyo Kanalları', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: isLoadingRadios
+                ? const Center(child: CircularProgressIndicator())
+                : radioList.isEmpty
+                    ? const Center(child: Text("Radyo kanalları bulunamadı."))
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: radioList.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            leading: const Icon(Icons.headset),
+                            title: Text(radioList[index]['name']!, style: const TextStyle(fontSize: 18)),
+                            trailing: Icon(Icons.chevron_right, size: 36, color: Theme.of(context).colorScheme.secondary),
+                            onTap: () {
+                              _stopTv();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => LiveRadioPlayerScreen(radio: radioList[index]),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+          ),
+        ],
       ),
     );
   }
@@ -196,120 +185,105 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.tv, size: 40, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 10),
-                Text('Televizyon İzle', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (isLoadingTvs)
-              const Center(child: CircularProgressIndicator())
-            else if (tvList.isEmpty)
-              const Center(child: Text("Televizyon kanalları bulunamadı."))
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: tvList.length,
-                itemBuilder: (context, index) {
-                  final isPlaying = _playingTvIndex == index;
+      child: ExpansionTile(
+        leading: Icon(Icons.tv, size: 40, color: Theme.of(context).colorScheme.primary),
+        title: Text('Televizyon Kanalları', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: isLoadingTvs
+                ? const Center(child: CircularProgressIndicator())
+                : tvList.isEmpty
+                    ? const Center(child: Text("Televizyon kanalları bulunamadı."))
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: tvList.length,
+                        itemBuilder: (context, index) {
+                          final isPlaying = _playingTvIndex == index;
 
-                  return ExpansionTile(
-                    leading: const Icon(Icons.live_tv),
-                    title: Text(tvList[index]['name']!, style: const TextStyle(fontSize: 18)),
-                    trailing: Icon(isPlaying ? Icons.tv_off : Icons.play_arrow, size: 36, color: Theme.of(context).colorScheme.secondary),
-                    onExpansionChanged: (expanded) {
-                      if (expanded) {
-                        _playTv(index);
-                      } else if (isPlaying) {
-                        _stopTv();
-                      }
-                    },
-                    children: [
-                      if (isPlaying)
-                        Column(
-                          children: [
-                            Container(
-                              height: 200,
-                              color: Colors.black,
-                              child: _videoController != null
-                                  ? Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        Video(
-                                          controller: _videoController!,
-                                          controls: NoVideoControls,
-                                        ),
-                                        StreamBuilder<bool>(
-                                          stream: _player?.stream.buffering,
-                                          builder: (context, snapshot) {
-                                            final isBuffering = snapshot.data ?? true;
-                                            if (isBuffering) {
-                                              return const CircularProgressIndicator();
-                                            }
-                                            return const SizedBox.shrink();
-                                          },
-                                        ),
-                                      ],
-                                    )
-                                  : const Center(child: CircularProgressIndicator()),
-                            ),
-                            Container(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              padding: const EdgeInsets.all(16.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  StreamBuilder<bool>(
-                                    stream: _player?.stream.playing,
-                                    builder: (context, snapshot) {
-                                      final playing = snapshot.data ?? false;
-                                      return Semantics(
-                                        label: playing ? "Televizyonu Durdur" : "Televizyonu Başlat",
-                                        button: true,
-                                        child: IconButton(
-                                          icon: Icon(
-                                            playing ? Icons.pause : Icons.play_arrow
-                                          ),
-                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                          iconSize: 40,
-                                          onPressed: () {
-                                            if (_player != null) {
-                                              _player!.playOrPause();
-                                            }
-                                          },
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  Semantics(
-                                    label: "Yayını Kapat",
-                                    button: true,
-                                    child: IconButton(
-                                      icon: const Icon(Icons.stop),
-                                      color: Theme.of(context).colorScheme.error,
-                                      iconSize: 40,
-                                      onPressed: _stopTv,
+                          return ExpansionTile(
+                            leading: const Icon(Icons.live_tv),
+                            title: Text(tvList[index]['name']!, style: const TextStyle(fontSize: 18)),
+                            trailing: Icon(isPlaying ? Icons.tv_off : Icons.play_arrow, size: 36, color: Theme.of(context).colorScheme.secondary),
+                            onExpansionChanged: (expanded) {
+                              if (expanded) {
+                                _playTv(index);
+                              } else if (isPlaying) {
+                                _stopTv();
+                              }
+                            },
+                            children: [
+                              if (isPlaying)
+                                Column(
+                                  children: [
+                                    Container(
+                                      height: 200,
+                                      color: Colors.black,
+                                      child: _videoController != null
+                                          ? Stack(
+                                              alignment: Alignment.center,
+                                              children: [
+                                                Video(
+                                                  controller: _videoController!,
+                                                  controls: NoVideoControls,
+                                                ),
+                                                StreamBuilder<bool>(
+                                                  stream: _player?.stream.buffering,
+                                                  builder: (context, snapshot) {
+                                                    if (snapshot.data == true) {
+                                                      return const CircularProgressIndicator();
+                                                    }
+                                                    return const SizedBox.shrink();
+                                                  },
+                                                ),
+                                              ],
+                                            )
+                                          : const Center(child: CircularProgressIndicator()),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          ],
-                        )
-                    ],
-                  );
-                },
-              ),
-          ],
-        ),
+                                    Container(
+                                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          StreamBuilder<bool>(
+                                            stream: _player?.stream.playing,
+                                            builder: (context, snapshot) {
+                                              final playing = snapshot.data ?? false;
+                                              return TextButton.icon(
+                                                icon: Icon(playing ? Icons.pause : Icons.play_arrow, size: 30),
+                                                label: Text(playing ? "Durdur" : "Başlat"),
+                                                style: TextButton.styleFrom(
+                                                  foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                ),
+                                                onPressed: () {
+                                                  if (_player != null) {
+                                                    _player!.playOrPause();
+                                                  }
+                                                },
+                                              );
+                                            },
+                                          ),
+                                          TextButton.icon(
+                                            icon: const Icon(Icons.stop, size: 30),
+                                            label: const Text("Kapat"),
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: Theme.of(context).colorScheme.error,
+                                            ),
+                                            onPressed: _stopTv,
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                )
+                            ],
+                          );
+                        },
+                      ),
+          ),
+        ],
       ),
     );
   }

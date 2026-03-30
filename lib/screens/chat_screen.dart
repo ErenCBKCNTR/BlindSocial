@@ -456,31 +456,35 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     try {
       // Fetch numeric IDs for naming convention
-      String userNumericId = 'UnknownUser';
+      String userNumericId = '';
       final userDoc = await (widget.firestore ?? FirebaseFirestore.instance)
           .collection('users')
           .doc(user.uid)
           .get();
       if (userDoc.exists && userDoc.data()!['numericId'] != null) {
         userNumericId = userDoc.data()!['numericId'].toString();
+      } else {
+        userNumericId = 'UnknownUser';
       }
 
-      String roomNumericId = 'UnknownRoom';
+      String roomNumericId = '';
       final roomDoc = await (widget.firestore ?? FirebaseFirestore.instance)
           .collection('chat_rooms')
           .doc(widget.roomId)
           .get();
       if (roomDoc.exists && roomDoc.data()!['numericId'] != null) {
         roomNumericId = roomDoc.data()!['numericId'].toString();
+      } else {
+        roomNumericId = 'UnknownRoom';
       }
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'R${roomNumericId}_U${userNumericId}_$timestamp.m4a';
+      final fileName = '${roomNumericId}_U${userNumericId}_$timestamp.m4a';
 
       final ref = (widget.storage ?? FirebaseStorage.instance)
           .ref()
-          .child('chat_voices')
-          .child(widget.roomId)
+          .child('recordings')
+          .child(roomNumericId)
           .child(fileName);
 
       await ref.putFile(File(path));

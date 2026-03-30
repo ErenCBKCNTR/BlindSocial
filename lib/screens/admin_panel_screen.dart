@@ -299,6 +299,83 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
+  Widget _buildRadioTheaterAdmin() {
+    final titleController = TextEditingController();
+    final urlController = TextEditingController();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Tiyatro Adı'),
+              ),
+              TextField(
+                controller: urlController,
+                decoration: const InputDecoration(labelText: 'YouTube URL (veya m3u8 vs.)'),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Yeni Tiyatro Ekle'),
+                onPressed: () async {
+                  if (titleController.text.isNotEmpty && urlController.text.isNotEmpty) {
+                    await FirebaseFirestore.instance.collection('radio_theaters').add({
+                      'title': titleController.text,
+                      'url': urlController.text,
+                      'createdAt': FieldValue.serverTimestamp(),
+                    });
+                    titleController.clear();
+                    urlController.clear();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Tiyatro eklendi.')),
+                      );
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        const Divider(),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('radio_theaters')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+              final docs = snapshot.data!.docs;
+              if (docs.isEmpty) return const Center(child: Text('Kayıtlı tiyatro yok.'));
+              return ListView.builder(
+                itemCount: docs.length,
+                itemBuilder: (context, index) {
+                  final doc = docs[index];
+                  final data = doc.data() as Map<String, dynamic>;
+                  return ListTile(
+                    title: Text(data['title'] ?? ''),
+                    subtitle: Text(data['url'] ?? ''),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () async {
+                        await doc.reference.delete();
+                      },
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildBSBibCallsList() {
     return StreamBuilder<QuerySnapshot>(
       stream: _bsBibStream,
@@ -393,7 +470,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: Text(
@@ -410,6 +487,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               Tab(icon: Icon(Icons.meeting_room), text: 'Odalar'),
               Tab(icon: Icon(Icons.people), text: 'Üyeler'),
               Tab(icon: Icon(Icons.support_agent), text: 'BS BiB Çağrıları'),
+              Tab(icon: Icon(Icons.radio), text: 'Radyo Tiyatrosu'),
             ],
           ),
         ),
@@ -419,6 +497,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             _buildRoomList(),
             _buildMemberList(),
             _buildBSBibCallsList(),
+            _buildRadioTheaterAdmin(),
           ],
         ),
       ),

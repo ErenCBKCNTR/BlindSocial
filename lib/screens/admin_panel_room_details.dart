@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class AdminPanelRoomDetails extends StatefulWidget {
   final Map<String, dynamic> room;
@@ -124,8 +125,37 @@ class _AdminPanelRoomDetailsState extends State<AdminPanelRoomDetails> {
 
   Future<void> _deleteRoom() async {
     try {
+      // Cascade delete messages subcollection (in chunks of 500)
+      final messagesSnapshot = await widget.roomRef.collection('messages').get();
+      final docs = messagesSnapshot.docs;
+
+      for (int i = 0; i < docs.length; i += 500) {
+        final batch = FirebaseFirestore.instance.batch();
+        final chunk = docs.sublist(i, i + 500 > docs.length ? docs.length : i + 500);
+        for (final doc in chunk) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+      }
+
+      // Cascade delete storage files
+      if (widget.room['numericId'] != null) {
+        final folderRef = FirebaseStorage.instance
+            .ref()
+            .child('recordings')
+            .child(widget.room['numericId'].toString());
+        try {
+          final listResult = await folderRef.listAll();
+          for (final item in listResult.items) {
+            await item.delete();
+          }
+        } catch (e) {
+          debugPrint('Error deleting storage files: $e');
+        }
+      }
+
       await widget.roomRef.delete();
-      // NOTE: Deep deletion of subcollections would be ideal but sticking to doc delete for now
+
       if (mounted) {
         ScaffoldMessenger.of(
           context,
