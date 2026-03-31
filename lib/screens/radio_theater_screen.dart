@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'radio_theater_player_screen.dart';
 import '../services/audio_favorites_manager.dart';
 import '../services/audio_progress_manager.dart';
+import '../services/audio_cache_manager.dart';
 
 class RadioTheaterScreen extends StatefulWidget {
   const RadioTheaterScreen({super.key});
@@ -16,11 +19,40 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
   List<String> _favorites = [];
   Map<String, Duration> _cachedProgress = {};
   bool _isLoadingProgress = true;
+  bool _hasInternet = true;
+  List<Map<String, String>> _downloadedFiles = [];
 
   @override
   void initState() {
     super.initState();
+    _checkConnectivity();
     _loadFavorites();
+  }
+
+  Future<void> _checkConnectivity() async {
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult.contains(ConnectivityResult.none)) {
+      if (mounted) {
+        setState(() {
+          _hasInternet = false;
+          _currentIndex = 3; // Default to Downloads if offline
+        });
+        _loadDownloadedFiles();
+      }
+    } else {
+      setState(() {
+        _hasInternet = true;
+      });
+    }
+  }
+
+  Future<void> _loadDownloadedFiles() async {
+    final files = await AudioCacheManager.getDownloadedFiles();
+    if (mounted) {
+      setState(() {
+        _downloadedFiles = files;
+      });
+    }
   }
 
   Future<void> _loadFavorites() async {
@@ -83,14 +115,71 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
                   label: const Text('Favorilerim'),
                   selected: _currentIndex == 2,
                   onSelected: (selected) {
-                    if (selected) setState(() => _currentIndex = 2);
+                    if (selected && _hasInternet) setState(() => _currentIndex = 2);
+                  },
+                ),
+                ChoiceChip(
+                  label: const Text('İndirdiğim Kaynaklar'),
+                  selected: _currentIndex == 3,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _currentIndex = 3);
+                      _loadDownloadedFiles();
+                    }
                   },
                 ),
               ],
             ),
           ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
+          if (!_hasInternet && _currentIndex != 3)
+            const Expanded(
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    'İnternet bağlantınız yok. Yalnızca indirdiğiniz kaynakları dinleyebilirsiniz.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            )
+          else if (_currentIndex == 3)
+            Expanded(
+              child: _downloadedFiles.isEmpty
+                  ? const Center(child: Text('İndirdiğiniz herhangi bir kaynak bulunamadı.'))
+                  : ListView.builder(
+                      itemCount: _downloadedFiles.length,
+                      itemBuilder: (context, index) {
+                        final fileData = _downloadedFiles[index];
+                        final title = fileData['title'] ?? 'Bilinmeyen Eser';
+                        final localPath = fileData['localPath'] ?? '';
+
+                        return Card(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: ListTile(
+                            leading: const Icon(Icons.offline_pin, color: Colors.green),
+                            title: Text(title),
+                            subtitle: const Text('Çevrimdışı Kaynak'),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => RadioTheaterPlayerScreen(
+                                    url: localPath, // Use local path as unique ID for offline progress tracking
+                                    title: title,
+                                    localForcePath: localPath, // We need to add this to Player Screen
+                                  ),
+                                ),
+                              ).then((_) => _loadDownloadedFiles()); // Refresh if deleted
+                            },
+                          ),
+                        );
+                      },
+                    ),
+            )
+          else
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('radio_theaters')
                   .orderBy('createdAt', descending: true)

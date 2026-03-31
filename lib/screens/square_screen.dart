@@ -455,20 +455,27 @@ class _SquareScreenState extends State<SquareScreen> {
                         likes.contains(currentUserUid);
                     final likeCount = likes.length;
 
-                    return Card(
-                      color: Colors.grey[900],
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
+                    return StreamBuilder<QuerySnapshot>(
+                      stream: _firestore.collection('meydan_posts').doc(doc.id).collection('comments').snapshots(),
+                      builder: (context, commentSnapshot) {
+                        final commentCount = commentSnapshot.data?.docs.length ?? 0;
+                        return Card(
+                          color: Colors.grey[900],
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Semantics(
+                              label: 'Gönderen: $authorUsername. İçerik: $content. ${likeCount > 0 ? '$likeCount kişi beğendi.' : ''} ${commentCount > 0 ? '$commentCount kişi yorum yaptı.' : ''}',
+                              container: true,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
                                 Text(
                                   '@$authorUsername',
                                   style: const TextStyle(
@@ -534,17 +541,21 @@ class _SquareScreenState extends State<SquareScreen> {
                                 Row(
                                   children: [
                                     if (currentUserUid != null) ...[
-                                      IconButton(
-                                        icon: const Icon(Icons.comment, color: Colors.grey),
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => PostCommentsScreen(postId: doc.id),
-                                            ),
-                                          );
-                                        },
-                                        tooltip: 'Yorumlar',
+                                        Semantics(
+                                          label: commentCount > 0 ? '$commentCount yorum. Yorumlara git.' : 'Yorumlar',
+                                          button: true,
+                                          child: IconButton(
+                                            icon: const ExcludeSemantics(child: Icon(Icons.comment, color: Colors.grey)),
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => PostCommentsScreen(postId: doc.id),
+                                                ),
+                                              );
+                                            },
+                                            tooltip: 'Yorumlar',
+                                          ),
                                       ),
                                     ],
                                     if (currentUserUid == authorId || _userRole == 0 || _userRole == 1) ...[
@@ -578,10 +589,13 @@ class _SquareScreenState extends State<SquareScreen> {
                           ],
                         ),
                       ),
-                    );
-                  },
-                );
-              },
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        },
             ),
           ),
         ],

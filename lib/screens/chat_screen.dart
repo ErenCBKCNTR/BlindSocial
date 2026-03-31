@@ -728,12 +728,101 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     );
   }
 
+  void _showRoomDescription() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StreamBuilder<DocumentSnapshot>(
+          stream: _roomStream,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData || !snapshot.data!.exists) {
+              return const AlertDialog(content: Text('Yükleniyor...'));
+            }
+            final data = snapshot.data!.data() as Map<String, dynamic>;
+            final description = data['description'] ?? 'Bu oda için henüz bir açıklama eklenmemiş.';
+            final isCreator = data['creatorId'] == _auth.currentUser?.uid;
+
+            return AlertDialog(
+              title: Text('${widget.roomName} Açıklaması'),
+              content: Text(description),
+              actions: [
+                if (isCreator)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _editRoomDescription(description);
+                    },
+                    child: const Text('Açıklamayı Düzenle'),
+                  ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Kapat'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _editRoomDescription(String currentDescription) {
+    final TextEditingController controller = TextEditingController(text: currentDescription == 'Bu oda için henüz bir açıklama eklenmemiş.' ? '' : currentDescription);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Oda Açıklamasını Düzenle'),
+          content: TextField(
+            controller: controller,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              hintText: 'Oda açıklamasını buraya yazın...',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('İptal'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final newDescription = controller.text.trim();
+                await (widget.firestore ?? FirebaseFirestore.instance)
+                    .collection('chat_rooms')
+                    .doc(widget.roomId)
+                    .update({'description': newDescription});
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Kaydet'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.roomName),
+        title: Semantics(
+          label: '${widget.roomName}. Oda açıklamasını görüntülemek için çift tıklayın.',
+          button: true,
+          child: GestureDetector(
+            onDoubleTap: _showRoomDescription,
+            child: Text(widget.roomName),
+          ),
+        ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.info_outline, size: 30),
+            onPressed: _showRoomDescription,
+            tooltip: 'Oda Açıklaması',
+          ),
           IconButton(
             icon: Icon(Icons.people, size: 30),
             onPressed: _showParticipantList,

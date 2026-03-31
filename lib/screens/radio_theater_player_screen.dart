@@ -9,11 +9,13 @@ import '../services/audio_favorites_manager.dart';
 class RadioTheaterPlayerScreen extends StatefulWidget {
   final String url;
   final String title;
+  final String? localForcePath;
 
   const RadioTheaterPlayerScreen({
     super.key,
     required this.url,
     required this.title,
+    this.localForcePath,
   });
 
   @override
@@ -58,8 +60,13 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
     final directAudioUrl = _convertToDirectLink(widget.url);
 
     try {
-      // Check if file is already downloaded
-      _localPath = await AudioCacheManager.getCachedAudioPath(directAudioUrl, widget.title);
+      if (widget.localForcePath != null) {
+        _localPath = widget.localForcePath;
+      } else {
+        // Check if file is already downloaded
+        _localPath = await AudioCacheManager.getCachedAudioPath(directAudioUrl, widget.title);
+      }
+
       final playUrl = _localPath != null ? 'file://$_localPath' : directAudioUrl;
 
       final mediaItem = MediaItem(
@@ -140,15 +147,6 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
   }
 
   Future<void> _downloadOffline() async {
-    if (_localPath != null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bu tiyatro zaten çevrimdışı dinleme için indirilmiş.')),
-        );
-      }
-      return;
-    }
-
     setState(() {
       _isDownloading = true;
     });
@@ -171,6 +169,22 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
           const SnackBar(content: Text('İndirme sırasında bir hata oluştu.')),
         );
       }
+    }
+  }
+
+  Future<void> _deleteOffline() async {
+    if (_localPath == null) return;
+
+    final success = await AudioCacheManager.deleteAudio(widget.url, widget.title);
+
+    if (success && mounted) {
+      setState(() {
+        _localPath = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tiyatro çevrimdışı dinleme listenizden çıkarıldı.')),
+      );
+      // Fallback url dynamically updates via play mechanism or user backs out
     }
   }
 
@@ -314,13 +328,13 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                                   )
                           else
                             TextButton.icon(
-                              onPressed: null,
-                              icon: Icon(Icons.download_done, size: 20, color: Colors.green[400]),
-                              label: Text(
-                                'İndirildi',
+                              onPressed: _deleteOffline,
+                              icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
+                              label: const Text(
+                                'İndirilen Kaynağı Sil',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.green[400],
+                                  color: Colors.redAccent,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),

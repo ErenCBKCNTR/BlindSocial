@@ -199,15 +199,11 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
                         ),
                         subtitle: Text(content, style: const TextStyle(color: Colors.white)),
                         trailing: currentUserUid == authorId
-                            ? Semantics(
-                                label: 'Yorumu Sil',
-                                button: true,
-                                child: IconButton(
-                                  icon: const ExcludeSemantics(
-                                    child: Icon(Icons.delete, color: Colors.red),
-                                  ),
-                                  tooltip: 'Yorumu Sil',
-                                  onPressed: () => _confirmDeleteComment(commentDoc.id),
+                            ? TextButton(
+                                onPressed: () => _confirmDeleteComment(commentDoc.id),
+                                child: const Text(
+                                  'Sil',
+                                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
                                 ),
                               )
                             : null,

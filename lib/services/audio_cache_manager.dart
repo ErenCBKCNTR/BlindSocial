@@ -48,4 +48,45 @@ class AudioCacheManager {
       return null;
     }
   }
+
+  static Future<bool> deleteAudio(String url, String fileName) async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final safeFileName = fileName.replaceAll(RegExp(r'[^\w\s]+'), '').replaceAll(' ', '_');
+      final file = File('${dir.path}/$safeFileName.mp3');
+
+      if (await file.exists()) {
+        await file.delete();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint("Error deleting audio: $e");
+      return false;
+    }
+  }
+
+  static Future<List<Map<String, String>>> getDownloadedFiles() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final entities = await dir.list().toList();
+
+      List<Map<String, String>> downloadedList = [];
+      for (var entity in entities) {
+        if (entity is File && entity.path.endsWith('.mp3')) {
+          final fileName = entity.path.split('/').last.replaceAll('.mp3', '');
+          // This is a rough recreation since we don't store the exact title or URL,
+          // but we can pass local info to the player.
+          downloadedList.add({
+            'title': fileName.replaceAll('_', ' '),
+            'localPath': entity.path,
+          });
+        }
+      }
+      return downloadedList;
+    } catch (e) {
+      debugPrint("Error fetching downloaded files: $e");
+      return [];
+    }
+  }
 }
