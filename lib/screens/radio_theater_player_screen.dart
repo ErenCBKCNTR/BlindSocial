@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import '../services/audio_handler.dart';
 
 class RadioTheaterPlayerScreen extends StatefulWidget {
@@ -210,23 +211,30 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
     } else {
       setState(() {
         _isDownloading = true;
+        _downloadProgress = 0.0;
       });
 
+      final yt = YoutubeExplode();
       try {
-        final streamUrl = await _fetchPipedAudioUrl(videoId);
-        if (streamUrl == null) throw Exception("Stream URL not found");
+        final manifest = await yt.videos.streamsClient.getManifest(videoId);
+        final audioOnlyStreams = manifest.audioOnly;
 
-        final request = http.Request('GET', Uri.parse(streamUrl));
-        final response = await http.Client().send(request);
+        if (audioOnlyStreams.isEmpty) {
+          throw Exception("No audio streams found");
+        }
 
-        final contentLength = response.contentLength;
+        // Try to find the highest bitrate m4a (mp4 container)
+        final streamInfo = audioOnlyStreams.withHighestBitrate();
+        final stream = yt.videos.streamsClient.get(streamInfo);
+
+        final contentLength = streamInfo.size.totalBytes;
         int bytesDownloaded = 0;
         final sink = file.openWrite();
 
-        await for (final chunk in response.stream) {
+        await for (final chunk in stream) {
           sink.add(chunk);
           bytesDownloaded += chunk.length;
-          if (contentLength != null && mounted) {
+          if (contentLength > 0 && mounted) {
             setState(() {
               _downloadProgress = bytesDownloaded / contentLength;
             });
@@ -255,6 +263,11 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
             const SnackBar(content: Text('İndirme sırasında bir hata oluştu.')),
           );
         }
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } finally {
+        yt.close();
       }
     }
   }
