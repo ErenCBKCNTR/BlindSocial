@@ -91,39 +91,32 @@ class _LiveRadioPlayerScreenState extends State<LiveRadioPlayerScreen> {
                 final isLoading = processingState == AudioProcessingState.loading ||
                     processingState == AudioProcessingState.buffering;
 
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    if (isLoading)
-                      const SizedBox(
-                        width: 80,
-                        height: 80,
-                        child: CircularProgressIndicator(),
-                      )
-                    else
-                      TextButton.icon(
-                        icon: Icon(playing ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 40),
-                        label: Text(playing ? "Radyoyu Durdur" : "Radyoyu Başlat", style: const TextStyle(fontSize: 18)),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Theme.of(context).colorScheme.primary,
-                        ),
-                        onPressed: () {
-                          if (playing) {
-                            audioHandler.pause();
-                          } else {
-                            audioHandler.play();
-                          }
-                        },
-                      ),
-                    TextButton.icon(
-                      icon: const Icon(Icons.stop_circle_outlined, size: 40),
-                      label: const Text("Yayını Kapat", style: TextStyle(fontSize: 18)),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.error,
-                      ),
-                      onPressed: _stopRadio,
+                if (isLoading) {
+                  return const Center(
+                    child: SizedBox(
+                      width: 80,
+                      height: 80,
+                      child: CircularProgressIndicator(),
                     ),
-                  ],
+                  );
+                }
+
+                return Center(
+                  child: TextButton.icon(
+                    icon: Icon(playing ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 40),
+                    label: Text(playing ? "Radyoyu Durdur" : "Radyoyu Başlat", style: const TextStyle(fontSize: 18)),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    ),
+                    onPressed: () {
+                      if (playing) {
+                        _stopRadio();
+                      } else {
+                        _playRadio();
+                      }
+                    },
+                  ),
                 );
               },
             ),
