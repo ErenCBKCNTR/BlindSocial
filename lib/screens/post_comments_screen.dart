@@ -209,9 +209,16 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
                     onPressed: _listen,
                     tooltip: 'Dikte',
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.send, color: Colors.cyan),
+                  TextButton(
                     onPressed: _submitComment,
+                    child: const Text(
+                      'Gönder',
+                      style: TextStyle(
+                        color: Colors.cyan,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                 ],
               ),

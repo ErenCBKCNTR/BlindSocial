@@ -34,7 +34,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     {
       'title': 'Tamamen Erişilebilir',
       'description':
-          'TalkBack ve VoiceOver ile tam uyumlu arayüz sayesinde uygulamayı kolayca ve bağımsız bir şekilde kullanın.',
+          'Tüm ekran okuyucularla uyumlu çalışmaktadır. Arayüz sayesinde uygulamayı kolayca ve bağımsız bir şekilde kullanın.',
       'icon': 'hearing',
     },
   ];
@@ -74,6 +74,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: TextButton(
+                  onPressed: _completeOnboarding,
+                  child: const Text(
+                    'Atla',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
