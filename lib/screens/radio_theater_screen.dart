@@ -62,9 +62,8 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
 
   Future<String?> _fetchPipedAudioUrl(String videoId) async {
     final endpoints = [
+      'https://api.piped.private.coffee',
       'https://pipedapi.kavin.rocks',
-      'https://pipedapi.drgns.space',
-      'https://pipedapi.tokhmi.xyz',
     ];
 
     for (final endpoint in endpoints) {
