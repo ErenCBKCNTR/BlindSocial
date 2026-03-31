@@ -647,10 +647,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     final isMe = uid == _auth.currentUser?.uid;
 
                     return StreamBuilder<DocumentSnapshot>(
-                      stream: (widget.firestore ?? FirebaseFirestore.instance)
-                          .collection('chat_rooms')
-                          .doc(widget.roomId)
-                          .snapshots(),
+                      // ⚡ Bolt: Use the already cached _roomStream instead of creating N streams per participant
+                      stream: _roomStream,
                       builder: (context, roomSnap) {
                         final isCreator = roomSnap.hasData &&
                             (roomSnap.data!.data() as Map<String, dynamic>?)?['creatorId'] ==
