@@ -199,18 +199,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Şifre',
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
+                        suffixIcon: TextButton(
                           onPressed: () {
                             setState(() {
                               _obscurePassword = !_obscurePassword;
                             });
                           },
+                          child: Text(
+                            _obscurePassword ? 'Şifreyi Göster' : 'Şifreyi Gizle',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
+                          ),
                         ),
                       ),
                       validator: (v) =>

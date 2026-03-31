@@ -237,6 +237,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: 'ornek@email.com veya kullanıcıadı',
                     ),
                   ),
+                  SizedBox(height: 20),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: 'Şifre',
+                      hintText: 'Şifreniz',
+                      suffixIcon: TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                        child: Text(
+                          _obscurePassword ? 'Şifreyi Göster' : 'Şifreyi Gizle',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton(
@@ -250,29 +272,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 20),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      labelText: 'Şifre',
-                      hintText: 'Şifreniz',
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
+                  SizedBox(height: 10),
                   Row(
                     children: [
                       Checkbox(
