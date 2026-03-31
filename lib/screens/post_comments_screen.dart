@@ -87,6 +87,37 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
     _commentController.clear();
   }
 
+  Future<void> _confirmDeleteComment(String commentId) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Emin misiniz?'),
+          content: const Text('Yorumunuzu silmek istediğinize emin misiniz?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('İptal'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Sil', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      await _deleteComment(commentId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gönderiye yaptığınız yorum silinmiştir.')),
+        );
+      }
+    }
+  }
+
   Future<void> _deleteComment(String commentId) async {
     await _firestore
         .collection('meydan_posts')
@@ -168,9 +199,16 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
                         ),
                         subtitle: Text(content, style: const TextStyle(color: Colors.white)),
                         trailing: currentUserUid == authorId
-                            ? IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => _deleteComment(commentDoc.id),
+                            ? Semantics(
+                                label: 'Yorumu Sil',
+                                button: true,
+                                child: IconButton(
+                                  icon: const ExcludeSemantics(
+                                    child: Icon(Icons.delete, color: Colors.red),
+                                  ),
+                                  tooltip: 'Yorumu Sil',
+                                  onPressed: () => _confirmDeleteComment(commentDoc.id),
+                                ),
                               )
                             : null,
                       ),
