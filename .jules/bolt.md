@@ -34,3 +34,7 @@
 ## 2024-03-30 - Firestore Indexing & Unblocking UI
 **Learning:** Combining inequality (`where('field', isNotEqualTo: true)`) or multi-field equality (`where`) with `orderBy` on different fields requires a composite index, causing silent drops or StreamBuilder errors in production without it. Awaiting multiple Firebase deletes sequentially on close routines blocks the main UI thread during navigation.
 **Action:** Always prefer server-side sorting (`orderBy`) and filter data client-side in the `StreamBuilder` if the resulting dataset is small. For component teardown, dispatch asynchronous operations (like `collection.get().then(...)`) and allow `Navigator.pop()` to execute immediately to ensure UI fluidity.
+
+## 2024-03-31 - N+1 StreamBuilder pattern in ListView
+**Learning:** Using `StreamBuilder` with inline `.snapshots()` inside a `ListView.builder` creates an N+1 query problem, exponentially increasing Firestore reads (N streams for N items) and triggering excessive widget rebuilds.
+**Action:** When child items in a list need real-time data from a parent document or already-watched query, pass down the cached `Stream` initialized in the parent's `initState`, rather than instantiating new `.snapshots()` calls per child item.
