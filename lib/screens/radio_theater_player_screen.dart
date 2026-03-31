@@ -223,24 +223,34 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
           throw Exception("No audio streams found");
         }
 
-        // Try to find the highest bitrate m4a (mp4 container)
+        // Try to find the highest bitrate audio stream
         final streamInfo = audioOnlyStreams.withHighestBitrate();
         final stream = yt.videos.streamsClient.get(streamInfo);
 
-        final contentLength = streamInfo.size.totalBytes;
+        // Fallback length checking if size is somewhat reported incorrectly
+        final contentLength = streamInfo.size.totalBytes > 0
+            ? streamInfo.size.totalBytes
+            : 1; // Default to 1 to avoid division by zero if stream size unknown
+
         int bytesDownloaded = 0;
         final sink = file.openWrite();
 
         await for (final chunk in stream) {
           sink.add(chunk);
           bytesDownloaded += chunk.length;
-          if (contentLength > 0 && mounted) {
+          if (mounted) {
             setState(() {
-              _downloadProgress = bytesDownloaded / contentLength;
+              // Clamp progress between 0 and 1
+              _downloadProgress = (bytesDownloaded / contentLength).clamp(0.0, 1.0);
             });
           }
         }
         await sink.close();
+
+        // Check if file was actually written properly
+        if (await file.length() == 0) {
+           throw Exception("Downloaded file is empty");
+        }
 
         setState(() {
           _isDownloaded = true;
@@ -255,16 +265,54 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
         }
       } catch (e) {
         debugPrint("Download error: $e");
-        setState(() {
-          _isDownloading = false;
-        });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('İndirme sırasında bir hata oluştu.')),
-          );
-        }
-        if (await file.exists()) {
-          await file.delete();
+
+        // If youtube_explode_dart fails, fallback to piped api
+        try {
+           final streamUrl = await _fetchPipedAudioUrl(videoId);
+           if (streamUrl == null) throw Exception("Stream URL not found via fallback API");
+
+           final request = http.Request('GET', Uri.parse(streamUrl));
+           final response = await http.Client().send(request);
+
+           final contentLength = response.contentLength;
+           int bytesDownloaded = 0;
+           final sink = file.openWrite();
+
+           await for (final chunk in response.stream) {
+             sink.add(chunk);
+             bytesDownloaded += chunk.length;
+             if (contentLength != null && mounted) {
+               setState(() {
+                 _downloadProgress = (bytesDownloaded / contentLength).clamp(0.0, 1.0);
+               });
+             }
+           }
+           await sink.close();
+
+           setState(() {
+             _isDownloaded = true;
+             _isDownloading = false;
+             _downloadedFilePath = path;
+           });
+
+           if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(
+               const SnackBar(content: Text('İndirme tamamlandı! Artık çevrimdışı dinleyebilirsiniz.')),
+             );
+           }
+        } catch(fallbackError) {
+          debugPrint("Fallback download error: $fallbackError");
+          setState(() {
+            _isDownloading = false;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('İndirme sırasında bir hata oluştu. Videoya erişilemiyor.')),
+            );
+          }
+          if (await file.exists()) {
+            await file.delete();
+          }
         }
       } finally {
         yt.close();
