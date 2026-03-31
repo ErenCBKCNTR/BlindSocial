@@ -1,6 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import '../services/audio_handler.dart';
+import '../services/audio_cache_manager.dart';
+import '../services/audio_progress_manager.dart';
+import '../services/audio_favorites_manager.dart';
 
 class RadioTheaterPlayerScreen extends StatefulWidget {
   final String url;
@@ -42,29 +46,58 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
     return driveLink;
   }
 
+  double _currentSpeed = 1.0;
+  bool _isDownloading = false;
+  String? _localPath;
+  Duration _lastSavedPosition = Duration.zero;
+  StreamSubscription? _positionSubscription;
+  StreamSubscription? _playbackStateSubscription;
+  bool _isFavorite = false;
+
   Future<void> _initAudio() async {
     final directAudioUrl = _convertToDirectLink(widget.url);
 
     try {
+      // Check if file is already downloaded
+      _localPath = await AudioCacheManager.getCachedAudioPath(directAudioUrl, widget.title);
+      final playUrl = _localPath != null ? 'file://$_localPath' : directAudioUrl;
+
       final mediaItem = MediaItem(
-        id: directAudioUrl,
+        id: playUrl,
         title: widget.title,
         artist: 'Blind Social Sesli Kitap / Tiyatro',
       );
 
       await audioHandler.stop();
-      await audioHandler.setUrl(directAudioUrl, mediaItem: mediaItem);
-      await audioHandler.play();
+      await audioHandler.setUrl(playUrl, mediaItem: mediaItem);
+
+      // Load saved progress
+      _lastSavedPosition = await AudioProgressManager.getProgress(widget.url);
+      if (_lastSavedPosition > Duration.zero) {
+        await audioHandler.seek(_lastSavedPosition);
+      }
 
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _isPlaying = true;
         });
       }
 
+      // Play immediately but don't await the Future
+      audioHandler.play();
+
+      // Periodically save progress
+      _positionSubscription = audioHandler.player.positionStream.listen((position) {
+        if (position.inSeconds % 10 == 0) {
+          AudioProgressManager.saveProgress(widget.url, position);
+        }
+      });
+
+      // Load favorite status
+      _isFavorite = await AudioFavoritesManager.isFavorite(widget.url);
+
       // Listen to player state to update UI play/pause icon correctly
-      audioHandler.playbackState.listen((state) {
+      _playbackStateSubscription = audioHandler.playbackState.listen((state) {
         if (mounted) {
           setState(() {
             _isPlaying = state.playing;
@@ -85,8 +118,60 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
 
   @override
   void dispose() {
+    _positionSubscription?.cancel();
+    _playbackStateSubscription?.cancel();
     audioHandler.stop();
     super.dispose();
+  }
+
+  void _changeSpeed() {
+    setState(() {
+      if (_currentSpeed == 1.0) {
+        _currentSpeed = 1.25;
+      } else if (_currentSpeed == 1.25) {
+        _currentSpeed = 1.5;
+      } else if (_currentSpeed == 1.5) {
+        _currentSpeed = 2.0;
+      } else {
+        _currentSpeed = 1.0;
+      }
+      audioHandler.player.setSpeed(_currentSpeed);
+    });
+  }
+
+  Future<void> _downloadOffline() async {
+    if (_localPath != null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bu tiyatro zaten çevrimdışı dinleme için indirilmiş.')),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isDownloading = true;
+    });
+
+    final directAudioUrl = _convertToDirectLink(widget.url);
+    final path = await AudioCacheManager.downloadAudio(directAudioUrl, widget.title);
+
+    if (mounted) {
+      setState(() {
+        _isDownloading = false;
+        _localPath = path;
+      });
+
+      if (path != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tiyatro çevrimdışı dinleme için kaydedildi.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('İndirme sırasında bir hata oluştu.')),
+        );
+      }
+    }
   }
 
   String _formatDuration(Duration duration) {
@@ -97,10 +182,31 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
     return [if (duration.inHours > 0) hours, minutes, seconds].join(':');
   }
 
+  Future<void> _toggleFavorite() async {
+    await AudioFavoritesManager.toggleFavorite(widget.url);
+    if (mounted) {
+      setState(() {
+        _isFavorite = !_isFavorite;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Oynatıcı')),
+      appBar: AppBar(
+        title: const Text('Oynatıcı'),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: _isFavorite ? Colors.red : null,
+            ),
+            tooltip: 'Favorilere Ekle/Çıkar',
+            onPressed: _toggleFavorite,
+          ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
@@ -175,46 +281,105 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          TextButton(
-                            onPressed: () {
-                              audioHandler.rewind();
-                            },
-                            child: Text(
-                              '10 Saniye Geriye Al',
+                          TextButton.icon(
+                            onPressed: _changeSpeed,
+                            icon: const Icon(Icons.speed, size: 20),
+                            label: Text(
+                              'Hız: ${_currentSpeed}x',
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 16,
                                 color: Theme.of(context).colorScheme.primary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              if (_isPlaying) {
-                                audioHandler.pause();
-                              } else {
-                                audioHandler.play();
-                              }
-                            },
-                            child: Text(
-                              _isPlaying ? 'Duraklat' : 'Başlat',
-                              style: TextStyle(
-                                fontSize: 24,
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.bold,
+                          if (_localPath == null)
+                            _isDownloading
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : TextButton.icon(
+                                    onPressed: _downloadOffline,
+                                    icon: const Icon(Icons.download, size: 20),
+                                    label: Text(
+                                      'Çevrimdışı İndir',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Theme.of(context).colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  )
+                          else
+                            TextButton.icon(
+                              onPressed: null,
+                              icon: Icon(Icons.download_done, size: 20, color: Colors.green[400]),
+                              label: Text(
+                                'İndirildi',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.green[400],
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () {
+                                audioHandler.rewind();
+                              },
+                              child: Text(
+                                '10 Saniye Geri',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              audioHandler.fastForward();
-                            },
-                            child: Text(
-                              '10 Saniye İleri Sar',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () {
+                                if (_isPlaying) {
+                                  audioHandler.pause();
+                                } else {
+                                  audioHandler.play();
+                                }
+                              },
+                              child: Text(
+                                _isPlaying ? 'Duraklat' : 'Başlat',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () {
+                                audioHandler.fastForward();
+                              },
+                              child: Text(
+                                '10 Saniye İleri',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
                             ),
                           ),
