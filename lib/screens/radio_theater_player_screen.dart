@@ -80,7 +80,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                     _controller.seekTo(seconds: currentPos - 10, allowSeekAhead: true);
                   },
                   child: Text(
-                    '< 10 Saniye',
+                    '10 Saniye Geriye Al',
                     style: TextStyle(
                       fontSize: 18,
                       color: Theme.of(context).colorScheme.primary,
@@ -112,7 +112,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                     _controller.seekTo(seconds: currentPos + 10, allowSeekAhead: true);
                   },
                   child: Text(
-                    '10 Saniye >',
+                    '10 Saniye İleri Sar',
                     style: TextStyle(
                       fontSize: 18,
                       color: Theme.of(context).colorScheme.primary,
