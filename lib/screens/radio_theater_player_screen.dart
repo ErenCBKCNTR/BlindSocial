@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:audio_service/audio_service.dart';
 import '../services/audio_handler.dart';
 
@@ -19,18 +17,9 @@ class RadioTheaterPlayerScreen extends StatefulWidget {
 }
 
 class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
-  String? _videoId;
   bool _isLoading = true;
   String? _errorMessage;
   bool _isPlaying = false;
-
-  final List<String> _pipedInstances = [
-    'https://api.piped.private.coffee',
-    'https://pipedapi.lunar.icu',
-    'https://pipedapi.kavin.rocks',
-    'https://piped-api.garudalinux.org',
-    'https://pipedapi.drgns.space',
-  ];
 
   @override
   void initState() {
@@ -38,80 +27,33 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
     _initAudio();
   }
 
-  String? _extractVideoId(String url) {
-    try {
-      final uri = Uri.parse(url);
-      if (uri.host.contains('youtube.com')) {
-        return uri.queryParameters['v'];
-      } else if (uri.host.contains('youtu.be')) {
-        return uri.pathSegments.first;
-      }
-    } catch (e) {
-      debugPrint('Error parsing URL: $e');
+  // Converts a standard Google Drive view link to a direct download link
+  // e.g., https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+  // -> https://drive.google.com/uc?export=download&id=FILE_ID
+  String _convertToDirectLink(String driveLink) {
+    // Linkin içinden ID kısmını ayıklar
+    RegExp regExp = RegExp(r"id=([a-zA-Z0-9_-]+)|/d/([a-zA-Z0-9_-]+)");
+    Match? match = regExp.firstMatch(driveLink);
+
+    if (match != null) {
+      String fileId = match.group(1) ?? match.group(2)!;
+      return "https://drive.google.com/uc?export=download&id=$fileId";
     }
-    return null;
+    return driveLink;
   }
 
   Future<void> _initAudio() async {
-    _videoId = _extractVideoId(widget.url);
-    if (_videoId == null) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = "Geçersiz YouTube bağlantısı.";
-        });
-      }
-      return;
-    }
-
-    // Attempt to fetch audio stream from multiple Piped API instances
-    String? audioUrl;
-    for (final instance in _pipedInstances) {
-      try {
-        debugPrint('Trying Piped instance: $instance');
-        final response = await http
-            .get(Uri.parse('$instance/streams/$_videoId'))
-            .timeout(const Duration(seconds: 10));
-
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          if (data['audioStreams'] != null && data['audioStreams'].isNotEmpty) {
-            final audioStreams = List<Map<String, dynamic>>.from(data['audioStreams']);
-            // Prefer m4a for compatibility
-            audioStreams.sort((a, b) => (b['bitrate'] as int? ?? 0).compareTo(a['bitrate'] as int? ?? 0));
-            final bestStream = audioStreams.firstWhere(
-              (stream) => stream['codec'] == 'm4a',
-              orElse: () => audioStreams.first,
-            );
-            audioUrl = bestStream['url'];
-            if (audioUrl != null) break;
-          }
-        }
-      } catch (e) {
-        debugPrint('Failed instance $instance: $e');
-      }
-    }
-
-    if (audioUrl == null) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = "Ses akışı alınamadı, sunucular yanıt vermiyor.";
-        });
-      }
-      return;
-    }
+    final directAudioUrl = _convertToDirectLink(widget.url);
 
     try {
       final mediaItem = MediaItem(
-        id: audioUrl,
+        id: directAudioUrl,
         title: widget.title,
-        artist: 'Blind Social Radyo Tiyatrosu',
-        artUri: Uri.parse('https://img.youtube.com/vi/$_videoId/0.jpg'),
+        artist: 'Blind Social Sesli Kitap / Tiyatro',
       );
 
       await audioHandler.stop();
-      await audioHandler.setUrl(audioUrl, mediaItem: mediaItem);
+      await audioHandler.setUrl(directAudioUrl, mediaItem: mediaItem);
       await audioHandler.play();
 
       if (mounted) {
@@ -135,7 +77,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = "Oynatılırken bir hata oluştu: $e";
+          _errorMessage = "Ses dosyası oynatılamadı. Lütfen Google Drive bağlantısının 'Herkese Açık' (Bağlantıya sahip olan herkes) olarak ayarlandığından emin olun.";
         });
       }
     }
@@ -158,13 +100,13 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Radyo Tiyatrosu Oynatıcı')),
+      appBar: AppBar(title: const Text('Oynatıcı')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
               ? Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(24.0),
                     child: Text(
                       _errorMessage!,
                       style: const TextStyle(fontSize: 18, color: Colors.red),
@@ -176,18 +118,17 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12.0),
-                        child: Image.network(
-                          'https://img.youtube.com/vi/$_videoId/0.jpg',
-                          height: 250,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            height: 250,
-                            color: Colors.grey[800],
-                            child: const Center(child: Icon(Icons.radio, size: 80)),
-                          ),
+                      Container(
+                        height: 250,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[850],
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Icon(
+                          Icons.headphones,
+                          size: 100,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                       const SizedBox(height: 24),
