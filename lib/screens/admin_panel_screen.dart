@@ -315,7 +315,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               ),
               TextField(
                 controller: urlController,
-                decoration: const InputDecoration(labelText: 'YouTube URL (veya m3u8 vs.)'),
+                decoration: const InputDecoration(labelText: 'Google Drive Paylaşım Linki (mp3/m4a)'),
               ),
               const SizedBox(height: 10),
               ElevatedButton.icon(
@@ -323,9 +323,21 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 label: const Text('Yeni Tiyatro Ekle'),
                 onPressed: () async {
                   if (titleController.text.isNotEmpty && urlController.text.isNotEmpty) {
+                    String originalUrl = urlController.text.trim();
+                    String finalUrl = originalUrl;
+
+                    // Linkin içinden ID kısmını ayıklar
+                    RegExp regExp = RegExp(r"id=([a-zA-Z0-9_-]+)|/d/([a-zA-Z0-9_-]+)");
+                    Match? match = regExp.firstMatch(originalUrl);
+
+                    if (match != null) {
+                      String fileId = match.group(1) ?? match.group(2)!;
+                      finalUrl = "https://drive.google.com/uc?export=download&id=$fileId";
+                    }
+
                     await FirebaseFirestore.instance.collection('radio_theaters').add({
                       'title': titleController.text,
-                      'url': urlController.text,
+                      'url': finalUrl,
                       'createdAt': FieldValue.serverTimestamp(),
                     });
                     titleController.clear();

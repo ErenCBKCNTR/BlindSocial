@@ -6,11 +6,52 @@ class UpdateScreen extends StatelessWidget {
 
   const UpdateScreen({super.key, required this.updateUrl});
 
-  Future<void> _launchUpdate() async {
-    final url = Uri.parse(updateUrl);
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      debugPrint('Could not launch $updateUrl');
+  Future<void> _contactAdminViaWhatsApp(BuildContext context) async {
+    const phoneNumber = '905345991728';
+    const message = 'Merhaba, uygulamanın güncel sürümünü almak için iletişime geçiyorum.';
+    final whatsappUrl = Uri.parse('https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}');
+
+    try {
+      if (!await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication)) {
+        if (context.mounted) {
+           _showFallbackMessage(context);
+        }
+      }
+    } catch (e) {
+       if (context.mounted) {
+           _showFallbackMessage(context);
+       }
     }
+  }
+
+  void _showFallbackMessage(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          title: Text(
+            'Hata',
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+          content: Text(
+            'WhatsApp uygulaması açılamadı. Lütfen yönetici ile iletişime geçiniz: 0534 599 17 28',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Tamam',
+                style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -53,14 +94,14 @@ class UpdateScreen extends StatelessWidget {
                 ),
                 const Spacer(),
                 ElevatedButton(
-                  onPressed: _launchUpdate,
+                  onPressed: () => _contactAdminViaWhatsApp(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     minimumSize: const Size(double.infinity, 70),
                   ),
                   child: const Text(
-                    'Güncellemeyi İndir',
+                    'Uygulamayı Güncelle',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),

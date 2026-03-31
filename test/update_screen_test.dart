@@ -45,18 +45,18 @@ void main() {
         find.text(
             'Uygulamanın daha iyi ve sorunsuz çalışması için yeni sürümü yüklemelisiniz.'),
         findsOneWidget);
-    expect(find.text('Güncellemeyi İndir'), findsOneWidget);
+    expect(find.text('Uygulamayı Güncelle'), findsOneWidget);
     expect(find.byType(ElevatedButton), findsOneWidget);
   });
 
 
-  testWidgets('launches URL when button is tapped', (WidgetTester tester) async {
+  testWidgets('launches WhatsApp URL when button is tapped', (WidgetTester tester) async {
     await tester.pumpWidget(createWidgetUnderTest());
 
     await tester.tap(find.byType(ElevatedButton));
     await tester.pumpAndSettle();
 
-    expect(mockUrlLauncher.url, 'https://example.com/update');
+    expect(mockUrlLauncher.url, startsWith('https://wa.me/905345991728'));
     expect(mockUrlLauncher.options?.mode, PreferredLaunchMode.externalApplication);
   });
 }
