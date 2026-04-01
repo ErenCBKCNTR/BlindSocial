@@ -600,19 +600,15 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    Semantics(
-                                      label: likeCount > 0
+                                    IconButton(
+                                      tooltip: likeCount > 0
                                           ? 'Gönderiyi beğen. Bu gönderiyi $likeCount kişi beğendi.'
                                           : 'Gönderiyi beğen',
-                                      button: true,
-                                      child: IconButton(
-                                        tooltip: 'Gönderiyi beğen',
-                                        icon: Icon(
-                                          isLiked ? Icons.favorite : Icons.favorite_border,
-                                          color: isLiked ? Colors.red : Colors.grey,
-                                        ),
-                                        onPressed: () => _toggleLike(doc.id, likes),
+                                      icon: Icon(
+                                        isLiked ? Icons.favorite : Icons.favorite_border,
+                                        color: isLiked ? Colors.red : Colors.grey,
                                       ),
+                                      onPressed: () => _toggleLike(doc.id, likes),
                                     ),
                                     ExcludeSemantics(
                                       child: Text(
@@ -625,21 +621,17 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
                                 Row(
                                   children: [
                                     if (currentUserUid != null) ...[
-                                      Semantics(
-                                        label: commentCount > 0 ? '$commentCount yorum. Yorumlara git.' : 'Yorumlar',
-                                        button: true,
-                                        child: IconButton(
-                                          icon: const ExcludeSemantics(child: Icon(Icons.comment, color: Colors.grey)),
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => PostCommentsScreen(postId: doc.id),
-                                              ),
-                                            );
-                                          },
-                                          tooltip: 'Yorumlar',
-                                        ),
+                                      IconButton(
+                                        icon: const Icon(Icons.comment, color: Colors.grey),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => PostCommentsScreen(postId: doc.id),
+                                            ),
+                                          );
+                                        },
+                                        tooltip: commentCount > 0 ? '$commentCount yorum. Yorumlara git.' : 'Yorumlar',
                                       ),
                                     ],
                                     if (currentUserUid == widget.userId) ...[

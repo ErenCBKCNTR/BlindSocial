@@ -24,6 +24,7 @@ class _SquareScreenState extends State<SquareScreen> {
   bool _isPosting = false;
   int _limit = 20;
   late Stream<QuerySnapshot> _postsStream;
+  DateTime? _lastRefreshTime;
 
   int _userRole = 2;
 
@@ -77,6 +78,29 @@ class _SquareScreenState extends State<SquareScreen> {
         .orderBy('createdAt', descending: true)
         .limit(_limit)
         .snapshots();
+  }
+
+  Future<void> _handleRefresh() async {
+    final now = DateTime.now();
+    if (_lastRefreshTime != null &&
+        now.difference(_lastRefreshTime!).inSeconds < 15) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Lütfen yenilemek için biraz bekleyin.'),
+          ),
+        );
+      }
+      return;
+    }
+
+    _lastRefreshTime = now;
+    if (mounted) {
+      setState(() {
+        _limit = 20;
+        _updateStream();
+      });
+    }
   }
 
   @override
@@ -405,206 +429,212 @@ class _SquareScreenState extends State<SquareScreen> {
   }
 
   Widget _buildPostsList(List<DocumentSnapshot> docs, String? currentUserUid) {
-    return ListView.builder(
-      controller: _scrollController,
-      itemCount: docs.length,
-      padding: const EdgeInsets.only(bottom: 80),
-      itemBuilder: (context, index) {
-        final doc = docs[index];
-        final data = doc.data() as Map<String, dynamic>;
+    return RefreshIndicator(
+      onRefresh: _handleRefresh,
+      color: Colors.yellow,
+      backgroundColor: Colors.black,
+      child: ListView.builder(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: docs.length,
+        padding: const EdgeInsets.only(bottom: 80),
+        itemBuilder: (context, index) {
+          final doc = docs[index];
+          final data = doc.data() as Map<String, dynamic>;
 
-        final content = data['content'] ?? '';
-        final authorId = data['authorId'];
-        final authorUsername = data['authorUsername'] ?? 'İsimsiz';
-        final likes = data['likes'] as List<dynamic>? ?? [];
-        final reportedBy = data['reportedBy'] as List<dynamic>? ?? [];
+          final content = data['content'] ?? '';
+          final authorId = data['authorId'];
+          final authorUsername = data['authorUsername'] ?? 'İsimsiz';
+          final likes = data['likes'] as List<dynamic>? ?? [];
+          final reportedBy = data['reportedBy'] as List<dynamic>? ?? [];
 
-        final isLiked =
-            currentUserUid != null && likes.contains(currentUserUid);
-        final likeCount = likes.length;
+          final isLiked =
+              currentUserUid != null && likes.contains(currentUserUid);
+          final likeCount = likes.length;
 
-        return StreamBuilder<QuerySnapshot>(
-          stream: _firestore
-              .collection('meydan_posts')
-              .doc(doc.id)
-              .collection('comments')
-              .snapshots(),
-          builder: (context, commentSnapshot) {
-            final commentCount = commentSnapshot.data?.docs.length ?? 0;
-            return Card(
-              color: Colors.grey[900],
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PostCommentsScreen(postId: doc.id),
-                    ),
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Semantics(
-                    label:
-                        'Gönderen: $authorUsername. İçerik: $content. ${likeCount > 0 ? '$likeCount kişi beğendi.' : ''} ${commentCount > 0 ? '$commentCount kişi yorum yaptı.' : ''}',
-                    container: true,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        MeydanProfileScreen(userId: authorId),
+          return StreamBuilder<QuerySnapshot>(
+            stream: _firestore
+                .collection('meydan_posts')
+                .doc(doc.id)
+                .collection('comments')
+                .snapshots(),
+            builder: (context, commentSnapshot) {
+              final commentCount = commentSnapshot.data?.docs.length ?? 0;
+              return Card(
+                color: Colors.grey[900],
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            PostCommentsScreen(postId: doc.id),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Semantics(
+                      label:
+                          'Gönderen: $authorUsername. İçerik: $content. ${likeCount > 0 ? '$likeCount kişi beğendi.' : ''} ${commentCount > 0 ? '$commentCount kişi yorum yaptı.' : ''}',
+                      container: true,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          MeydanProfileScreen(userId: authorId),
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  '@$authorUsername',
+                                  style: const TextStyle(
+                                    color: Colors.yellow,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
                                   ),
-                                );
-                              },
-                              child: Text(
-                                '@$authorUsername',
-                                style: const TextStyle(
-                                  color: Colors.yellow,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
                                 ),
                               ),
-                            ),
-                            if (data['createdAt'] != null)
-                              Text(
-                                _formatTimestamp(
-                                  data['createdAt'] as Timestamp,
+                              if (data['createdAt'] != null)
+                                Text(
+                                  _formatTimestamp(
+                                    data['createdAt'] as Timestamp,
+                                  ),
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                  ),
                                 ),
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14,
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          content,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            height: 1.5,
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Semantics(
-                                  label: likeCount > 0
-                                      ? 'Gönderiyi beğen. Bu gönderiyi $likeCount kişi beğendi.'
-                                      : 'Gönderiyi beğen',
-                                  button: true,
-                                  child: IconButton(
-                                    tooltip: 'Gönderiyi beğen',
+                          const SizedBox(height: 8),
+                          Text(
+                            content,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  IconButton(
+                                    tooltip: likeCount > 0
+                                        ? 'Gönderiyi beğen. Bu gönderiyi $likeCount kişi beğendi.'
+                                        : 'Gönderiyi beğen',
                                     icon: Icon(
                                       isLiked
                                           ? Icons.favorite
                                           : Icons.favorite_border,
-                                      color: isLiked ? Colors.red : Colors.grey,
-                                    ),
-                                    onPressed: () => _toggleLike(doc.id, likes),
-                                  ),
-                                ),
-                                ExcludeSemantics(
-                                  child: Text(
-                                    '$likeCount',
-                                    style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                if (currentUserUid != null) ...[
-                                  Semantics(
-                                    label: commentCount > 0
-                                        ? '$commentCount yorum. Yorumlara git.'
-                                        : 'Yorumlar',
-                                    button: true,
-                                    child: IconButton(
-                                      icon: const ExcludeSemantics(
-                                        child: Icon(
-                                          Icons.comment,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                PostCommentsScreen(
-                                                  postId: doc.id,
-                                                ),
-                                          ),
-                                        );
-                                      },
-                                      tooltip: 'Yorumlar',
-                                    ),
-                                  ),
-                                ],
-                                if (currentUserUid == authorId ||
-                                    _userRole == 0 ||
-                                    _userRole == 1) ...[
-                                  if (currentUserUid == authorId)
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.edit,
-                                        color: Colors.blue,
-                                      ),
-                                      onPressed: () =>
-                                          _editPost(doc.id, content),
-                                      tooltip: 'Düzenle',
-                                    ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () => _deletePost(doc.id),
-                                    tooltip: 'Sil',
-                                  ),
-                                ],
-                                if (currentUserUid != null &&
-                                    currentUserUid != authorId) ...[
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.report,
-                                      color: Colors.grey,
+                                      color: isLiked
+                                          ? Colors.red
+                                          : Colors.grey,
                                     ),
                                     onPressed: () =>
-                                        _reportPost(doc.id, reportedBy),
-                                    tooltip: 'Şikayet Et',
+                                        _toggleLike(doc.id, likes),
+                                  ),
+                                  ExcludeSemantics(
+                                    child: Text(
+                                      '$likeCount',
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 16,
+                                      ),
+                                    ),
                                   ),
                                 ],
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
+                              ),
+                              Row(
+                                children: [
+                                  if (currentUserUid != null) ...[
+                                    Semantics(
+                                      label: commentCount > 0
+                                          ? '$commentCount yorum. Yorumlara git.'
+                                          : 'Yorumlar',
+                                      button: true,
+                                      child: IconButton(
+                                        icon: const ExcludeSemantics(
+                                          child: Icon(
+                                            Icons.comment,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  PostCommentsScreen(
+                                                    postId: doc.id,
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                        tooltip: 'Yorumlar',
+                                      ),
+                                    ),
+                                  ],
+                                  if (currentUserUid == authorId ||
+                                      _userRole == 0 ||
+                                      _userRole == 1) ...[
+                                    if (currentUserUid == authorId)
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          color: Colors.blue,
+                                        ),
+                                        onPressed: () =>
+                                            _editPost(doc.id, content),
+                                        tooltip: 'Düzenle',
+                                      ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () => _deletePost(doc.id),
+                                      tooltip: 'Sil',
+                                    ),
+                                  ],
+                                  if (currentUserUid != null &&
+                                      currentUserUid != authorId) ...[
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.report,
+                                        color: Colors.grey,
+                                      ),
+                                      onPressed: () =>
+                                          _reportPost(doc.id, reportedBy),
+                                      tooltip: 'Şikayet Et',
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-        );
-      },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 

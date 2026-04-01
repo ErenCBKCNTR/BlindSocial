@@ -117,7 +117,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = "Ses dosyası oynatılamadı. Lütfen Google Drive bağlantısının 'Herkese Açık' (Bağlantıya sahip olan herkes) olarak ayarlandığından emin olun.";
+          _errorMessage = "Ses dosyası oynatılamadı. Lütfen kaynak bağlantısının 'Herkese Açık' olarak ayarlandığından emin olun.";
         });
       }
     }

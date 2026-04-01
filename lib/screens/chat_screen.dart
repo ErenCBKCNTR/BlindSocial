@@ -304,13 +304,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         );
       }
     } catch (e) {
-      debugPrint('LiveKit connection error: $e');
+      debugPrint('Connection error: $e');
       setState(() {
         _isJoining = false;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Bağlantı Hatası: ${e.toString()}')),
+          const SnackBar(content: Text('Sesli kanala bağlanılamadı. Lütfen bağlantınızı kontrol ediniz.')),
         );
       }
     }
