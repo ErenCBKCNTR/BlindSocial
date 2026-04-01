@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'post_comments_screen.dart';
+import 'meydan_profile_screen.dart';
 
 class SquareScreen extends StatefulWidget {
   final FirebaseAuth? auth;
@@ -288,108 +289,320 @@ class _SquareScreenState extends State<SquareScreen> {
           },
           child: StatefulBuilder(
             builder: (context, setStateDialog) {
-            return AlertDialog(
-              backgroundColor: Colors.black,
-              title: const Text(
-                'Yeni Gönderi',
-                style: TextStyle(color: Colors.yellow),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: _postController,
-                    maxLines: 4,
-                    maxLength: 280,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: 'Neler düşünüyorsunuz?',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.cyan),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.yellow),
+              return AlertDialog(
+                backgroundColor: Colors.black,
+                title: const Text(
+                  'Yeni Gönderi',
+                  style: TextStyle(color: Colors.yellow),
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: _postController,
+                      maxLines: 4,
+                      maxLength: 280,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: 'Neler düşünüyorsunuz?',
+                        hintStyle: TextStyle(color: Colors.grey),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.cyan),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.yellow),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          _isListening ? Icons.mic : Icons.mic_none,
-                          color: _isListening ? Colors.red : Colors.yellow,
-                          size: 32,
-                        ),
-                        onPressed: () async {
-                          if (!_isListening) {
-                            bool available = await _speech.initialize(
-                              onStatus: (val) {
-                                if (val == 'done' || val == 'notListening') {
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            _isListening ? Icons.mic : Icons.mic_none,
+                            color: _isListening ? Colors.red : Colors.yellow,
+                            size: 32,
+                          ),
+                          onPressed: () async {
+                            if (!_isListening) {
+                              bool available = await _speech.initialize(
+                                onStatus: (val) {
+                                  if (val == 'done' || val == 'notListening') {
+                                    if (mounted) {
+                                      setStateDialog(
+                                        () => _isListening = false,
+                                      );
+                                    }
+                                  }
+                                },
+                                onError: (val) {
                                   if (mounted) {
                                     setStateDialog(() => _isListening = false);
                                   }
-                                }
-                              },
-                              onError: (val) {
-                                if (mounted) {
-                                  setStateDialog(() => _isListening = false);
-                                }
-                              },
-                            );
-                            if (available) {
-                              setStateDialog(() => _isListening = true);
-                              currentText = _postController.text;
-                              _speech.listen(
-                                onResult: (val) {
-                                  setStateDialog(() {
-                                    if (val.recognizedWords.isNotEmpty) {
-                                      _postController.text =
-                                          '$currentText ${val.recognizedWords}'.trimLeft();
-                                    }
-                                  });
                                 },
-                                localeId: 'tr_TR',
                               );
+                              if (available) {
+                                setStateDialog(() => _isListening = true);
+                                currentText = _postController.text;
+                                _speech.listen(
+                                  onResult: (val) {
+                                    setStateDialog(() {
+                                      if (val.recognizedWords.isNotEmpty) {
+                                        _postController.text =
+                                            '$currentText ${val.recognizedWords}'
+                                                .trimLeft();
+                                      }
+                                    });
+                                  },
+                                  localeId: 'tr_TR',
+                                );
+                              }
+                            } else {
+                              setStateDialog(() => _isListening = false);
+                              _speech.stop();
                             }
-                          } else {
-                            setStateDialog(() => _isListening = false);
-                            _speech.stop();
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    _speech.stop();
-                    _isListening = false;
-                    Navigator.pop(context);
-                  },
-                  child: const Text('İptal', style: TextStyle(color: Colors.red)),
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    _speech.stop();
-                    _isListening = false;
-                    Navigator.pop(context);
-                    _submitPost();
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
-                  child: const Text(
-                    'Paylaş',
-                    style: TextStyle(color: Colors.black),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      _speech.stop();
+                      _isListening = false;
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'İptal',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ),
-                ),
+                  ElevatedButton(
+                    onPressed: () {
+                      _speech.stop();
+                      _isListening = false;
+                      Navigator.pop(context);
+                      _submitPost();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.yellow,
+                    ),
+                    child: const Text(
+                      'Paylaş',
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  ),
                 ],
               );
             },
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPostsList(List<DocumentSnapshot> docs, String? currentUserUid) {
+    return ListView.builder(
+      controller: _scrollController,
+      itemCount: docs.length,
+      padding: const EdgeInsets.only(bottom: 80),
+      itemBuilder: (context, index) {
+        final doc = docs[index];
+        final data = doc.data() as Map<String, dynamic>;
+
+        final content = data['content'] ?? '';
+        final authorId = data['authorId'];
+        final authorUsername = data['authorUsername'] ?? 'İsimsiz';
+        final likes = data['likes'] as List<dynamic>? ?? [];
+        final reportedBy = data['reportedBy'] as List<dynamic>? ?? [];
+
+        final isLiked =
+            currentUserUid != null && likes.contains(currentUserUid);
+        final likeCount = likes.length;
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: _firestore
+              .collection('meydan_posts')
+              .doc(doc.id)
+              .collection('comments')
+              .snapshots(),
+          builder: (context, commentSnapshot) {
+            final commentCount = commentSnapshot.data?.docs.length ?? 0;
+            return Card(
+              color: Colors.grey[900],
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PostCommentsScreen(postId: doc.id),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Semantics(
+                    label:
+                        'Gönderen: $authorUsername. İçerik: $content. ${likeCount > 0 ? '$likeCount kişi beğendi.' : ''} ${commentCount > 0 ? '$commentCount kişi yorum yaptı.' : ''}',
+                    container: true,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        MeydanProfileScreen(userId: authorId),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                '@$authorUsername',
+                                style: const TextStyle(
+                                  color: Colors.yellow,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            if (data['createdAt'] != null)
+                              Text(
+                                _formatTimestamp(
+                                  data['createdAt'] as Timestamp,
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          content,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Semantics(
+                                  label: likeCount > 0
+                                      ? 'Gönderiyi beğen. Bu gönderiyi $likeCount kişi beğendi.'
+                                      : 'Gönderiyi beğen',
+                                  button: true,
+                                  child: IconButton(
+                                    tooltip: 'Gönderiyi beğen',
+                                    icon: Icon(
+                                      isLiked
+                                          ? Icons.favorite
+                                          : Icons.favorite_border,
+                                      color: isLiked ? Colors.red : Colors.grey,
+                                    ),
+                                    onPressed: () => _toggleLike(doc.id, likes),
+                                  ),
+                                ),
+                                ExcludeSemantics(
+                                  child: Text(
+                                    '$likeCount',
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                if (currentUserUid != null) ...[
+                                  Semantics(
+                                    label: commentCount > 0
+                                        ? '$commentCount yorum. Yorumlara git.'
+                                        : 'Yorumlar',
+                                    button: true,
+                                    child: IconButton(
+                                      icon: const ExcludeSemantics(
+                                        child: Icon(
+                                          Icons.comment,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                PostCommentsScreen(
+                                                  postId: doc.id,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      tooltip: 'Yorumlar',
+                                    ),
+                                  ),
+                                ],
+                                if (currentUserUid == authorId ||
+                                    _userRole == 0 ||
+                                    _userRole == 1) ...[
+                                  if (currentUserUid == authorId)
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        color: Colors.blue,
+                                      ),
+                                      onPressed: () =>
+                                          _editPost(doc.id, content),
+                                      tooltip: 'Düzenle',
+                                    ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () => _deletePost(doc.id),
+                                    tooltip: 'Sil',
+                                  ),
+                                ],
+                                if (currentUserUid != null &&
+                                    currentUserUid != authorId) ...[
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.report,
+                                      color: Colors.grey,
+                                    ),
+                                    onPressed: () =>
+                                        _reportPost(doc.id, reportedBy),
+                                    tooltip: 'Şikayet Et',
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -401,7 +614,28 @@ class _SquareScreenState extends State<SquareScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(title: const Text('BS Meydan')),
+      appBar: AppBar(
+        title: const Text('BS Meydan'),
+        actions: [
+          if (currentUserUid != null)
+            Semantics(
+              label: 'BS Meydan profilim',
+              button: true,
+              child: IconButton(
+                icon: const ExcludeSemantics(child: Icon(Icons.person)),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          MeydanProfileScreen(userId: currentUserUid),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showNewPostDialog,
         backgroundColor: Colors.yellow,
@@ -415,197 +649,82 @@ class _SquareScreenState extends State<SquareScreen> {
         children: [
           if (_isPosting) const LinearProgressIndicator(color: Colors.yellow),
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _postsStream,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Center(child: Text('Bir hata oluştu.'));
-                }
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final docs = snapshot.data?.docs ?? [];
-                if (docs.isEmpty) {
-                  return Center(
-                    child: const Text(
-                      'Henüz gönderi yok.',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                  );
+            child: FutureBuilder<DocumentSnapshot>(
+              future: currentUserUid != null
+                  ? FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(currentUserUid)
+                        .get()
+                  : Future.value(null),
+              builder: (context, userSnapshot) {
+                List<dynamic> followingList = [];
+                if (userSnapshot.hasData &&
+                    userSnapshot.data != null &&
+                    userSnapshot.data!.exists) {
+                  final userData =
+                      userSnapshot.data!.data() as Map<String, dynamic>;
+                  followingList = userData['following'] as List<dynamic>? ?? [];
                 }
 
-                return ListView.builder(
-                  controller: _scrollController,
-                  itemCount: docs.length,
-                  padding: const EdgeInsets.only(bottom: 80),
-                  itemBuilder: (context, index) {
-                    final doc = docs[index];
-                    final data = doc.data() as Map<String, dynamic>;
-
-                    final content = data['content'] ?? '';
-                    final authorId = data['authorId'];
-                    final authorUsername = data['authorUsername'] ?? 'İsimsiz';
-                    final likes = data['likes'] as List<dynamic>? ?? [];
-                    final reportedBy =
-                        data['reportedBy'] as List<dynamic>? ?? [];
-
-                    final isLiked =
-                        currentUserUid != null &&
-                        likes.contains(currentUserUid);
-                    final likeCount = likes.length;
-
-                    return StreamBuilder<QuerySnapshot>(
-                      stream: _firestore.collection('meydan_posts').doc(doc.id).collection('comments').snapshots(),
-                      builder: (context, commentSnapshot) {
-                        final commentCount = commentSnapshot.data?.docs.length ?? 0;
-                        return Card(
-                          color: Colors.grey[900],
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PostCommentsScreen(postId: doc.id),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Semantics(
-                                label: 'Gönderen: $authorUsername. İçerik: $content. ${likeCount > 0 ? '$likeCount kişi beğendi.' : ''} ${commentCount > 0 ? '$commentCount kişi yorum yaptı.' : ''}',
-                                container: true,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                Text(
-                                  '@$authorUsername',
-                                  style: const TextStyle(
-                                    color: Colors.yellow,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                if (data['createdAt'] != null)
-                                  Text(
-                                    _formatTimestamp(data['createdAt'] as Timestamp),
-                                    style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              content,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Semantics(
-                                      label: likeCount > 0
-                                          ? 'Gönderiyi beğen. Bu gönderiyi $likeCount kişi beğendi.'
-                                          : 'Gönderiyi beğen',
-                                      button: true,
-                                      child: IconButton(
-                                        tooltip: 'Gönderiyi beğen',
-                                        icon: Icon(
-                                          isLiked
-                                              ? Icons.favorite
-                                              : Icons.favorite_border,
-                                          color: isLiked
-                                              ? Colors.red
-                                              : Colors.grey,
-                                        ),
-                                        onPressed: () =>
-                                            _toggleLike(doc.id, likes),
-                                      ),
-                                    ),
-                                    ExcludeSemantics(
-                                      child: Text(
-                                        '$likeCount',
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    if (currentUserUid != null) ...[
-                                        Semantics(
-                                          label: commentCount > 0 ? '$commentCount yorum. Yorumlara git.' : 'Yorumlar',
-                                          button: true,
-                                          child: IconButton(
-                                            icon: const ExcludeSemantics(child: Icon(Icons.comment, color: Colors.grey)),
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => PostCommentsScreen(postId: doc.id),
-                                                ),
-                                              );
-                                            },
-                                            tooltip: 'Yorumlar',
-                                          ),
-                                      ),
-                                    ],
-                                    if (currentUserUid == authorId || _userRole == 0 || _userRole == 1) ...[
-                                      if (currentUserUid == authorId)
-                                        IconButton(
-                                          icon: const Icon(Icons.edit, color: Colors.blue),
-                                          onPressed: () => _editPost(doc.id, content),
-                                          tooltip: 'Düzenle',
-                                        ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete, color: Colors.red),
-                                        onPressed: () => _deletePost(doc.id),
-                                        tooltip: 'Sil',
-                                      ),
-                                    ],
-                                    if (currentUserUid != null && currentUserUid != authorId) ...[
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.report,
-                                          color: Colors.grey,
-                                        ),
-                                        onPressed: () =>
-                                            _reportPost(doc.id, reportedBy),
-                                        tooltip: 'Şikayet Et',
-                                      ),
-                                    ]
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                                ),
+                return StreamBuilder<QuerySnapshot>(
+                  stream: _postsStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return const Center(
+                        child: Text(
+                          'Bir hata oluştu.',
+                          style: TextStyle(color: Colors.white),
                         ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
+                      );
+                    }
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final docs = snapshot.data?.docs ?? [];
+                    if (docs.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Henüz gönderi yok.',
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
+                      );
+                    }
+
+                    // Feed Mixing Algorithm
+                    List<DocumentSnapshot> followedPosts = [];
+                    List<DocumentSnapshot> otherPosts = [];
+
+                    for (var doc in docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final authorId = data['authorId'];
+                      if (followingList.contains(authorId)) {
+                        followedPosts.add(doc);
+                      } else {
+                        otherPosts.add(doc);
+                      }
+                    }
+
+                    List<DocumentSnapshot> mixedDocs = [];
+                    int fIndex = 0;
+                    int oIndex = 0;
+
+                    while (fIndex < followedPosts.length ||
+                        oIndex < otherPosts.length) {
+                      if (fIndex < followedPosts.length) {
+                        mixedDocs.add(followedPosts[fIndex]);
+                        fIndex++;
+                      }
+                      if (oIndex < otherPosts.length) {
+                        mixedDocs.add(otherPosts[oIndex]);
+                        oIndex++;
+                      }
+                    }
+
+                    return _buildPostsList(mixedDocs, currentUserUid);
+                  },
+                );
+              },
             ),
           ),
         ],

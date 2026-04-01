@@ -1,0 +1,49 @@
+import 'package:flutter/material.dart';
+
+class ReleaseNotesScreen extends StatelessWidget {
+  const ReleaseNotesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String> notes = [
+      'BS Meydan için Instagram benzeri profil arayüzü eklendi.',
+      'Profilden göderi silme ve düzenleme işlemleri aktifleştirildi.',
+      'Kullanıcıları takip etme ve takipten çıkma sistemi eklendi.',
+      'Profil sayfasına sesli komutla biyografi ekleme desteği getirildi.',
+      'BS Meydan gönderi akışında yapay zeka destekli, takip edilen ve popüler içerikleri karma gösteren yeni algoritma devreye alındı.',
+      'Gönderi tasarımı, satır aralıkları ve yazı boyutları okunaklılığı artırmak adına yenilendi.',
+      'Yönetici panelinden son sürüm notları ve çevrimiçi üyeleri görüntüleme imkanı sağlandı.',
+    ];
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(title: const Text('Son Sürüm Notları')),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemCount: notes.length,
+        itemBuilder: (context, index) {
+          return Card(
+            color: Colors.grey[900],
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      notes[index],
+                      style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

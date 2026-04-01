@@ -42,3 +42,11 @@
 ## 2024-04-01 - [Optimize GitHub Actions Gradle Cache]
 **Learning:** Building Android APKs on GitHub Actions without caching Gradle dependencies causes the runner to download all dependencies from scratch on every run, resulting in significantly longer build times (often several minutes).
 **Action:** Always include `cache: true` for the `flutter-action` setup and `cache: "gradle"` for the `setup-java` action in `build.yml` or `android-build.yml` workflows to speed up Flutter/Android CI processes.
+
+## Profile and Social Feed Updates
+- Created `MeydanProfileScreen` mimicking Instagram profile layout with posts, followers, and following statistics.
+- Added voice dictation functionality to add/edit the user's biography.
+- Integrated a new social "Follow" feature updating `following` and `followers` lists in the database.
+- Implemented a smart feed mixing algorithm in `SquareScreen` that seamlessly alternates followed posts with normal posts.
+- Refined general post visual standards (font size 16, height 1.5, more spacious card padding).
+- Introduced "Son Sürüm Notları" (Release Notes) and "Çevrimiçi Üyeler" (Online Users) views in the admin panel.
