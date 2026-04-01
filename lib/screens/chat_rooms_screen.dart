@@ -792,25 +792,6 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       );
                     },
                   ),
-                  if (_userRole == 0)
-                    ListTile(
-                      leading: Icon(
-                        Icons.admin_panel_settings,
-                        color: Theme.of(context).colorScheme.secondary,
-                        size: 30,
-                      ),
-                      title: Text(
-                        'Yönetici Paneli',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: 22,
-                        ),
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.pushNamed(context, '/admin_panel');
-                      },
-                    ),
                   if (_userRole == 1)
                     ListTile(
                       leading: Icon(
@@ -916,6 +897,44 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                               ),
                             ),
                           ),
+                          if (_userRole == 0 || _userRole == 1) ...[
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: AspectRatio(
+                                aspectRatio: 1.0,
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  clipBehavior: Clip.antiAlias,
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      Navigator.pushNamed(context, '/admin_panel');
+                                    },
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.admin_panel_settings,
+                                          size: 40,
+                                          color: Theme.of(context).colorScheme.onPrimary,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Yönetici\nPaneli',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).colorScheme.onPrimary,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                           if (_userRole != 0) ...[
                             const SizedBox(width: 16),
                             Expanded(
