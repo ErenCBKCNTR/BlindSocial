@@ -735,8 +735,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         return StreamBuilder<DocumentSnapshot>(
           stream: _roomStream,
           builder: (context, snapshot) {
-            if (!snapshot.hasData || !snapshot.data!.exists) {
+            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
               return const AlertDialog(content: Text('Yükleniyor...'));
+            }
+            if (!snapshot.hasData || !snapshot.data!.exists) {
+              return const AlertDialog(content: Text('Oda bilgisi bulunamadı.'));
             }
             final data = snapshot.data!.data() as Map<String, dynamic>;
             final description = data['description'] ?? 'Bu oda için henüz bir açıklama eklenmemiş.';
