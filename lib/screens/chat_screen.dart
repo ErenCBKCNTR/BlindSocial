@@ -94,7 +94,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _addParticipant();
 
     _audioPlayer.onPlayerStateChanged.listen((state) {
-      if (state == PlayerState.completed || state == PlayerState.stopped) {
+      if (state == PlayerState.completed) {
         if (mounted) {
           setState(() {
             _currentlyPlayingMessageId = null;
@@ -758,16 +758,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               ),
               actions: [
                 if (isCreator)
-                  Semantics(
-                    label: 'Oda açıklamasını düzenle',
-                    button: true,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _editRoomDescription(description);
-                      },
-                      child: const Text('Açıklamayı Düzenle'),
-                    ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _editRoomDescription(description);
+                    },
+                    child: const Text('Açıklamayı Düzenle'),
                   ),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -1119,137 +1115,141 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       child: Row(
                         mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
                         children: [
-                          if (isMe)
-                            Semantics(
-                              label: 'Mesajı sil',
-                              button: true,
-                              child: IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 28),
-                                tooltip: 'Mesajı sil',
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                                      title: Text('Mesajı Sil', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-                                      content: Text('Bu mesajı silmek istediğinize emin misiniz?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context),
-                                          child: const Text('İptal'),
-                                        ),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                            _deleteMessage(messages[index].id, audioUrl);
-                                          },
-                                          child: const Text('Sil'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
                           Flexible(
                             child: Align(
-                          alignment: isMe
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft,
-                          child: Container(
-                            padding: const EdgeInsets.all(12.0),
-                            decoration: BoxDecoration(
-                              color: isMe
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).colorScheme.secondary,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              alignment: isMe
+                                  ? Alignment.centerRight
+                                  : Alignment.centerLeft,
+                              child: Container(
+                                padding: const EdgeInsets.all(12.0),
+                                decoration: BoxDecoration(
+                                  color: isMe
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).colorScheme.secondary,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    Text(
-                                      senderName,
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onPrimary,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    if (type == 'audio')
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: Icon(
-                                              _currentlyPlayingMessageId == messages[index].id
-                                                  ? Icons.stop
-                                                  : Icons.play_arrow,
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.onPrimary,
-                                              size: 30,
-                                            ),
-                                            onPressed: () async {
-                                              if (_currentlyPlayingMessageId == messages[index].id) {
-                                                await _audioPlayer.stop();
-                                                setState(() {
-                                                  _currentlyPlayingMessageId = null;
-                                                });
-                                              } else {
-                                                if (audioUrl != null) {
-                                                  await _audioPlayer.stop();
-                                                  setState(() {
-                                                    _currentlyPlayingMessageId = messages[index].id;
-                                                  });
-                                                  await _audioPlayer.play(
-                                                    UrlSource(audioUrl),
-                                                  );
-                                                }
-                                              }
-                                            },
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          senderName,
+                                          style: TextStyle(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimary,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
                                           ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        if (type == 'audio')
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(
+                                                  _currentlyPlayingMessageId == messages[index].id
+                                                      ? Icons.stop
+                                                      : Icons.play_arrow,
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.onPrimary,
+                                                  size: 30,
+                                                ),
+                                                onPressed: () async {
+                                                  if (_currentlyPlayingMessageId == messages[index].id) {
+                                                    await _audioPlayer.stop();
+                                                    setState(() {
+                                                      _currentlyPlayingMessageId = null;
+                                                    });
+                                                  } else {
+                                                    if (audioUrl != null) {
+                                                      setState(() {
+                                                        _currentlyPlayingMessageId = messages[index].id;
+                                                      });
+                                                      await _audioPlayer.play(
+                                                        UrlSource(audioUrl),
+                                                      );
+                                                    }
+                                                  }
+                                                },
+                                              ),
+                                              Text(
+                                                '$duration sn',
+                                                style: TextStyle(
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.onPrimary,
+                                                  fontSize: 18,
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        else
                                           Text(
-                                            '$duration sn',
+                                            text,
                                             style: TextStyle(
                                               color: Theme.of(
                                                 context,
                                               ).colorScheme.onPrimary,
-                                              fontSize: 18,
+                                              fontSize: 20,
                                             ),
                                           ),
-                                        ],
-                                      )
-                                    else
-                                      Text(
-                                        text,
-                                        style: TextStyle(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onPrimary,
-                                          fontSize: 20,
+                                      ],
+                                    ),
+                                    SizedBox(height: 4),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (isMe)
+                                          Semantics(
+                                            label: 'Mesajı sil',
+                                            button: true,
+                                            child: IconButton(
+                                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 24),
+                                              tooltip: 'Mesajı sil',
+                                              onPressed: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) => AlertDialog(
+                                                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                                                    title: Text('Mesajı Sil', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                                                    content: Text('Bu mesajı silmek istediğinize emin misiniz?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () => Navigator.pop(context),
+                                                        child: const Text('İptal'),
+                                                      ),
+                                                      ElevatedButton(
+                                                        onPressed: () {
+                                                          Navigator.pop(context);
+                                                          _deleteMessage(messages[index].id, audioUrl);
+                                                        },
+                                                        child: const Text('Sil'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        Text(
+                                          timeString,
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      ),
+                                      ],
+                                    ),
                                   ],
                                 ),
-                                SizedBox(height: 4),
-                                Text(
-                                  timeString,
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
                           ),
                         ],
                       ),
