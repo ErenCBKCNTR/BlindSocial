@@ -496,7 +496,6 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
       stream: _firestore
           .collection('meydan_posts')
           .where('authorId', isEqualTo: widget.userId)
-          .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -506,7 +505,7 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final docs = snapshot.data?.docs ?? [];
+        final docs = snapshot.data?.docs.toList() ?? [];
         if (docs.isEmpty) {
           return const Center(
             child: Text(
@@ -515,6 +514,18 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
             ),
           );
         }
+
+        // Sort client-side to avoid requiring a composite index in Firestore
+        docs.sort((a, b) {
+          final aData = a.data() as Map<String, dynamic>?;
+          final bData = b.data() as Map<String, dynamic>?;
+          final aTime = aData?['createdAt'] as Timestamp?;
+          final bTime = bData?['createdAt'] as Timestamp?;
+          if (aTime == null && bTime == null) return 0;
+          if (aTime == null) return 1;
+          if (bTime == null) return -1;
+          return bTime.compareTo(aTime); // descending
+        });
 
         return ListView.builder(
           itemCount: docs.length,

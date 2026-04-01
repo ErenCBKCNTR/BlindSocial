@@ -6,6 +6,11 @@ class ReleaseNotesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<String> notes = [
+      'BS Meydan akışına aşağı kaydırarak yenileme (Pull-to-Refresh) özelliği getirildi.',
+      'Aşırı veri tabanı yükünü önlemek için yenileme süresine kısıtlama eklendi.',
+      'Ekran okuyucuların buton isimlerini çift okuması ve etiketsiz uyarısı vermesi düzeltildi.',
+      'Yönetici panelindeki çevrimiçi kullanıcılar özelliği doğrudan sayıya tıklanarak açılacak şekilde yenilendi.',
+      'Sistem hatalarındaki teknik isimler gizlenerek hata mesajları sadeleştirildi.',
       'BS Meydan için Instagram benzeri profil arayüzü eklendi.',
       'Profilden göderi silme ve düzenleme işlemleri aktifleştirildi.',
       'Kullanıcıları takip etme ve takipten çıkma sistemi eklendi.',
