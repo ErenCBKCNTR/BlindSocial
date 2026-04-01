@@ -732,17 +732,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     showDialog(
       context: context,
       builder: (context) {
-        return StreamBuilder<DocumentSnapshot>(
-          stream: _roomStream,
+        return FutureBuilder<DocumentSnapshot>(
+          future: (widget.firestore ?? FirebaseFirestore.instance)
+              .collection('chat_rooms')
+              .doc(widget.roomId)
+              .get(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const AlertDialog(content: Text('Yükleniyor...'));
             }
             if (!snapshot.hasData || !snapshot.data!.exists) {
-              return const AlertDialog(content: Text('Oda bilgisi bulunamadı.'));
+              return const AlertDialog(content: Text('Oda açıklaması bulunamadı.'));
             }
             final data = snapshot.data!.data() as Map<String, dynamic>;
-            final description = data['description'] ?? 'Bu oda için henüz bir açıklama eklenmemiş.';
+            final description = data['description'] ?? 'Oda açıklaması bulunamadı.';
             final isCreator = data['creatorId'] == _auth.currentUser?.uid;
 
             return AlertDialog(
@@ -750,12 +753,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               content: Text(description),
               actions: [
                 if (isCreator)
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _editRoomDescription(description);
-                    },
-                    child: const Text('Açıklamayı Düzenle'),
+                  Semantics(
+                    label: 'Oda açıklamasını düzenle',
+                    button: true,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _editRoomDescription(description);
+                      },
+                      child: const Text('Açıklamayı Düzenle'),
+                    ),
                   ),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -770,7 +777,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   void _editRoomDescription(String currentDescription) {
-    final TextEditingController controller = TextEditingController(text: currentDescription == 'Bu oda için henüz bir açıklama eklenmemiş.' ? '' : currentDescription);
+    final TextEditingController controller = TextEditingController(text: currentDescription == 'Oda açıklaması bulunamadı.' || currentDescription == 'Bu oda için henüz bir açıklama eklenmemiş.' ? '' : currentDescription);
 
     showDialog(
       context: context,
