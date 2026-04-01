@@ -4,6 +4,8 @@ import 'admin_panel_room_details.dart';
 import 'admin_panel_user_details.dart';
 import 'reported_posts_screen.dart';
 import 'bs_bib_call_screen.dart';
+import 'release_notes_screen.dart';
+import 'online_users_screen.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   final FirebaseFirestore? firestore;
@@ -652,6 +654,36 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               minimumSize: const Size(double.infinity, 60),
             ),
             child: const Text('Şikayet Edilen Gönderiler', style: TextStyle(fontSize: 20)),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ReleaseNotesScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 60),
+            ),
+            child: const Text('Son Sürüm Notları', style: TextStyle(fontSize: 20)),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => OnlineUsersScreen(firestore: _firestore)),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 60),
+            ),
+            child: const Text('Çevrimiçi Üyeler', style: TextStyle(fontSize: 20)),
           ),
         ],
       ),
