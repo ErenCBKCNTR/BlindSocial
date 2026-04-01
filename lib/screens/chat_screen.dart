@@ -732,27 +732,42 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     showDialog(
       context: context,
       builder: (context) {
-        return StreamBuilder<DocumentSnapshot>(
-          stream: _roomStream,
+        return FutureBuilder<DocumentSnapshot>(
+          future: (widget.firestore ?? FirebaseFirestore.instance)
+              .collection('chat_rooms')
+              .doc(widget.roomId)
+              .get(),
           builder: (context, snapshot) {
-            if (!snapshot.hasData || !snapshot.data!.exists) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const AlertDialog(content: Text('Yükleniyor...'));
             }
+            if (!snapshot.hasData || !snapshot.data!.exists) {
+              return const AlertDialog(content: Text('Oda açıklaması bulunamadı.'));
+            }
             final data = snapshot.data!.data() as Map<String, dynamic>;
-            final description = data['description'] ?? 'Bu oda için henüz bir açıklama eklenmemiş.';
+            final description = data['description'] ?? 'Oda açıklaması bulunamadı.';
             final isCreator = data['creatorId'] == _auth.currentUser?.uid;
 
             return AlertDialog(
-              title: Text('${widget.roomName} Açıklaması'),
-              content: Text(description),
+              title: Text('${widget.roomName} isimli odanın açıklaması'),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+              content: Text(
+                description,
+                style: const TextStyle(fontSize: 18, height: 1.5),
+              ),
               actions: [
                 if (isCreator)
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _editRoomDescription(description);
-                    },
-                    child: const Text('Açıklamayı Düzenle'),
+                  Semantics(
+                    label: 'Oda açıklamasını düzenle',
+                    button: true,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _editRoomDescription(description);
+                      },
+                      child: const Text('Açıklamayı Düzenle'),
+                    ),
                   ),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -767,39 +782,104 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   void _editRoomDescription(String currentDescription) {
-    final TextEditingController controller = TextEditingController(text: currentDescription == 'Bu oda için henüz bir açıklama eklenmemiş.' ? '' : currentDescription);
+    final TextEditingController controller = TextEditingController(text: currentDescription == 'Oda açıklaması bulunamadı.' || currentDescription == 'Bu oda için henüz bir açıklama eklenmemiş.' ? '' : currentDescription);
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Oda Açıklamasını Düzenle'),
-          content: TextField(
-            controller: controller,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              hintText: 'Oda açıklamasını buraya yazın...',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('İptal'),
-            ),
-            TextButton(
-              onPressed: () async {
-                final newDescription = controller.text.trim();
-                await (widget.firestore ?? FirebaseFirestore.instance)
-                    .collection('chat_rooms')
-                    .doc(widget.roomId)
-                    .update({'description': newDescription});
-                if (context.mounted) {
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Kaydet'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              title: const Text('Oda Açıklamasını Düzenle'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: controller,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      hintText: 'Oda açıklamasını buraya yazın...',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      icon: Icon(
+                        _isListening ? Icons.mic : Icons.mic_none,
+                        color: _isListening ? Colors.red : Theme.of(context).colorScheme.primary,
+                        size: 30,
+                      ),
+                      tooltip: _isListening ? 'Dinleniyor... Kapatmak için dokunun' : 'Dikte için dokunun',
+                      onPressed: () async {
+                        if (!_isListening) {
+                          bool available = await _speech.initialize(
+                            onStatus: (val) {
+                              if (val == 'done' || val == 'notListening') {
+                                if (mounted) {
+                                  setModalState(() => _isListening = false);
+                                }
+                              }
+                            },
+                            onError: (val) {
+                              if (mounted) {
+                                setModalState(() => _isListening = false);
+                              }
+                            },
+                          );
+                          if (available) {
+                            if (mounted) {
+                              setModalState(() => _isListening = true);
+                            }
+                            _speech.listen(
+                              localeId: 'tr_TR',
+                              onResult: (val) {
+                                if (mounted) {
+                                  setModalState(() {
+                                    controller.text = val.recognizedWords;
+                                  });
+                                }
+                              },
+                            );
+                          }
+                        } else {
+                          if (mounted) {
+                            setModalState(() => _isListening = false);
+                          }
+                          _speech.stop();
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    if (_isListening) _speech.stop();
+                    _isListening = false;
+                    Navigator.pop(context);
+                  },
+                  child: const Text('İptal'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (_isListening) _speech.stop();
+                    _isListening = false;
+                    final newDescription = controller.text.trim();
+                    await (widget.firestore ?? FirebaseFirestore.instance)
+                        .collection('chat_rooms')
+                        .doc(widget.roomId)
+                        .update({'description': newDescription});
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text('Kaydet'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -1031,38 +1111,48 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         ? 'Gönderen: $senderName, Mesaj: $text, Saat: $timeString'
                         : 'Gönderen: $senderName, Sesli Mesaj ($duration saniye), Saat: $timeString';
 
-                    return GestureDetector(
-                      onLongPress: isMe
-                          ? () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                                  title: Text('Mesajı Sil', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-                                  content: Text('Bu mesajı silmek istediğinize emin misiniz?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('İptal'),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8.0,
+                        horizontal: 16.0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                        children: [
+                          if (isMe)
+                            Semantics(
+                              label: 'Mesajı sil',
+                              button: true,
+                              child: IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 28),
+                                tooltip: 'Mesajı sil',
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                                      title: Text('Mesajı Sil', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                                      content: Text('Bu mesajı silmek istediğinize emin misiniz?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context),
+                                          child: const Text('İptal'),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            _deleteMessage(messages[index].id, audioUrl);
+                                          },
+                                          child: const Text('Sil'),
+                                        ),
+                                      ],
                                     ),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        _deleteMessage(messages[index].id, audioUrl);
-                                      },
-                                      child: const Text('Sil'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-                          : null,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 8.0,
-                          horizontal: 16.0,
-                        ),
-                        child: Align(
+                                  );
+                                },
+                              ),
+                            ),
+                          Flexible(
+                            child: Align(
                           alignment: isMe
                               ? Alignment.centerRight
                               : Alignment.centerLeft,
@@ -1160,6 +1250,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             ),
                           ),
                         ),
+                          ),
+                        ],
                       ),
                     );
                   },
