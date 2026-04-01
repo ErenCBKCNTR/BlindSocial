@@ -810,10 +810,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     return Scaffold(
       appBar: AppBar(
         title: Semantics(
-          label: '${widget.roomName}. Oda açıklamasını görüntülemek için çift tıklayın.',
+          label: '${widget.roomName}. Oda açıklamasını görüntülemek için dokunun.',
           button: true,
           child: GestureDetector(
-            onDoubleTap: _showRoomDescription,
+            onTap: _showRoomDescription,
             child: Text(widget.roomName),
           ),
         ),

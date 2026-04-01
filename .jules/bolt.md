@@ -38,3 +38,7 @@
 ## 2024-03-31 - N+1 StreamBuilder pattern in ListView
 **Learning:** Using `StreamBuilder` with inline `.snapshots()` inside a `ListView.builder` creates an N+1 query problem, exponentially increasing Firestore reads (N streams for N items) and triggering excessive widget rebuilds.
 **Action:** When child items in a list need real-time data from a parent document or already-watched query, pass down the cached `Stream` initialized in the parent's `initState`, rather than instantiating new `.snapshots()` calls per child item.
+
+## 2024-04-01 - [Optimize GitHub Actions Gradle Cache]
+**Learning:** Building Android APKs on GitHub Actions without caching Gradle dependencies causes the runner to download all dependencies from scratch on every run, resulting in significantly longer build times (often several minutes).
+**Action:** Always include `cache: true` for the `flutter-action` setup and `cache: "gradle"` for the `setup-java` action in `build.yml` or `android-build.yml` workflows to speed up Flutter/Android CI processes.

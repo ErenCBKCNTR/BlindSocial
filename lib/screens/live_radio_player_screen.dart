@@ -56,10 +56,17 @@ class _LiveRadioPlayerScreenState extends State<LiveRadioPlayerScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.radio,
-              size: 150,
-              color: Theme.of(context).colorScheme.primary,
+            Container(
+              height: 250,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey[850],
+                borderRadius: BorderRadius.circular(12.0),
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/radio_cover.png'),
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             const SizedBox(height: 30),
             Text(

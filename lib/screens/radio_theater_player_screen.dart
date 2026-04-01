@@ -244,11 +244,10 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                         decoration: BoxDecoration(
                           color: Colors.grey[850],
                           borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: Icon(
-                          Icons.headphones,
-                          size: 100,
-                          color: Theme.of(context).colorScheme.primary,
+                          image: const DecorationImage(
+                            image: AssetImage('assets/images/radio_cover.png'),
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -318,7 +317,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                                     onPressed: _downloadOffline,
                                     icon: const Icon(Icons.download, size: 20),
                                     label: Text(
-                                      'Çevrimdışı İndir',
+                                      'Çevrimdışı Dinlemek İçin İndir',
                                       style: TextStyle(
                                         fontSize: 16,
                                         color: Theme.of(context).colorScheme.primary,
