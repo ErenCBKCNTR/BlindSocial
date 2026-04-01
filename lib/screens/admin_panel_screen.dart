@@ -549,23 +549,31 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
               final onlineCount = snapshot.hasData ? (snapshot.data!.count ?? 0) : 0;
-              return Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.secondary,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(
-                    'Çevrimiçi Kullanıcı: $onlineCount',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSecondary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => OnlineUsersScreen(firestore: _firestore)),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Çevrimiçi Kullanıcı: $onlineCount',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSecondary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -669,21 +677,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               minimumSize: const Size(double.infinity, 60),
             ),
             child: const Text('Son Sürüm Notları', style: TextStyle(fontSize: 20)),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => OnlineUsersScreen(firestore: _firestore)),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 60),
-            ),
-            child: const Text('Çevrimiçi Üyeler', style: TextStyle(fontSize: 20)),
           ),
         ],
       ),

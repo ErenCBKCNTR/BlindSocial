@@ -618,21 +618,18 @@ class _SquareScreenState extends State<SquareScreen> {
         title: const Text('BS Meydan'),
         actions: [
           if (currentUserUid != null)
-            Semantics(
-              label: 'BS Meydan profilim',
-              button: true,
-              child: IconButton(
-                icon: const ExcludeSemantics(child: Icon(Icons.person)),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          MeydanProfileScreen(userId: currentUserUid),
-                    ),
-                  );
-                },
-              ),
+            IconButton(
+              icon: const Icon(Icons.person),
+              tooltip: 'BS Meydan profilim',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        MeydanProfileScreen(userId: currentUserUid),
+                  ),
+                );
+              },
             ),
         ],
       ),
