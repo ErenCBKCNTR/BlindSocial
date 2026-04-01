@@ -465,13 +465,22 @@ class _SquareScreenState extends State<SquareScreen> {
                             horizontal: 10,
                             vertical: 5,
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Semantics(
-                              label: 'Gönderen: $authorUsername. İçerik: $content. ${likeCount > 0 ? '$likeCount kişi beğendi.' : ''} ${commentCount > 0 ? '$commentCount kişi yorum yaptı.' : ''}',
-                              container: true,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PostCommentsScreen(postId: doc.id),
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Semantics(
+                                label: 'Gönderen: $authorUsername. İçerik: $content. ${likeCount > 0 ? '$likeCount kişi beğendi.' : ''} ${commentCount > 0 ? '$commentCount kişi yorum yaptı.' : ''}',
+                                container: true,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -587,6 +596,7 @@ class _SquareScreenState extends State<SquareScreen> {
                               ],
                             ),
                           ],
+                                ),
                         ),
                       ),
                     ),
