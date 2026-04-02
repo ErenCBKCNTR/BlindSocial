@@ -465,7 +465,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onPressed: () async {
         await _auth.signOut();
         if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/');
+        Navigator.pushReplacementNamed(context, '/login');
       },
       icon: const Icon(Icons.logout),
       label: const Text(
