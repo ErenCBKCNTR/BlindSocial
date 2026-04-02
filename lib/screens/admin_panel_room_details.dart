@@ -146,9 +146,7 @@ class _AdminPanelRoomDetailsState extends State<AdminPanelRoomDetails> {
             .child(widget.room['numericId'].toString());
         try {
           final listResult = await folderRef.listAll();
-          for (final item in listResult.items) {
-            await item.delete();
-          }
+          await Future.wait(listResult.items.map((item) => item.delete()));
         } catch (e) {
           debugPrint('Error deleting storage files: $e');
         }
