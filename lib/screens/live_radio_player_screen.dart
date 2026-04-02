@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:audio_service/audio_service.dart';
 import '../services/audio_handler.dart';
 
@@ -72,7 +73,7 @@ class _LiveRadioPlayerScreenState extends State<LiveRadioPlayerScreen> {
             Text(
               widget.radio['name']!,
               style: TextStyle(
-                fontSize: 28,
+                fontSize: AppFonts.size(28),
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -82,7 +83,7 @@ class _LiveRadioPlayerScreenState extends State<LiveRadioPlayerScreen> {
             Text(
               'Canlı Yayın',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: AppFonts.size(18),
                 color: Theme.of(context).colorScheme.secondary,
               ),
               textAlign: TextAlign.center,
@@ -111,7 +112,7 @@ class _LiveRadioPlayerScreenState extends State<LiveRadioPlayerScreen> {
                 return Center(
                   child: TextButton.icon(
                     icon: Icon(playing ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 40),
-                    label: Text(playing ? "Radyoyu Durdur" : "Radyoyu Başlat", style: const TextStyle(fontSize: 18)),
+                    label: Text(playing ? "Radyoyu Durdur" : "Radyoyu Başlat", style: TextStyle(fontSize: AppFonts.size(18))),
                     style: TextButton.styleFrom(
                       foregroundColor: Theme.of(context).colorScheme.primary,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),

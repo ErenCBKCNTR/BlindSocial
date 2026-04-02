@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -87,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
           message,
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface,
-            fontSize: 20,
+            fontSize: AppFonts.size(20),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -267,7 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Şifrenizi mi unuttunuz?',
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.secondary,
-                          fontSize: 18,
+                          fontSize: AppFonts.size(18),
                         ),
                       ),
                     ),
@@ -306,7 +307,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Blind Social Hesabı Oluştur',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.secondary,
-                        fontSize: 22,
+                        fontSize: AppFonts.size(22),
                         fontWeight: FontWeight.bold,
                       ),
                     ),

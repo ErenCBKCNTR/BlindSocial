@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AdminPanelUserDetails extends StatefulWidget {
@@ -75,7 +76,7 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
               'ID: U${widget.user['numericId'] ?? 'Bilinmiyor'}',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
-                fontSize: 18,
+                fontSize: AppFonts.size(18),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -84,7 +85,7 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
               'Kullanıcı Adı: ${widget.user['username'] ?? 'Bilinmiyor'}',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 16,
+                fontSize: AppFonts.size(16),
               ),
             ),
             const SizedBox(height: 10),
@@ -92,7 +93,7 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
               'İsim Soyisim: ${widget.user['fullName'] ?? 'Bilinmiyor'}',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 16,
+                fontSize: AppFonts.size(16),
               ),
             ),
             const SizedBox(height: 10),
@@ -100,7 +101,7 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
               'E-posta: ${widget.user['email'] ?? 'Bilinmiyor'}',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 16,
+                fontSize: AppFonts.size(16),
               ),
             ),
             const SizedBox(height: 10),
@@ -108,7 +109,7 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
               'Doğum Tarihi: $birthDate',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 16,
+                fontSize: AppFonts.size(16),
               ),
             ),
             const SizedBox(height: 10),
@@ -116,7 +117,7 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
               'Kayıt Tarihi: $createdAt',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 16,
+                fontSize: AppFonts.size(16),
               ),
             ),
             const SizedBox(height: 30),
@@ -124,7 +125,7 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
               'Kullanıcı Yetkisi',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
-                fontSize: 18,
+                fontSize: AppFonts.size(18),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -169,7 +170,7 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
                   'Yetkiyi Güncelle',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onPrimary,
-                    fontSize: 16,
+                    fontSize: AppFonts.size(16),
                   ),
                 ),
               ),
@@ -185,11 +186,11 @@ class _AdminPanelUserDetailsState extends State<AdminPanelUserDetails> {
                   ),
                 ),
                 onPressed: () => _deleteUser(context),
-                child: const Text(
+                child: Text(
                   'Üyeyi Sil',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: AppFonts.size(16),
                   ),
                 ),
               ),

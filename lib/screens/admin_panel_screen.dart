@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_panel_room_details.dart';
 import 'admin_panel_user_details.dart';
@@ -530,7 +531,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 'Genel İstatistikler',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.primary,
-                  fontSize: 20,
+                  fontSize: AppFonts.size(20),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -571,7 +572,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                       'Çevrimiçi Kullanıcı: $onlineCount',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSecondary,
-                        fontSize: 24,
+                        fontSize: AppFonts.size(24),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -599,13 +600,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Toplam Odalar',
-                          style: TextStyle(color: Colors.white, fontSize: 24),
+                          style: TextStyle(color: Colors.white, fontSize: AppFonts.size(24)),
                         ),
                         Text(
                           '$count',
-                          style: const TextStyle(color: Colors.yellow, fontSize: 32, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: Colors.yellow, fontSize: AppFonts.size(32), fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -633,13 +634,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Toplam Üyeler',
-                          style: TextStyle(color: Colors.white, fontSize: 24),
+                          style: TextStyle(color: Colors.white, fontSize: AppFonts.size(24)),
                         ),
                         Text(
                           '$count',
-                          style: const TextStyle(color: Colors.yellow, fontSize: 32, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: Colors.yellow, fontSize: AppFonts.size(32), fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -661,7 +662,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 60),
             ),
-            child: const Text('Şikayet Edilen Gönderiler', style: TextStyle(fontSize: 20)),
+            child: Text('Şikayet Edilen Gönderiler', style: TextStyle(fontSize: AppFonts.size(20))),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
@@ -676,7 +677,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 60),
             ),
-            child: const Text('Son Sürüm Notları', style: TextStyle(fontSize: 20)),
+            child: Text('Son Sürüm Notları', style: TextStyle(fontSize: AppFonts.size(20))),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 
 class ReleaseNotesScreen extends StatelessWidget {
   const ReleaseNotesScreen({super.key});
@@ -40,7 +41,7 @@ class ReleaseNotesScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       notes[index],
-                      style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.5),
+                      style: TextStyle(color: Colors.white, fontSize: AppFonts.size(16), height: 1.5),
                     ),
                   ),
                 ],

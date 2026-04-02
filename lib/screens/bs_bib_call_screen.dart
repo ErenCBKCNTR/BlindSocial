@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -419,7 +420,7 @@ class _BSBibCallScreenState extends State<BSBibCallScreen> {
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
-                    child: const Text('Aramayı Sonlandır', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    child: Text('Aramayı Sonlandır', style: TextStyle(fontSize: AppFonts.size(16), fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),

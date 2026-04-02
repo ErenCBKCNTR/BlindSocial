@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -80,10 +81,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 padding: const EdgeInsets.only(top: 16.0),
                 child: TextButton(
                   onPressed: _completeOnboarding,
-                  child: const Text(
+                  child: Text(
                     'Atla',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: AppFonts.size(18),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -116,7 +117,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.secondary,
-                            fontSize: 28,
+                            fontSize: AppFonts.size(28),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -126,7 +127,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurface,
-                            fontSize: 20,
+                            fontSize: AppFonts.size(20),
                           ),
                         ),
                       ],
@@ -155,7 +156,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         color: _currentPage == 0
                             ? Colors.grey
                             : Theme.of(context).colorScheme.primary,
-                        fontSize: 20,
+                        fontSize: AppFonts.size(20),
                       ),
                     ),
                   ),
@@ -190,7 +191,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       _currentPage == _pages.length - 1 ? 'Başla' : 'İleri',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
-                        fontSize: 20,
+                        fontSize: AppFonts.size(20),
                         fontWeight: FontWeight.bold,
                       ),
                     ),

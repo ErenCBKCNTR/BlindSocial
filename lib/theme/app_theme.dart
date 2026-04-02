@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 
 class AppTheme {
   // Theme 0: High Contrast Theme (Original)
@@ -19,21 +20,21 @@ class AppTheme {
         outline: Colors.grey,
       ),
       scaffoldBackgroundColor: Colors.black,
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         displayLarge: TextStyle(
-          fontSize: 32,
+          fontSize: AppFonts.size(32),
           fontWeight: FontWeight.bold,
           color: Colors.yellow,
         ),
         displayMedium: TextStyle(
-          fontSize: 28,
+          fontSize: AppFonts.size(28),
           fontWeight: FontWeight.bold,
           color: Colors.yellow,
         ),
-        bodyLarge: TextStyle(fontSize: 24, color: Colors.white),
-        bodyMedium: TextStyle(fontSize: 20, color: Colors.white),
+        bodyLarge: TextStyle(fontSize: AppFonts.size(24), color: Colors.white),
+        bodyMedium: TextStyle(fontSize: AppFonts.size(20), color: Colors.white),
         labelLarge: TextStyle(
-          fontSize: 22,
+          fontSize: AppFonts.size(22),
           fontWeight: FontWeight.bold,
           color: Colors.black,
         ),
@@ -42,15 +43,15 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.yellow,
           foregroundColor: Colors.black,
-          textStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          textStyle: TextStyle(fontSize: AppFonts.size(22), fontWeight: FontWeight.bold),
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         ),
       ),
-      inputDecorationTheme: const InputDecorationTheme(
+      inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Color(0xFF1E1E1E),
-        labelStyle: TextStyle(color: Colors.yellow, fontSize: 20),
-        hintStyle: TextStyle(color: Colors.grey, fontSize: 18),
+        labelStyle: TextStyle(color: Colors.yellow, fontSize: AppFonts.size(20)),
+        hintStyle: TextStyle(color: Colors.grey, fontSize: AppFonts.size(18)),
         enabledBorder: OutlineInputBorder(
           borderSide: BorderSide(color: Colors.yellow, width: 2),
         ),

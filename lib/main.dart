@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -232,11 +233,11 @@ class SplashScreen extends StatelessWidget {
               color: Colors.yellow,
             ),
             const SizedBox(height: 40),
-            const Text(
+            Text(
               'Yükleniyor...',
               style: TextStyle(
                 color: Colors.yellow,
-                fontSize: 32,
+                fontSize: AppFonts.size(32),
                 fontWeight: FontWeight.bold,
               ),
             ),

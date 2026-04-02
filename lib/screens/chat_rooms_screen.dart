@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
@@ -108,7 +109,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       'Profil Tamamlama Gerekli',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
-                        fontSize: 22,
+                        fontSize: AppFonts.size(22),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -144,7 +145,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                         'Doğum Tarihi',
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.secondary,
-                          fontSize: 18,
+                          fontSize: AppFonts.size(18),
                         ),
                       ),
                     ),
@@ -369,7 +370,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       'Mesaj Saklanma Süresi',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.secondary,
-                        fontSize: 18,
+                        fontSize: AppFonts.size(18),
                       ),
                     ),
                     DropdownButton<String>(
@@ -378,7 +379,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       isExpanded: true,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
-                        fontSize: 20,
+                        fontSize: AppFonts.size(20),
                       ),
                       items: const [
                         DropdownMenuItem(value: '24h', child: Text('24 Saat')),
@@ -455,7 +456,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   ],
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 20,
+                    fontSize: AppFonts.size(20),
                   ),
                   decoration: InputDecoration(
                     labelText: 'Oda İsmi',
@@ -475,7 +476,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   keyboardType: TextInputType.number,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 20,
+                    fontSize: AppFonts.size(20),
                   ),
                   decoration: InputDecoration(
                     labelText: 'Kapasite (Örn: 10)',
@@ -499,7 +500,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   ],
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 20,
+                    fontSize: AppFonts.size(20),
                   ),
                   decoration: InputDecoration(
                     labelText: 'Şifre (Opsiyonel)',
@@ -529,7 +530,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   'Mesaj Saklanma Süresi',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.secondary,
-                    fontSize: 18,
+                    fontSize: AppFonts.size(18),
                   ),
                 ),
                 DropdownButton<String>(
@@ -538,7 +539,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   isExpanded: true,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.primary,
-                    fontSize: 20,
+                    fontSize: AppFonts.size(20),
                   ),
                   items: const [
                     DropdownMenuItem(value: '24h', child: Text('24 Saat')),
@@ -561,7 +562,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 'İptal',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.error,
-                  fontSize: 18,
+                  fontSize: AppFonts.size(18),
                 ),
               ),
             ),
@@ -622,7 +623,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       'Oluştur',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onPrimary,
-                        fontSize: 18,
+                        fontSize: AppFonts.size(18),
                       ),
                     ),
             ),
@@ -715,7 +716,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                           'Blind Social Menü',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onPrimary,
-                            fontSize: 32,
+                            fontSize: AppFonts.size(32),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -732,7 +733,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       'Sesli Odalar',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
-                        fontSize: 22,
+                        fontSize: AppFonts.size(22),
                       ),
                     ),
                     onTap: () => Navigator.pop(context),
@@ -743,9 +744,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       color: Colors.cyan,
                       size: 30,
                     ),
-                    title: const Text(
+                    title: Text(
                       'BS Meydan',
-                      style: TextStyle(color: Colors.white, fontSize: 22),
+                      style: TextStyle(color: Colors.white, fontSize: AppFonts.size(22)),
                     ),
                     onTap: () {
                       Navigator.pop(context);
@@ -758,9 +759,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       color: Theme.of(context).colorScheme.secondary,
                       size: 30,
                     ),
-                    title: const Text(
+                    title: Text(
                       'Radyo Tiyatrosu',
-                      style: TextStyle(color: Colors.white, fontSize: 22),
+                      style: TextStyle(color: Colors.white, fontSize: AppFonts.size(22)),
                     ),
                     onTap: () {
                       Navigator.pop(context);
@@ -776,9 +777,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       color: Theme.of(context).colorScheme.secondary,
                       size: 30,
                     ),
-                    title: const Text(
+                    title: Text(
                       'Güncel Haberler',
-                      style: TextStyle(color: Colors.white, fontSize: 22),
+                      style: TextStyle(color: Colors.white, fontSize: AppFonts.size(22)),
                     ),
                     onTap: () {
                       Navigator.pop(context);
@@ -794,9 +795,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       color: Theme.of(context).colorScheme.secondary,
                       size: 30,
                     ),
-                    title: const Text(
+                    title: Text(
                       'Canlı Yayın',
-                      style: TextStyle(color: Colors.white, fontSize: 22),
+                      style: TextStyle(color: Colors.white, fontSize: AppFonts.size(22)),
                     ),
                     onTap: () {
                       Navigator.pop(context);
@@ -816,7 +817,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       'Oyun Odası',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
-                        fontSize: 22,
+                        fontSize: AppFonts.size(22),
                       ),
                     ),
                     onTap: () {
@@ -839,7 +840,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                         'Yetkili Menüsü',
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: 22,
+                          fontSize: AppFonts.size(22),
                         ),
                       ),
                       onTap: () {
@@ -921,7 +922,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                                       Text(
                                         'Hesabım',
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: AppFonts.size(16),
                                           fontWeight: FontWeight.bold,
                                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                                         ),
@@ -958,7 +959,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                                         Text(
                                           'Yönetici\nPaneli',
                                           style: TextStyle(
-                                            fontSize: 16,
+                                            fontSize: AppFonts.size(16),
                                             fontWeight: FontWeight.bold,
                                             color: Theme.of(context).colorScheme.onPrimary,
                                           ),
@@ -1002,10 +1003,10 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                                           color: Colors.white,
                                         ),
                                         const SizedBox(height: 8),
-                                        const Text(
+                                        Text(
                                           'BS BiB\nÇağrı',
                                           style: TextStyle(
-                                            fontSize: 16,
+                                            fontSize: AppFonts.size(16),
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white,
                                           ),
@@ -1045,7 +1046,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     'Oda Oluştur',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onPrimary,
-                      fontSize: 20,
+                      fontSize: AppFonts.size(20),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1060,7 +1061,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   'Lütfen profilinizi tamamlayın',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 20,
+                    fontSize: AppFonts.size(20),
                   ),
                 ),
               ),
@@ -1164,7 +1165,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 24,
+                                fontSize: AppFonts.size(24),
                                 fontWeight: FontWeight.bold,
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
@@ -1173,7 +1174,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                               'Kapasite: $realTimeParticipants / $maxCapacity',
                               style: TextStyle(
                                 color: Theme.of(context).colorScheme.secondary,
-                                fontSize: 18,
+                                fontSize: AppFonts.size(18),
                               ),
                             ),
                             trailing: Row(
