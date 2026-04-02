@@ -15,12 +15,7 @@ void main() {
     // Find the text fields by checking their hintText via their widget properties
     Finder findTextFieldByHint(String hint) {
       return find.byWidgetPredicate(
-        (Widget widget) {
-          if (widget is TextField) {
-            return widget.decoration?.hintText == hint;
-          }
-          return false;
-        }
+        (Widget widget) => widget is TextField && widget.decoration?.hintText == hint,
       );
     }
 
