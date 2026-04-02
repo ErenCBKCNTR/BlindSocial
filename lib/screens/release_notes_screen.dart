@@ -7,6 +7,7 @@ class ReleaseNotesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<String> notes = [
+      'Canlı radyo yayını kaydetme ve paylaşma özelliği eklendi.',
       'BS Meydan akışına aşağı kaydırarak yenileme (Pull-to-Refresh) özelliği getirildi.',
       'Aşırı veri tabanı yükünü önlemek için yenileme süresine kısıtlama eklendi.',
       'Ekran okuyucuların buton isimlerini çift okuması ve etiketsiz uyarısı vermesi düzeltildi.',
