@@ -3,8 +3,11 @@ import 'package:blind_social/theme/app_fonts.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:intl/intl.dart';
 import 'live_radio_player_screen.dart';
 import '../services/audio_handler.dart';
+import '../services/broadcast_record_manager.dart';
 
 class LiveMediaScreen extends StatefulWidget {
   const LiveMediaScreen({super.key});
@@ -16,10 +19,13 @@ class LiveMediaScreen extends StatefulWidget {
 class _LiveMediaScreenState extends State<LiveMediaScreen> {
   List<Map<String, String>> radioList = [];
   List<Map<String, String>> tvList = [];
+  List<Map<String, dynamic>> savedRecords = [];
   bool isLoadingRadios = true;
   bool isLoadingTvs = true;
 
   Player? _player;
+  Player? _recordPlayer;
+  String? _playingRecordPath;
   VideoController? _videoController;
   int? _playingTvIndex;
 
@@ -29,6 +35,22 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
     _initAudioSession();
     _fetchRadios();
     _fetchTvs();
+    _fetchSavedRecords();
+    _recordPlayer = Player();
+    _recordPlayer?.stream.completed.listen((completed) {
+      if (completed && mounted) {
+        setState(() {
+          _playingRecordPath = null;
+        });
+      }
+    });
+  }
+
+  Future<void> _fetchSavedRecords() async {
+    final records = await broadcastRecordManager.getSavedRecords();
+    setState(() {
+      savedRecords = records;
+    });
   }
 
   Future<void> _initAudioSession() async {
@@ -78,6 +100,7 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
   @override
   void dispose() {
     _player?.dispose();
+    _recordPlayer?.dispose();
     super.dispose();
   }
 
@@ -130,12 +153,117 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Canlı Yayın')),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
+      body: RefreshIndicator(
+        onRefresh: _fetchSavedRecords,
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            _buildRadioSection(),
+            const SizedBox(height: 20),
+            _buildTvSection(),
+            const SizedBox(height: 20),
+            _buildSavedRecordsSection(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSavedRecordsSection() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ExpansionTile(
+        leading: Icon(Icons.mic, size: 40, color: Theme.of(context).colorScheme.primary),
+        title: Text('Kaydedilen Yayınlar', style: TextStyle(fontSize: AppFonts.size(24), fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+        onExpansionChanged: (expanded) {
+          if (expanded) {
+            _fetchSavedRecords();
+          }
+        },
         children: [
-          _buildRadioSection(),
-          const SizedBox(height: 20),
-          _buildTvSection(),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: savedRecords.isEmpty
+                ? const Center(child: Text("Henüz kaydedilmiş bir yayın yok."))
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: savedRecords.length,
+                    itemBuilder: (context, index) {
+                      final record = savedRecords[index];
+                      final stationName = record['stationName'];
+                      final filePath = record['filePath'];
+                      final durationSeconds = record['durationInSeconds'] as int;
+                      final timestamp = record['timestamp'] as int;
+
+                      final isPlaying = _playingRecordPath == filePath;
+
+                      final durationStr = "${durationSeconds ~/ 60}:${(durationSeconds % 60).toString().padLeft(2, '0')}";
+                      final dateStr = DateFormat('dd.MM.yyyy HH:mm').format(DateTime.fromMillisecondsSinceEpoch(timestamp));
+
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8.0),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(stationName, style: TextStyle(fontSize: AppFonts.size(18), fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 4),
+                                    Text(dateStr, style: TextStyle(fontSize: AppFonts.size(14), color: Colors.grey)),
+                                    Text("Süre: $durationStr", style: TextStyle(fontSize: AppFonts.size(14), color: Colors.grey)),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(isPlaying ? Icons.stop_circle : Icons.play_circle_fill, size: 36, color: Theme.of(context).colorScheme.secondary),
+                                onPressed: () async {
+                                  if (isPlaying) {
+                                    await _recordPlayer?.stop();
+                                    setState(() {
+                                      _playingRecordPath = null;
+                                    });
+                                  } else {
+                                    _stopTv();
+                                    audioHandler.stop();
+                                    await _recordPlayer?.open(Media('file://$filePath'));
+                                    await _recordPlayer?.play();
+                                    setState(() {
+                                      _playingRecordPath = filePath;
+                                    });
+                                  }
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.share, size: 30),
+                                onPressed: () {
+                                  Share.shareXFiles([XFile(filePath)], subject: '$stationName Radyo Kaydı ($dateStr)');
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () async {
+                                  if (isPlaying) {
+                                    await _recordPlayer?.stop();
+                                    setState(() {
+                                      _playingRecordPath = null;
+                                    });
+                                  }
+                                  await broadcastRecordManager.deleteRecord(filePath);
+                                  _fetchSavedRecords();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
         ],
       ),
     );
