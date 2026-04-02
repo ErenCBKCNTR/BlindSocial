@@ -575,7 +575,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 if (user == null) return;
 
                 // Generate a random 6-digit numericId
-                final random = math.Random();
+                final random = math.Random.secure();
                 final numericId = 100000 + random.nextInt(900000);
 
                 await _firestore.collection('chat_rooms').add({
