@@ -1273,7 +1273,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         if (isMe)
-                                          ExcludeSemantics(
+                                          Semantics(
+                                            label: 'Mesajı sil',
+                                            button: true,
                                             child: IconButton(
                                               icon: const Icon(
                                                 Icons.delete_outline,

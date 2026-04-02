@@ -85,9 +85,7 @@ void main() {
 
       expect(find.byType(Checkbox), findsOneWidget);
 
-      await tester.ensureVisible(find.widgetWithText(ElevatedButton, "Kayıt Ol"));
-      await tester.tap(find.widgetWithText(ElevatedButton, "Kayıt Ol"));
-
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Kayıt Ol'));
       await tester.pumpAndSettle();
 
       expect(find.text('Ebeveyn izni kutusunu işaretlemelisiniz.'), findsOneWidget);
