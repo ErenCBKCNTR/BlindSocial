@@ -121,7 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         final year = int.parse(_yearController.text);
 
         // Generate a random 6-digit numericId
-        final random = math.Random();
+        final random = math.Random.secure();
         final numericId = 100000 + random.nextInt(900000);
 
         await firestore.collection('users').doc(user.uid).set({
