@@ -436,6 +436,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
     final passwordController = TextEditingController();
     String ttlPreference = '24h';
     bool obscure = true;
+    bool isCreating = false;
 
     showDialog(
       context: context,
@@ -570,43 +571,64 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
+                if (isCreating) return;
                 if (nameController.text.trim().isEmpty) return;
                 final user = _auth.currentUser;
                 if (user == null) return;
 
-                // Generate a random 6-digit numericId
-                final random = math.Random.secure();
-                final numericId = 100000 + random.nextInt(900000);
+                setModalState(() => isCreating = true);
 
-                await _firestore.collection('chat_rooms').add({
-                  'name': nameController.text.trim(),
-                  'numericId': numericId,
-                  'maxCapacity': int.tryParse(capacityController.text) ?? 10,
-                  'password': passwordController.text.isEmpty
-                      ? null
-                      : passwordController.text,
-                  'plainPassword': passwordController.text.isEmpty
-                      ? null
-                      : passwordController.text,
-                  'ttl': ttlPreference,
-                  'creatorId': user.uid,
-                  'currentParticipants': 0,
-                  'createdAt': FieldValue.serverTimestamp(),
-                });
-                if (!mounted) return;
-                // ignore: use_build_context_synchronously
-                Navigator.pop(context);
+                try {
+                  // Generate a random 6-digit numericId
+                  final random = math.Random.secure();
+                  final numericId = 100000 + random.nextInt(900000);
+
+                  await _firestore.collection('chat_rooms').add({
+                    'name': nameController.text.trim(),
+                    'numericId': numericId,
+                    'maxCapacity': int.tryParse(capacityController.text) ?? 10,
+                    'password': passwordController.text.isEmpty
+                        ? null
+                        : passwordController.text,
+                    'plainPassword': passwordController.text.isEmpty
+                        ? null
+                        : passwordController.text,
+                    'ttl': ttlPreference,
+                    'creatorId': user.uid,
+                    'currentParticipants': 0,
+                    'createdAt': FieldValue.serverTimestamp(),
+                  });
+                  if (!mounted) return;
+                  // ignore: use_build_context_synchronously
+                  Navigator.pop(context);
+                } catch (e) {
+                  if (mounted) {
+                    setModalState(() => isCreating = false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Oda oluşturulurken bir hata oluştu.')),
+                    );
+                  }
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
               ),
-              child: Text(
-                'Oluştur',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontSize: 18,
-                ),
-              ),
+              child: isCreating
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      'Oluştur',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontSize: 18,
+                      ),
+                    ),
             ),
           ],
         ),
