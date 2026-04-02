@@ -122,10 +122,9 @@ class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObse
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
 
-    // Request notification permission during initialization
-    // as per the requirement: "Uygulama ilk açıldığında veya giriş yapıldıktan hemen sonra Bildirim iznini..."
+    // Request initial permissions (Notification, Microphone, Storage/Audio) during initialization
     if (mounted) {
-      await PermissionManager.requestNotificationPermission(context);
+      await PermissionManager.requestInitialPermissions(context);
     }
 
     if (!hasSeenOnboarding) {
