@@ -173,6 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: [
                     TextFormField(
                       controller: _fullNameController,
+                      maxLength: 50,
                       decoration: const InputDecoration(
                         labelText: 'İsim Soyisim',
                       ),
@@ -181,13 +182,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     SizedBox(height: 20),
                     TextFormField(
                       controller: _usernameController,
+                      maxLength: 20,
                       decoration: const InputDecoration(
                         labelText: 'Kullanıcı Adı',
                       ),
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Boş bırakılamaz';
-                        if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(v)) {
-                          return 'Kullanıcı adı noktalama işaretleri veya boşluk içeremez';
+                        if (!RegExp(r'^[a-zA-Z0-9_.]+$').hasMatch(v)) {
+                          return 'Kullanıcı adı boşluk içeremez. Sadece harf, rakam, nokta ve alt çizgi kullanılabilir.';
                         }
                         return null;
                       },
@@ -196,6 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
+                      maxLength: 100,
                       decoration: const InputDecoration(labelText: 'E-posta'),
                       validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
                     ),

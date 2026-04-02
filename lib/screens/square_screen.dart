@@ -15,6 +15,88 @@ class SquareScreen extends StatefulWidget {
   State<SquareScreen> createState() => _SquareScreenState();
 }
 
+class ExpandablePostText extends StatefulWidget {
+  final String text;
+
+  const ExpandablePostText({super.key, required this.text});
+
+  @override
+  State<ExpandablePostText> createState() => _ExpandablePostTextState();
+}
+
+class _ExpandablePostTextState extends State<ExpandablePostText> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textSpan = TextSpan(
+          text: widget.text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            height: 1.5,
+          ),
+        );
+
+        final textPainter = TextPainter(
+          text: textSpan,
+          maxLines: 3,
+          textDirection: TextDirection.ltr,
+        );
+
+        textPainter.layout(maxWidth: constraints.maxWidth);
+
+        if (textPainter.didExceedMaxLines) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  height: 1.5,
+                ),
+                maxLines: _isExpanded ? null : 3,
+                overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+              ),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Text(
+                    _isExpanded ? '...daha az göster' : '...devamını okuyun',
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        } else {
+          return Text(
+            widget.text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              height: 1.5,
+            ),
+          );
+        }
+      },
+    );
+  }
+}
+
 class _SquareScreenState extends State<SquareScreen> {
   late final FirebaseAuth _auth;
   late final FirebaseFirestore _firestore;
@@ -517,14 +599,7 @@ class _SquareScreenState extends State<SquareScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            content,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              height: 1.5,
-                            ),
-                          ),
+                          ExpandablePostText(text: content),
                           const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,

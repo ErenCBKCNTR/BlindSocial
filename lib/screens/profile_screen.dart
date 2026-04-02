@@ -108,10 +108,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(newUsername)) {
+    if (!RegExp(r'^[a-zA-Z0-9_.]+$').hasMatch(newUsername)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Kullanıcı adı noktalama işaretleri veya boşluk içeremez.'),
+          content: Text('Kullanıcı adı boşluk içeremez. Sadece harf, rakam, nokta ve alt çizgi kullanılabilir.'),
         ),
       );
       return;
@@ -314,6 +314,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'İsim Soyisim',
                             _fullNameController,
                             'İsim Soyisim düzenleme alanı',
+                            maxLength: 50,
                           ),
                           const SizedBox(height: 20),
                           _buildTextField(
@@ -321,6 +322,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _usernameController,
                             'Kullanıcı Adı düzenleme alanı',
                             hint: '15 dakikada bir değiştirilebilir',
+                            maxLength: 20,
                           ),
                           const SizedBox(height: 20),
                           _buildDropdown(theme),
@@ -383,6 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 'İsim Soyisim',
                 _fullNameController,
                 'İsim Soyisim düzenleme alanı',
+                maxLength: 50,
               ),
               const SizedBox(height: 20),
               _buildTextField(
@@ -390,6 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _usernameController,
                 'Kullanıcı Adı düzenleme alanı',
                 hint: '15 dakikada bir değiştirilebilir',
+                maxLength: 20,
               ),
               const SizedBox(height: 20),
               _buildDropdown(theme),
@@ -421,6 +425,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'İsim Soyisim',
               _fullNameController,
               'İsim Soyisim düzenleme alanı',
+              maxLength: 50,
             ),
             const SizedBox(height: 20),
             _buildTextField(
@@ -428,6 +433,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _usernameController,
               'Kullanıcı Adı düzenleme alanı',
               hint: '15 dakikada bir değiştirilebilir',
+              maxLength: 20,
             ),
             const SizedBox(height: 20),
             _buildDropdown(theme),
@@ -474,9 +480,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     TextEditingController controller,
     String semanticLabel, {
     String? hint,
+    int? maxLength,
   }) {
     return TextField(
       controller: controller,
+      maxLength: maxLength,
       decoration: InputDecoration(labelText: label),
       style: TextStyle(
         color: Theme.of(context).colorScheme.onSurface,
