@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:blind_social/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../services/audio_handler.dart';
 import '../services/audio_cache_manager.dart';
 import '../services/audio_progress_manager.dart';
@@ -148,6 +149,18 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
   }
 
   Future<void> _downloadOffline() async {
+    final storageStatus = await Permission.storage.request();
+    final audioStatus = await Permission.audio.request();
+
+    if (!storageStatus.isGranted && !audioStatus.isGranted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('İndirme için depolama veya ses izni gerekiyor.')),
+        );
+      }
+      return;
+    }
+
     setState(() {
       _isDownloading = true;
     });

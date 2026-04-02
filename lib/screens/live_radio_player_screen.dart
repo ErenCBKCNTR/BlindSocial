@@ -83,12 +83,10 @@ class _LiveRadioPlayerScreenState extends State<LiveRadioPlayerScreen> {
       }
     } else {
       // Check permissions
-      var status = await Permission.storage.status;
-      if (!status.isGranted) {
-        status = await Permission.storage.request();
-      }
+      final storageStatus = await Permission.storage.request();
+      final audioStatus = await Permission.audio.request();
 
-      if (status.isGranted || await Permission.audio.request().isGranted) {
+      if (storageStatus.isGranted || audioStatus.isGranted) {
         await broadcastRecordManager.startRecording(url, widget.radio['name']!);
         setState(() {
           _isRecording = true;
@@ -101,7 +99,7 @@ class _LiveRadioPlayerScreenState extends State<LiveRadioPlayerScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kayıt için dosya izni gerekiyor.')),
+            const SnackBar(content: Text('Kayıt için depolama veya ses izni gerekiyor.')),
           );
         }
       }
