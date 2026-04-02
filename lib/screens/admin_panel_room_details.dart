@@ -129,14 +129,16 @@ class _AdminPanelRoomDetailsState extends State<AdminPanelRoomDetails> {
       final messagesSnapshot = await widget.roomRef.collection('messages').get();
       final docs = messagesSnapshot.docs;
 
+      final List<Future<void>> batchFutures = [];
       for (int i = 0; i < docs.length; i += 500) {
         final batch = FirebaseFirestore.instance.batch();
         final chunk = docs.sublist(i, i + 500 > docs.length ? docs.length : i + 500);
         for (final doc in chunk) {
           batch.delete(doc.reference);
         }
-        await batch.commit();
+        batchFutures.add(batch.commit());
       }
+      await Future.wait(batchFutures);
 
       // Cascade delete storage files
       if (widget.room['numericId'] != null) {
