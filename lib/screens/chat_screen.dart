@@ -67,6 +67,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   late stt.SpeechToText _speech;
   bool _isListening = false;
+  bool _isSending = false;
 
   @override
   void initState() {
@@ -504,6 +505,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() {
         _statusMessage = "Sesli mesaj yüklenirken hata oluştu.";
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
     }
   }
 
@@ -536,11 +543,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     String? audioUrl,
     int? duration,
   }) async {
+    if (_isSending) return;
+
     final messageText = _messageController.text.trim();
     if (type == 'text' && messageText.isEmpty) return;
 
     final user = _auth.currentUser;
     if (user == null) return;
+
+    setState(() {
+      _isSending = true;
+    });
 
     if (_cachedDisplayName == null) {
       final userDoc = await (widget.firestore ?? FirebaseFirestore.instance)
@@ -574,22 +587,32 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       expiresAt = expiresAt.add(const Duration(days: 7));
     }
 
-    await (widget.firestore ?? FirebaseFirestore.instance)
-        .collection('chat_rooms')
-        .doc(widget.roomId)
-        .collection('messages')
-        .add({
-          'text': type == 'text' ? messageText : '',
-          'type': type,
-          'audioUrl': audioUrl,
-          'duration': duration,
-          'senderId': user.uid,
-          'senderName': displayName,
-          'timestamp': FieldValue.serverTimestamp(),
-          'expires_at': Timestamp.fromDate(expiresAt),
-        });
+    try {
+      await (widget.firestore ?? FirebaseFirestore.instance)
+          .collection('chat_rooms')
+          .doc(widget.roomId)
+          .collection('messages')
+          .add({
+            'text': type == 'text' ? messageText : '',
+            'type': type,
+            'audioUrl': audioUrl,
+            'duration': duration,
+            'senderId': user.uid,
+            'senderName': displayName,
+            'timestamp': FieldValue.serverTimestamp(),
+            'expires_at': Timestamp.fromDate(expiresAt),
+          });
 
-    if (type == 'text') _messageController.clear();
+      if (type == 'text') _messageController.clear();
+
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
+    }
+
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         0.0,

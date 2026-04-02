@@ -21,6 +21,7 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
 
   late stt.SpeechToText _speech;
   bool _isListening = false;
+  bool _isPosting = false;
   late final Stream<QuerySnapshot> _commentsStream;
 
   @override
@@ -69,23 +70,37 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
   }
 
   Future<void> _submitComment() async {
+    if (_isPosting) return;
+
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
 
     final user = _auth.currentUser;
     if (user == null) return;
 
-    final userDoc = await _firestore.collection('users').doc(user.uid).get();
-    final username = userDoc.data()?['username'] ?? 'İsimsiz';
-
-    await _firestore.collection('meydan_posts').doc(widget.postId).collection('comments').add({
-      'content': text,
-      'authorId': user.uid,
-      'authorUsername': username,
-      'createdAt': FieldValue.serverTimestamp(),
+    setState(() {
+      _isPosting = true;
     });
 
-    _commentController.clear();
+    try {
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final username = userDoc.data()?['username'] ?? 'İsimsiz';
+
+      await _firestore.collection('meydan_posts').doc(widget.postId).collection('comments').add({
+        'content': text,
+        'authorId': user.uid,
+        'authorUsername': username,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      _commentController.clear();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPosting = false;
+        });
+      }
+    }
   }
 
   Future<void> _confirmDeleteComment(String commentId) async {
