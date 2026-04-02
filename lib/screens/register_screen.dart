@@ -184,7 +184,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Kullanıcı Adı',
                       ),
-                      validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Boş bırakılamaz';
+                        if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(v)) {
+                          return 'Kullanıcı adı noktalama işaretleri veya boşluk içeremez';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 20),
                     TextFormField(

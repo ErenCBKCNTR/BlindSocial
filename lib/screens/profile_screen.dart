@@ -108,6 +108,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
+    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(newUsername)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kullanıcı adı noktalama işaretleri veya boşluk içeremez.'),
+        ),
+      );
+      return;
+    }
+
     if (name == _originalFullName &&
         newUsername == _originalUsername &&
         _displayPreference == _originalDisplayPreference &&
