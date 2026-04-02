@@ -5,6 +5,7 @@ import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_storage_mocks/firebase_storage_mocks.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'dart:io';
 import 'package:record/record.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -15,6 +16,9 @@ import 'package:blind_social/screens/chat_screen.dart';
 class MockAudioRecorder extends Mock implements AudioRecorder {}
 class MockCustomFirebaseStorage extends Mock implements FirebaseStorage {}
 class MockReference extends Mock implements Reference {}
+class MockFirebaseFunctions extends Mock implements FirebaseFunctions {}
+class MockHttpsCallable extends Mock implements HttpsCallable {}
+class MockHttpsCallableResult extends Mock implements HttpsCallableResult<dynamic> {}
 
 class FakePathProviderPlatform extends Fake with MockPlatformInterfaceMixin implements PathProviderPlatform {
   @override
@@ -55,6 +59,7 @@ void main() {
     });
 
     final mockStorage = MockFirebaseStorage();
+    final mockFunctions = MockFirebaseFunctions();
 
     await tester.pumpWidget(MaterialApp(
       home: ChatScreen(
@@ -64,6 +69,7 @@ void main() {
         auth: mockAuth,
         firestore: fakeFirestore,
         storage: mockStorage,
+        functions: mockFunctions,
       ),
     ));
 
@@ -99,6 +105,7 @@ void main() {
     });
 
     final mockStorage = MockFirebaseStorage();
+    final mockFunctions = MockFirebaseFunctions();
 
     await tester.pumpWidget(MaterialApp(
       home: ChatScreen(
@@ -108,6 +115,7 @@ void main() {
         auth: mockAuth,
         firestore: fakeFirestore,
         storage: mockStorage,
+        functions: mockFunctions,
       ),
     ));
 
@@ -168,6 +176,7 @@ void main() {
     });
 
     final mockStorage = MockFirebaseStorage();
+    final mockFunctions = MockFirebaseFunctions();
 
     await tester.pumpWidget(MaterialApp(
       home: ChatScreen(
@@ -177,6 +186,7 @@ void main() {
         auth: mockAuth,
         firestore: fakeFirestore,
         storage: mockStorage,
+        functions: mockFunctions,
       ),
     ));
 
@@ -237,6 +247,7 @@ void main() {
     });
 
     final mockStorage = MockFirebaseStorage();
+    final mockFunctions = MockFirebaseFunctions();
 
     // 3. Pump the ChatScreen
     await tester.pumpWidget(MaterialApp(
@@ -247,6 +258,7 @@ void main() {
         auth: mockAuth,
         firestore: fakeFirestore,
         storage: mockStorage,
+        functions: mockFunctions,
       ),
     ));
 
@@ -332,6 +344,8 @@ void main() {
     // Stub putFile to throw exception to simulate upload error
     when(() => mockRef4.putFile(any())).thenThrow(FirebaseException(plugin: 'firebase_storage', code: 'canceled'));
 
+    final mockFunctions = MockFirebaseFunctions();
+
     // 3. Pump the ChatScreen
     await tester.pumpWidget(MaterialApp(
       home: ChatScreen(
@@ -341,6 +355,7 @@ void main() {
         auth: mockAuth,
         firestore: fakeFirestore,
         storage: mockStorage,
+        functions: mockFunctions,
       ),
     ));
 
