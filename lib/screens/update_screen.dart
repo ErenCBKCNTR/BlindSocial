@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UpdateScreen extends StatelessWidget {
@@ -36,7 +37,7 @@ class UpdateScreen extends StatelessWidget {
           ),
           content: Text(
             'WhatsApp uygulaması açılamadı. Lütfen yönetici ile iletişime geçiniz: 0534 599 17 28',
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: AppFonts.size(18)),
           ),
           actions: [
             TextButton(
@@ -45,7 +46,7 @@ class UpdateScreen extends StatelessWidget {
               },
               child: Text(
                 'Tamam',
-                style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 18),
+                style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: AppFonts.size(18)),
               ),
             ),
           ],
@@ -79,7 +80,7 @@ class UpdateScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.primary,
-                    fontSize: 32,
+                    fontSize: AppFonts.size(32),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -89,7 +90,7 @@ class UpdateScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 20,
+                    fontSize: AppFonts.size(20),
                   ),
                 ),
                 const Spacer(),
@@ -100,9 +101,9 @@ class UpdateScreen extends StatelessWidget {
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     minimumSize: const Size(double.infinity, 70),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Uygulamayı Güncelle',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: AppFonts.size(24), fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 24),

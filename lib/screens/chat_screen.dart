@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -109,17 +110,44 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     if (!_isListening) {
       bool available = await _speech.initialize(
         onStatus: (val) {
-          if (val == 'done') {
+          if (val == 'done' || val == 'notListening') {
             setState(() => _isListening = false);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Sesli yazma durduruldu')),
+              );
+              SemanticsService.announce(
+                'Sesli yazma durduruldu',
+                TextDirection.ltr,
+              );
+            }
           }
         },
         onError: (val) {
           setState(() => _isListening = false);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Sesli yazma durduruldu')),
+            );
+            SemanticsService.announce(
+              'Sesli yazma durduruldu',
+              TextDirection.ltr,
+            );
+          }
         },
       );
 
       if (available) {
         setState(() => _isListening = true);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Sesli yazma başlatıldı')),
+          );
+          SemanticsService.announce(
+            'Sesli yazma başlatıldı',
+            TextDirection.ltr,
+          );
+        }
         _speech.listen(
           onResult: (val) => setState(() {
             _messageController.text = val.recognizedWords;
@@ -132,6 +160,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     } else {
       setState(() => _isListening = false);
       _speech.stop();
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Sesli yazma durduruldu')));
+        SemanticsService.announce('Sesli yazma durduruldu', TextDirection.ltr);
+      }
     }
   }
 
@@ -604,7 +638,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           });
 
       if (type == 'text') _messageController.clear();
-
     } finally {
       if (mounted) {
         setState(() {
@@ -633,8 +666,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             .collection('participants')
             .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData)
+          if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
+          }
           final participants = snapshot.data!.docs;
 
           return Column(
@@ -648,7 +682,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       'Katılımcılar',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
-                        fontSize: 24,
+                        fontSize: AppFonts.size(24),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -689,7 +723,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             name + (isMe ? ' (Sen)' : ''),
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.onSurface,
-                              fontSize: 18,
+                              fontSize: AppFonts.size(18),
                             ),
                           ),
                           trailing: (isCreator && !isMe)
@@ -793,7 +827,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               insetPadding: const EdgeInsets.symmetric(horizontal: 16.0),
               content: Text(
                 description,
-                style: const TextStyle(fontSize: 18, height: 1.5),
+                style: TextStyle(
+                  fontSize: AppFonts.size(18),
+                  height: 1.5,
+                ),
               ),
               actions: [
                 if (isCreator)
@@ -864,18 +901,45 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               if (val == 'done' || val == 'notListening') {
                                 if (mounted) {
                                   setModalState(() => _isListening = false);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Sesli yazma durduruldu'),
+                                    ),
+                                  );
+                                  SemanticsService.announce(
+                                    'Sesli yazma durduruldu',
+                                    TextDirection.ltr,
+                                  );
                                 }
                               }
                             },
                             onError: (val) {
                               if (mounted) {
                                 setModalState(() => _isListening = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Sesli yazma durduruldu'),
+                                  ),
+                                );
+                                SemanticsService.announce(
+                                  'Sesli yazma durduruldu',
+                                  TextDirection.ltr,
+                                );
                               }
                             },
                           );
                           if (available) {
                             if (mounted) {
                               setModalState(() => _isListening = true);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Sesli yazma başlatıldı'),
+                                ),
+                              );
+                              SemanticsService.announce(
+                                'Sesli yazma başlatıldı',
+                                TextDirection.ltr,
+                              );
                             }
                             _speech.listen(
                               localeId: 'tr_TR',
@@ -891,6 +955,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         } else {
                           if (mounted) {
                             setModalState(() => _isListening = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Sesli yazma durduruldu'),
+                              ),
+                            );
+                            SemanticsService.announce(
+                              'Sesli yazma durduruldu',
+                              TextDirection.ltr,
+                            );
                           }
                           _speech.stop();
                         }
@@ -1130,7 +1203,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 // Status message for screen readers
                 Text(
                   _statusMessage,
-                  style: TextStyle(color: Colors.transparent, fontSize: 1),
+                  style: TextStyle(
+                    color: Colors.transparent,
+                    fontSize: AppFonts.size(1),
+                  ),
                 ),
               ],
             ),
@@ -1206,168 +1282,224 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               alignment: isMe
                                   ? Alignment.centerRight
                                   : Alignment.centerLeft,
-                              child: Container(
-                                padding: const EdgeInsets.all(12.0),
-                                decoration: BoxDecoration(
-                                  color: isMe
-                                      ? Theme.of(context).colorScheme.primary
-                                      : Theme.of(context).colorScheme.secondary,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          senderName,
-                                          style: TextStyle(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onPrimary,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        if (type == 'audio')
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              IconButton(
-                                                icon: Icon(
-                                                  _currentlyPlayingMessageId ==
-                                                          messages[index].id
-                                                      ? Icons.stop
-                                                      : Icons.play_arrow,
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).colorScheme.onPrimary,
-                                                  size: 30,
-                                                ),
-                                                onPressed: () async {
-                                                  if (_currentlyPlayingMessageId ==
-                                                      messages[index].id) {
-                                                    await _audioPlayer.stop();
-                                                    setState(() {
-                                                      _currentlyPlayingMessageId =
-                                                          null;
-                                                    });
-                                                  } else {
-                                                    if (audioUrl != null) {
-                                                      setState(() {
-                                                        _currentlyPlayingMessageId =
-                                                            messages[index].id;
-                                                      });
-                                                      await _audioPlayer.play(
-                                                        UrlSource(audioUrl),
-                                                      );
-                                                    }
-                                                  }
-                                                },
-                                              ),
-                                              Text(
-                                                '$duration sn',
+                              child: Semantics(
+                                customSemanticsActions: isMe
+                                    ? {
+                                        CustomSemanticsAction(
+                                          label: 'Mesajı Sil',
+                                        ): () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              backgroundColor: Theme.of(
+                                                context,
+                                              ).scaffoldBackgroundColor,
+                                              title: Text(
+                                                'Mesajı Sil',
                                                 style: TextStyle(
                                                   color: Theme.of(
                                                     context,
-                                                  ).colorScheme.onPrimary,
-                                                  fontSize: 18,
+                                                  ).colorScheme.primary,
                                                 ),
                                               ),
-                                            ],
-                                          )
-                                        else
+                                              content: Text(
+                                                'Bu mesajı silmek istediğinize emin misiniz?',
+                                                style: TextStyle(
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.onSurface,
+                                                ),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(context),
+                                                  child: const Text('İptal'),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                    _deleteMessage(
+                                                      messages[index].id,
+                                                      audioUrl,
+                                                    );
+                                                  },
+                                                  child: const Text('Sil'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      }
+                                    : null,
+                                child: Container(
+                                  padding: const EdgeInsets.all(12.0),
+                                  decoration: BoxDecoration(
+                                    color: isMe
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.secondary,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
                                           Text(
-                                            text,
+                                            senderName,
                                             style: TextStyle(
                                               color: Theme.of(
                                                 context,
                                               ).colorScheme.onPrimary,
-                                              fontSize: 20,
+                                              fontSize: AppFonts.size(16),
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 4),
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        if (isMe)
-                                          ExcludeSemantics(
-                                            child: IconButton(
-                                              icon: const Icon(
-                                                Icons.delete_outline,
-                                                color: Colors.redAccent,
-                                                size: 24,
-                                              ),
-                                              tooltip: 'Mesajı sil',
-                                              onPressed: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) => AlertDialog(
-                                                    backgroundColor: Theme.of(
+                                          SizedBox(height: 4),
+                                          if (type == 'audio')
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                IconButton(
+                                                  icon: Icon(
+                                                    _currentlyPlayingMessageId ==
+                                                            messages[index].id
+                                                        ? Icons.stop
+                                                        : Icons.play_arrow,
+                                                    color: Theme.of(
                                                       context,
-                                                    ).scaffoldBackgroundColor,
-                                                    title: Text(
-                                                      'Mesajı Sil',
-                                                      style: TextStyle(
-                                                        color: Theme.of(
-                                                          context,
-                                                        ).colorScheme.primary,
+                                                    ).colorScheme.onPrimary,
+                                                    size: 30,
+                                                  ),
+                                                  onPressed: () async {
+                                                    if (_currentlyPlayingMessageId ==
+                                                        messages[index].id) {
+                                                      await _audioPlayer.stop();
+                                                      setState(() {
+                                                        _currentlyPlayingMessageId =
+                                                            null;
+                                                      });
+                                                    } else {
+                                                      if (audioUrl != null) {
+                                                        setState(() {
+                                                          _currentlyPlayingMessageId =
+                                                              messages[index]
+                                                                  .id;
+                                                        });
+                                                        await _audioPlayer.play(
+                                                          UrlSource(audioUrl),
+                                                        );
+                                                      }
+                                                    }
+                                                  },
+                                                ),
+                                                Text(
+                                                  '$duration sn',
+                                                  style: TextStyle(
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.onPrimary,
+                                                    fontSize: AppFonts.size(18),
+                                                  ),
+                                                ),
+                                              ],
+                                            )
+                                          else
+                                            Text(
+                                              text,
+                                              style: TextStyle(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.onPrimary,
+                                                fontSize: AppFonts.size(20),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 4),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (isMe)
+                                            ExcludeSemantics(
+                                              child: IconButton(
+                                                icon: const Icon(
+                                                  Icons.delete_outline,
+                                                  color: Colors.redAccent,
+                                                  size: 24,
+                                                ),
+                                                tooltip: 'Mesajı sil',
+                                                onPressed: () {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (context) => AlertDialog(
+                                                      backgroundColor: Theme.of(
+                                                        context,
+                                                      ).scaffoldBackgroundColor,
+                                                      title: Text(
+                                                        'Mesajı Sil',
+                                                        style: TextStyle(
+                                                          color: Theme.of(
+                                                            context,
+                                                          ).colorScheme.primary,
+                                                        ),
                                                       ),
-                                                    ),
-                                                    content: Text(
-                                                      'Bu mesajı silmek istediğinize emin misiniz?',
-                                                      style: TextStyle(
-                                                        color: Theme.of(
-                                                          context,
-                                                        ).colorScheme.onSurface,
+                                                      content: Text(
+                                                        'Bu mesajı silmek istediğinize emin misiniz?',
+                                                        style: TextStyle(
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .onSurface,
+                                                        ),
                                                       ),
-                                                    ),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () =>
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                context,
+                                                              ),
+                                                          child: const Text(
+                                                            'İptal',
+                                                          ),
+                                                        ),
+                                                        ElevatedButton(
+                                                          onPressed: () {
                                                             Navigator.pop(
                                                               context,
-                                                            ),
-                                                        child: const Text(
-                                                          'İptal',
+                                                            );
+                                                            _deleteMessage(
+                                                              messages[index]
+                                                                  .id,
+                                                              audioUrl,
+                                                            );
+                                                          },
+                                                          child: const Text(
+                                                            'Sil',
+                                                          ),
                                                         ),
-                                                      ),
-                                                      ElevatedButton(
-                                                        onPressed: () {
-                                                          Navigator.pop(
-                                                            context,
-                                                          );
-                                                          _deleteMessage(
-                                                            messages[index].id,
-                                                            audioUrl,
-                                                          );
-                                                        },
-                                                        child: const Text(
-                                                          'Sil',
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          Text(
+                                            timeString,
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: AppFonts.size(14),
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                        Text(
-                                          timeString,
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -1416,7 +1548,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               : 'Kayıt Yapılıyor: $_recordDuration sn',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.error,
-                            fontSize: 20,
+                            fontSize: AppFonts.size(20),
                           ),
                         ),
                       ),
@@ -1428,7 +1560,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         decoration: const InputDecoration(hintText: 'Mesaj...'),
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: 20,
+                          fontSize: AppFonts.size(20),
                         ),
                       ),
                     ),

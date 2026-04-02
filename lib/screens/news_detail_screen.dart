@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:html/parser.dart';
 
 class NewsDetailScreen extends StatefulWidget {
@@ -84,7 +85,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: AppFonts.size(24),
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
                       ),
@@ -92,8 +93,8 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                     const SizedBox(height: 20),
                     Text(
                       _stripHtmlTags(description),
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style: TextStyle(
+                        fontSize: AppFonts.size(18),
                         height: 1.5,
                         color: Colors.white,
                       ),

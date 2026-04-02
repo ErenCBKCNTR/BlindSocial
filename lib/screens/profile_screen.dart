@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -375,7 +376,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text(
                 'SYSTEM CONFIG',
-                style: theme.textTheme.displayLarge?.copyWith(fontSize: 24),
+                style: theme.textTheme.displayLarge?.copyWith(fontSize: AppFonts.size(24)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
@@ -468,9 +469,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Navigator.pushReplacementNamed(context, '/login');
       },
       icon: const Icon(Icons.logout),
-      label: const Text(
+      label: Text(
         'Oturumu Kapat',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        style: TextStyle(fontSize: AppFonts.size(20), fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -488,7 +489,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: InputDecoration(labelText: label),
       style: TextStyle(
         color: Theme.of(context).colorScheme.onSurface,
-        fontSize: 20,
+        fontSize: AppFonts.size(20),
       ),
     );
   }
@@ -499,7 +500,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Text(
           'Platformda nasıl görünmek istersiniz?',
-          style: TextStyle(color: theme.colorScheme.secondary, fontSize: 18),
+          style: TextStyle(color: theme.colorScheme.secondary, fontSize: AppFonts.size(18)),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10),
@@ -559,7 +560,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Text(
           'Doğum Tarihi',
-          style: TextStyle(color: theme.colorScheme.secondary, fontSize: 18),
+          style: TextStyle(color: theme.colorScheme.secondary, fontSize: AppFonts.size(18)),
         ),
         Row(
           children: [
@@ -615,7 +616,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           label: Text(
             'Şifre Değiştir',
-            style: TextStyle(color: theme.colorScheme.primary, fontSize: 20),
+            style: TextStyle(color: theme.colorScheme.primary, fontSize: AppFonts.size(20)),
           ),
         ),
         if (_showPasswordFields) ...[
@@ -683,7 +684,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'Versiyon: $_appVersion',
         style: TextStyle(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-          fontSize: 14,
+          fontSize: AppFonts.size(14),
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -145,8 +146,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       String message = 'Bir hata oluştu.';
       if (e.code == 'username-already-in-use') message = e.message!;
-      if (e.code == 'email-already-in-use')
+      if (e.code == 'email-already-in-use') {
         message = 'Bu e-posta adresi zaten kullanımda.';
+      }
       if (e.code == 'weak-password') message = 'Şifre çok zayıf.';
 
       // ignore: use_build_context_synchronously
@@ -230,7 +232,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       'Doğum Tarihi',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.secondary,
-                        fontSize: 18,
+                        fontSize: AppFonts.size(18),
                       ),
                     ),
                     Row(

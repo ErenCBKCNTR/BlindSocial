@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -146,7 +147,7 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
         leading: Icon(Icons.radio, size: 40, color: Theme.of(context).colorScheme.primary),
-        title: Text('Radyo Kanalları', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+        title: Text('Radyo Kanalları', style: TextStyle(fontSize: AppFonts.size(24), fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -161,7 +162,7 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
                         itemBuilder: (context, index) {
                           return ListTile(
                             leading: const Icon(Icons.headset),
-                            title: Text(radioList[index]['name']!, style: const TextStyle(fontSize: 18)),
+                            title: Text(radioList[index]['name']!, style: TextStyle(fontSize: AppFonts.size(18))),
                             trailing: Icon(Icons.chevron_right, size: 36, color: Theme.of(context).colorScheme.secondary),
                             onTap: () {
                               _stopTv();
@@ -187,7 +188,7 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
         leading: Icon(Icons.tv, size: 40, color: Theme.of(context).colorScheme.primary),
-        title: Text('Televizyon Kanalları', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+        title: Text('Televizyon Kanalları', style: TextStyle(fontSize: AppFonts.size(24), fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -204,7 +205,7 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
 
                           return ExpansionTile(
                             leading: const Icon(Icons.live_tv),
-                            title: Text(tvList[index]['name']!, style: const TextStyle(fontSize: 18)),
+                            title: Text(tvList[index]['name']!, style: TextStyle(fontSize: AppFonts.size(18))),
                             trailing: Icon(isPlaying ? Icons.tv_off : Icons.play_arrow, size: 36, color: Theme.of(context).colorScheme.secondary),
                             onExpansionChanged: (expanded) {
                               if (expanded) {

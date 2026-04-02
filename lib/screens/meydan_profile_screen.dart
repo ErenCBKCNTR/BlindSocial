@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -204,17 +206,25 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
                                   if (val == 'done' || val == 'notListening') {
                                     if (mounted) {
                                       setStateDialog(() => _isListening = false);
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli yazma durduruldu')));
+                                      SemanticsService.announce('Sesli yazma durduruldu', TextDirection.ltr);
                                     }
                                   }
                                 },
                                 onError: (val) {
                                   if (mounted) {
                                     setStateDialog(() => _isListening = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli yazma durduruldu')));
+                                    SemanticsService.announce('Sesli yazma durduruldu', TextDirection.ltr);
                                   }
                                 },
                               );
                               if (available) {
                                 setStateDialog(() => _isListening = true);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli yazma başlatıldı')));
+                                  SemanticsService.announce('Sesli yazma başlatıldı', TextDirection.ltr);
+                                }
                                 currentText = _bioController.text;
                                 _speech.listen(
                                   onResult: (val) {
@@ -230,6 +240,10 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
                               }
                             } else {
                               setStateDialog(() => _isListening = false);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli yazma durduruldu')));
+                                SemanticsService.announce('Sesli yazma durduruldu', TextDirection.ltr);
+                              }
                               _speech.stop();
                             }
                           },
@@ -317,7 +331,7 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
           if (bio.isNotEmpty)
             Text(
               bio,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(color: Colors.white, fontSize: AppFonts.size(16)),
             ),
           const SizedBox(height: 16),
           SizedBox(
@@ -352,11 +366,11 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
       children: [
         Text(
           '$count',
-          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontSize: AppFonts.size(18), fontWeight: FontWeight.bold),
         ),
         Text(
           label,
-          style: const TextStyle(color: Colors.grey, fontSize: 14),
+          style: TextStyle(color: Colors.grey, fontSize: AppFonts.size(14)),
         ),
       ],
     );
@@ -507,10 +521,10 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
 
         final docs = snapshot.data?.docs.toList() ?? [];
         if (docs.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
               'Henüz gönderi yok.',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
+              style: TextStyle(color: Colors.grey, fontSize: AppFonts.size(16)),
             ),
           );
         }
@@ -569,18 +583,18 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
                               children: [
                                 Text(
                                   '@$authorUsername',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Colors.yellow,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                    fontSize: AppFonts.size(16),
                                   ),
                                 ),
                                 if (data['createdAt'] != null)
                                   Text(
                                     _formatTimestamp(data['createdAt'] as Timestamp),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: Colors.grey,
-                                      fontSize: 14,
+                                      fontSize: AppFonts.size(14),
                                     ),
                                   ),
                               ],
@@ -588,9 +602,9 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
                             const SizedBox(height: 8),
                             Text(
                               content,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 16,
+                                fontSize: AppFonts.size(16),
                                 height: 1.5,
                               ),
                             ),
@@ -617,7 +631,7 @@ class _MeydanProfileScreenState extends State<MeydanProfileScreen> {
                                     ExcludeSemantics(
                                       child: Text(
                                         '$likeCount',
-                                        style: const TextStyle(color: Colors.grey, fontSize: 16),
+                                        style: TextStyle(color: Colors.grey, fontSize: AppFonts.size(16)),
                                       ),
                                     ),
                                   ],

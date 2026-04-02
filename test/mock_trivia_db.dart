@@ -24,8 +24,9 @@ void populateMockTriviaDB(FirebaseFirestore firestore) async {
           .doc(docId);
 
       String diff = 'kolay';
-      if (i > 33 && i <= 66) diff = 'orta';
-      else if (i > 66) diff = 'zor';
+      if (i > 33 && i <= 66) {
+        diff = 'orta';
+      } else if (i > 66) diff = 'zor';
 
       batch.set(ref, {
         'id': docId,

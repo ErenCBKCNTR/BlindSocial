@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -17,7 +16,7 @@ class RadioTheaterScreen extends StatefulWidget {
 class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
   int _currentIndex = 0;
   List<String> _favorites = [];
-  Map<String, Duration> _cachedProgress = {};
+  final Map<String, Duration> _cachedProgress = {};
   bool _isLoadingProgress = true;
   bool _hasInternet = true;
   List<Map<String, String>> _downloadedFiles = [];

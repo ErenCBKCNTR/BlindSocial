@@ -85,6 +85,9 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
 
 
+  url_launcher_platform_interface: any
+  plugin_platform_interface: any
+  path_provider_platform_interface: any
 dependency_overrides:
   record_linux: any
   record_platform_interface: any

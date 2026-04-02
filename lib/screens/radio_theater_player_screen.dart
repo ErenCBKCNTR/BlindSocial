@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import '../services/audio_handler.dart';
@@ -229,7 +230,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                     padding: const EdgeInsets.all(24.0),
                     child: Text(
                       _errorMessage!,
-                      style: const TextStyle(fontSize: 18, color: Colors.red),
+                      style: TextStyle(fontSize: AppFonts.size(18), color: Colors.red),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -254,7 +255,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                       Text(
                         widget.title,
                         style: TextStyle(
-                          fontSize: 22,
+                          fontSize: AppFonts.size(22),
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
@@ -281,8 +282,8 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(_formatDuration(position), style: const TextStyle(fontSize: 16)),
-                                    Text(_formatDuration(duration), style: const TextStyle(fontSize: 16)),
+                                    Text(_formatDuration(position), style: TextStyle(fontSize: AppFonts.size(16))),
+                                    Text(_formatDuration(duration), style: TextStyle(fontSize: AppFonts.size(16))),
                                   ],
                                 ),
                               ),
@@ -300,7 +301,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                             label: Text(
                               'Hız: ${_currentSpeed}x',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: AppFonts.size(16),
                                 color: Theme.of(context).colorScheme.primary,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -319,7 +320,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                                     label: Text(
                                       'Çevrimdışı Dinlemek İçin İndir',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: AppFonts.size(16),
                                         color: Theme.of(context).colorScheme.primary,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -329,10 +330,10 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                             TextButton.icon(
                               onPressed: _deleteOffline,
                               icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
-                              label: const Text(
+                              label: Text(
                                 'İndirilen Kaynağı Sil',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: AppFonts.size(16),
                                   color: Colors.redAccent,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -352,7 +353,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                               child: Text(
                                 '10 Saniye Geri',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: AppFonts.size(16),
                                   color: Theme.of(context).colorScheme.primary,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -372,7 +373,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                               child: Text(
                                 _isPlaying ? 'Duraklat' : 'Başlat',
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize: AppFonts.size(20),
                                   color: Theme.of(context).colorScheme.primary,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -388,7 +389,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
                               child: Text(
                                 '10 Saniye İleri',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: AppFonts.size(16),
                                   color: Theme.of(context).colorScheme.primary,
                                   fontWeight: FontWeight.bold,
                                 ),

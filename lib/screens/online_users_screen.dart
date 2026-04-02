@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OnlineUsersScreen extends StatelessWidget {
@@ -27,10 +28,10 @@ class OnlineUsersScreen extends StatelessWidget {
           final docs = snapshot.data?.docs ?? [];
 
           if (docs.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
                 'Şu an çevrimiçi kimse yok.',
-                style: TextStyle(color: Colors.grey, fontSize: 18),
+                style: TextStyle(color: Colors.grey, fontSize: AppFonts.size(18)),
               ),
             );
           }
@@ -52,7 +53,7 @@ class OnlineUsersScreen extends StatelessWidget {
                   ),
                   title: Text(
                     '@$username',
-                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                    style: TextStyle(color: Colors.white, fontSize: AppFonts.size(18)),
                   ),
                 ),
               );

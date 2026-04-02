@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,9 +35,9 @@ class _ExpandablePostTextState extends State<ExpandablePostText> {
       builder: (context, constraints) {
         final textSpan = TextSpan(
           text: widget.text,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white,
-            fontSize: 16,
+            fontSize: AppFonts.size(16),
             height: 1.5,
           ),
         );
@@ -54,9 +56,9 @@ class _ExpandablePostTextState extends State<ExpandablePostText> {
             children: [
               Text(
                 widget.text,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: AppFonts.size(16),
                   height: 1.5,
                 ),
                 maxLines: _isExpanded ? null : 3,
@@ -72,10 +74,10 @@ class _ExpandablePostTextState extends State<ExpandablePostText> {
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
                   child: Text(
                     _isExpanded ? '...daha az göster' : '...devamını okuyun',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.grey,
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: AppFonts.size(14),
                     ),
                   ),
                 ),
@@ -85,9 +87,9 @@ class _ExpandablePostTextState extends State<ExpandablePostText> {
         } else {
           return Text(
             widget.text,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: AppFonts.size(16),
               height: 1.5,
             ),
           );
@@ -441,17 +443,25 @@ class _SquareScreenState extends State<SquareScreen> {
                                       setStateDialog(
                                         () => _isListening = false,
                                       );
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli yazma durduruldu')));
+                                      SemanticsService.announce('Sesli yazma durduruldu', TextDirection.ltr);
                                     }
                                   }
                                 },
                                 onError: (val) {
                                   if (mounted) {
                                     setStateDialog(() => _isListening = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli yazma durduruldu')));
+                                    SemanticsService.announce('Sesli yazma durduruldu', TextDirection.ltr);
                                   }
                                 },
                               );
                               if (available) {
                                 setStateDialog(() => _isListening = true);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli yazma başlatıldı')));
+                                  SemanticsService.announce('Sesli yazma başlatıldı', TextDirection.ltr);
+                                }
                                 currentText = _postController.text;
                                 _speech.listen(
                                   onResult: (val) {
@@ -468,6 +478,10 @@ class _SquareScreenState extends State<SquareScreen> {
                               }
                             } else {
                               setStateDialog(() => _isListening = false);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli yazma durduruldu')));
+                                SemanticsService.announce('Sesli yazma durduruldu', TextDirection.ltr);
+                              }
                               _speech.stop();
                             }
                           },
@@ -581,10 +595,10 @@ class _SquareScreenState extends State<SquareScreen> {
                                 },
                                 child: Text(
                                   '@$authorUsername',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Colors.yellow,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                    fontSize: AppFonts.size(16),
                                   ),
                                 ),
                               ),
@@ -593,9 +607,9 @@ class _SquareScreenState extends State<SquareScreen> {
                                   _formatTimestamp(
                                     data['createdAt'] as Timestamp,
                                   ),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Colors.grey,
-                                    fontSize: 14,
+                                    fontSize: AppFonts.size(14),
                                   ),
                                 ),
                             ],
@@ -626,9 +640,9 @@ class _SquareScreenState extends State<SquareScreen> {
                                   ExcludeSemantics(
                                     child: Text(
                                       '$likeCount',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: Colors.grey,
-                                        fontSize: 16,
+                                        fontSize: AppFonts.size(16),
                                       ),
                                     ),
                                   ),
@@ -792,10 +806,10 @@ class _SquareScreenState extends State<SquareScreen> {
 
                     final docs = snapshot.data?.docs ?? [];
                     if (docs.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Text(
                           'Henüz gönderi yok.',
-                          style: TextStyle(color: Colors.white, fontSize: 18),
+                          style: TextStyle(color: Colors.white, fontSize: AppFonts.size(18)),
                         ),
                       );
                     }

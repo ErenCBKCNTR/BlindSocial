@@ -1,4 +1,5 @@
 import 'package:flutter/semantics.dart';
+import 'package:blind_social/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,7 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 class PostCommentsScreen extends StatefulWidget {
   final String postId;
 
-  const PostCommentsScreen({Key? key, required this.postId}) : super(key: key);
+  const PostCommentsScreen({super.key, required this.postId});
 
   @override
   _PostCommentsScreenState createState() => _PostCommentsScreenState();
@@ -43,17 +44,29 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
     if (!_isListening) {
       bool available = await _speech.initialize(
         onStatus: (val) {
-          if (val == 'done') {
+          if (val == 'done' || val == 'notListening') {
             setState(() => _isListening = false);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli yazma durduruldu')));
+              SemanticsService.announce('Sesli yazma durduruldu', TextDirection.ltr);
+            }
           }
         },
         onError: (val) {
           setState(() => _isListening = false);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli yazma durduruldu')));
+            SemanticsService.announce('Sesli yazma durduruldu', TextDirection.ltr);
+          }
         },
       );
 
       if (available) {
         setState(() => _isListening = true);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli yazma başlatıldı')));
+          SemanticsService.announce('Sesli yazma başlatıldı', TextDirection.ltr);
+        }
         _speech.listen(
           onResult: (val) => setState(() {
             _commentController.text = val.recognizedWords;
@@ -66,6 +79,10 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
     } else {
       setState(() => _isListening = false);
       _speech.stop();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sesli yazma durduruldu')));
+        SemanticsService.announce('Sesli yazma durduruldu', TextDirection.ltr);
+      }
     }
   }
 
@@ -214,7 +231,7 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
                               if (data['createdAt'] != null)
                                 Text(
                                   _formatTimestamp(data['createdAt'] as Timestamp),
-                                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                  style: TextStyle(color: Colors.grey, fontSize: AppFonts.size(12)),
                                 ),
                             ],
                           ),
@@ -267,12 +284,12 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
                   ),
                   TextButton(
                     onPressed: _submitComment,
-                    child: const Text(
+                    child: Text(
                       'Gönder',
                       style: TextStyle(
                         color: Colors.cyan,
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: AppFonts.size(16),
                       ),
                     ),
                   ),
