@@ -1,3 +1,4 @@
+import 'package:flutter/semantics.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -182,31 +183,37 @@ class _PostCommentsScreenState extends State<PostCommentsScreen> {
                     final content = data['content'] ?? '';
                     final authorUsername = data['authorUsername'] ?? 'Bilinmiyor';
 
-                    return Card(
-                      color: Colors.grey[850],
-                      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      child: ListTile(
-                        title: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('@$authorUsername', style: const TextStyle(color: Colors.yellow)),
-                            if (data['createdAt'] != null)
-                              Text(
-                                _formatTimestamp(data['createdAt'] as Timestamp),
-                                style: const TextStyle(color: Colors.grey, fontSize: 12),
-                              ),
-                          ],
-                        ),
-                        subtitle: Text(content, style: const TextStyle(color: Colors.white)),
-                        trailing: currentUserUid == authorId
-                            ? TextButton(
-                                onPressed: () => _confirmDeleteComment(commentDoc.id),
-                                child: const Text(
-                                  'Sil',
-                                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                    return Semantics(
+                      customSemanticsActions: {
+                        if (currentUserUid == authorId)
+                          const CustomSemanticsAction(label: 'Sil'): () => _confirmDeleteComment(commentDoc.id),
+                      },
+                      child: Card(
+                        color: Colors.grey[850],
+                        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        child: ListTile(
+                          title: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('@$authorUsername', style: const TextStyle(color: Colors.yellow)),
+                              if (data['createdAt'] != null)
+                                Text(
+                                  _formatTimestamp(data['createdAt'] as Timestamp),
+                                  style: const TextStyle(color: Colors.grey, fontSize: 12),
                                 ),
-                              )
-                            : null,
+                            ],
+                          ),
+                          subtitle: Text(content, style: const TextStyle(color: Colors.white)),
+                          trailing: currentUserUid == authorId
+                              ? ExcludeSemantics(
+                                  child: IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () => _confirmDeleteComment(commentDoc.id),
+                                    tooltip: 'Sil',
+                                  ),
+                                )
+                              : null,
+                        ),
                       ),
                     );
                   },
