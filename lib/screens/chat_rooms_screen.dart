@@ -403,10 +403,6 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   onPressed: () async {
                     int maxCap = int.tryParse(capacityController.text) ?? 10;
 
-                    int ttlHours = 24;
-                    if (ttlPreference == '3d') ttlHours = 72;
-                    if (ttlPreference == '7d') ttlHours = 168;
-
                     await roomDoc.reference.update({
                       'name': nameController.text.trim(),
                       'maxCapacity': maxCap,
@@ -414,7 +410,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                           ? null
                           : passwordController.text,
                       'ttlPreference': ttlPreference,
-                      'ttl': ttlHours,
+                      'ttl': ttlPreference,
                     });
                     if (!mounted) return;
                     // ignore: use_build_context_synchronously

@@ -193,6 +193,8 @@ class _SquareScreenState extends State<SquareScreen> {
   }
 
   Future<void> _submitPost() async {
+    if (_isPosting) return;
+
     final text = _postController.text.trim();
     if (text.isEmpty) return;
 
