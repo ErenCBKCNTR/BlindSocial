@@ -5,10 +5,12 @@ import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_storage_mocks/firebase_storage_mocks.dart';
 import 'package:record/record.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 import 'package:blind_social/screens/chat_screen.dart';
 
 class MockAudioRecorder extends Mock implements AudioRecorder {}
+class MockFirebaseFunctions extends Mock implements FirebaseFunctions {}
 
 void main() {
   setUpAll(() {
@@ -43,6 +45,7 @@ void main() {
     });
 
     final mockStorage = MockFirebaseStorage();
+    final mockFunctions = MockFirebaseFunctions();
 
     await tester.pumpWidget(MaterialApp(
       home: ChatScreen(
@@ -52,6 +55,7 @@ void main() {
         auth: mockAuth,
         firestore: fakeFirestore,
         storage: mockStorage,
+        functions: mockFunctions,
       ),
     ));
 

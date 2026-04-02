@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
-import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:flutter/semantics.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
@@ -16,8 +16,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 const String liveKitUrl = 'wss://bs-app-l1mgfyed.livekit.cloud';
-const String liveKitApiKey = 'APINTM3AUHp6ftW';
-const String liveKitApiSecret = 'lQTO4G5gD9rGBFx94LoAl2bh0yaMBAaR6VgHN45ZeoO';
 
 class ChatScreen extends StatefulWidget {
   final String roomId;
@@ -26,6 +24,7 @@ class ChatScreen extends StatefulWidget {
   final FirebaseAuth? auth;
   final FirebaseFirestore? firestore;
   final FirebaseStorage? storage;
+  final FirebaseFunctions? functions;
 
   const ChatScreen({
     super.key,
@@ -35,6 +34,7 @@ class ChatScreen extends StatefulWidget {
     this.auth,
     this.firestore,
     this.storage,
+    this.functions,
   });
 
   @override
@@ -231,24 +231,22 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
-  String _generateToken() {
+  Future<String> _fetchLiveKitToken() async {
     final user = _auth.currentUser;
     final identity =
         _cachedDisplayName ??
         user?.uid ??
         'anonymous_${DateTime.now().millisecondsSinceEpoch}';
 
-    final jwt = JWT({
-      'exp':
-          (DateTime.now().add(const Duration(hours: 2)).millisecondsSinceEpoch /
-                  1000)
-              .round(),
-      'iss': liveKitApiKey,
-      'sub': identity,
-      'video': {'roomJoin': true, 'room': widget.roomId},
-    }, issuer: liveKitApiKey);
+    final functions = widget.functions ?? FirebaseFunctions.instance;
+    final httpsCallable = functions.httpsCallable('generateLiveKitToken');
 
-    return jwt.sign(SecretKey(liveKitApiSecret), algorithm: JWTAlgorithm.HS256);
+    final response = await httpsCallable.call({
+      'room': widget.roomId,
+      'identity': identity,
+    });
+
+    return response.data['token'] as String;
   }
 
   Future<void> _joinVoiceChannel() async {
@@ -278,7 +276,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         await _room!.disconnect();
       }
 
-      final token = _generateToken();
+      final token = await _fetchLiveKitToken();
       _room = Room();
 
       await _room!.connect(liveKitUrl, token);
