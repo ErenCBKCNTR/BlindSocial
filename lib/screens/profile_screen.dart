@@ -108,10 +108,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(newUsername)) {
+    if (newUsername.length > 30) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Kullanıcı adı noktalama işaretleri veya boşluk içeremez.'),
+          content: Text('Kullanıcı adı en fazla 30 karakter olabilir.'),
+        ),
+      );
+      return;
+    }
+
+    if (!RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9._]*$').hasMatch(newUsername)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kullanıcı adı harf/rakam ile başlamalı ve sadece nokta veya alt çizgi içerebilir.'),
         ),
       );
       return;

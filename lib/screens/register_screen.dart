@@ -181,13 +181,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     SizedBox(height: 20),
                     TextFormField(
                       controller: _usernameController,
+                      maxLength: 30,
                       decoration: const InputDecoration(
                         labelText: 'Kullanıcı Adı',
+                        counterText: '',
                       ),
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Boş bırakılamaz';
-                        if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(v)) {
-                          return 'Kullanıcı adı noktalama işaretleri veya boşluk içeremez';
+                        if (v.length > 30) return 'Kullanıcı adı en fazla 30 karakter olabilir';
+                        if (!RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9._]*$').hasMatch(v)) {
+                          return 'Kullanıcı adı harf/rakam ile başlamalı ve sadece ., _ içerebilir';
                         }
                         return null;
                       },
