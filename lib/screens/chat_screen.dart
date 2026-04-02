@@ -1283,6 +1283,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   ? Alignment.centerRight
                                   : Alignment.centerLeft,
                               child: Semantics(
+                                container: true,
+                                label: label,
                                 customSemanticsActions: isMe
                                     ? {
                                         CustomSemanticsAction(
