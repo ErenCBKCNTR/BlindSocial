@@ -38,7 +38,7 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
 
   Future<void> _fetchRadios() async {
     final List<Map<String, String>> predefinedRadios = [
-      {'name': 'Alem FM', 'url': 'http://scturkmedya.radyotvonline.com/stream/80/'},
+      {'name': 'Alem FM', 'url': 'https://scturkmedya.radyotvonline.com/stream/80/'},
       {'name': 'JoyTürk', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_TURK_SC'},
       {'name': 'Joy FM', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_FM_SC'},
       {'name': 'Metro FM', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/METRO_FM_SC'},
@@ -46,7 +46,7 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
       {'name': 'PowerTürk', 'url': 'https://listen.powerapp.com.tr/powerturk/mpeg/icecast.audio'},
       {'name': 'Süper FM', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/SUPER_FM_SC'},
       {'name': 'Virgin Radio', 'url': 'https://playerservices.streamtheworld.com/api/livestream-redirect/VIRGIN_RADIO_SC'},
-      {'name': 'Radyo D', 'url': 'http://17733.live.streamtheworld.com/RADYO_D.mp3'},
+      {'name': 'Radyo D', 'url': 'https://17733.live.streamtheworld.com/RADYO_D.mp3'},
       {'name': 'Show Radyo', 'url': 'http://46.20.7.104:8020/stream'}
     ];
 
