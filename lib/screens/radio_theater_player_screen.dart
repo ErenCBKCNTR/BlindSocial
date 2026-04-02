@@ -7,6 +7,7 @@ import '../services/audio_handler.dart';
 import '../services/audio_cache_manager.dart';
 import '../services/audio_progress_manager.dart';
 import '../services/audio_favorites_manager.dart';
+import '../services/permission_manager.dart';
 
 class RadioTheaterPlayerScreen extends StatefulWidget {
   final String url;
@@ -149,10 +150,17 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
   }
 
   Future<void> _downloadOffline() async {
-    final storageStatus = await Permission.storage.request();
-    final audioStatus = await Permission.audio.request();
+    final storageStatus = await Permission.storage.status;
+    final audioStatus = await Permission.audio.status;
 
-    if (!storageStatus.isGranted && !audioStatus.isGranted) {
+    bool hasPermission = storageStatus.isGranted || audioStatus.isGranted;
+
+    if (!hasPermission && context.mounted) {
+      // Try requesting via PermissionManager
+      hasPermission = await PermissionManager.requestInitialPermissions(context);
+    }
+
+    if (!hasPermission) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('İndirme için depolama veya ses izni gerekiyor.')),

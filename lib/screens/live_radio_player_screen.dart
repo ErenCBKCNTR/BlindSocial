@@ -4,6 +4,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../services/audio_handler.dart';
 import '../services/broadcast_record_manager.dart';
+import '../services/permission_manager.dart';
 
 class LiveRadioPlayerScreen extends StatefulWidget {
   final Map<String, String> radio;
@@ -83,10 +84,17 @@ class _LiveRadioPlayerScreenState extends State<LiveRadioPlayerScreen> {
       }
     } else {
       // Check permissions
-      final storageStatus = await Permission.storage.request();
-      final audioStatus = await Permission.audio.request();
+      final storageStatus = await Permission.storage.status;
+      final audioStatus = await Permission.audio.status;
 
-      if (storageStatus.isGranted || audioStatus.isGranted) {
+      bool hasPermission = storageStatus.isGranted || audioStatus.isGranted;
+
+      if (!hasPermission && context.mounted) {
+        // Try requesting via PermissionManager
+        hasPermission = await PermissionManager.requestInitialPermissions(context);
+      }
+
+      if (hasPermission) {
         await broadcastRecordManager.startRecording(url, widget.radio['name']!);
         setState(() {
           _isRecording = true;
