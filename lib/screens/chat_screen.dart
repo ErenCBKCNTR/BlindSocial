@@ -26,6 +26,7 @@ class ChatScreen extends StatefulWidget {
   final FirebaseAuth? auth;
   final FirebaseFirestore? firestore;
   final FirebaseStorage? storage;
+  final bool skipAddParticipant;
 
   const ChatScreen({
     super.key,
@@ -35,6 +36,7 @@ class ChatScreen extends StatefulWidget {
     this.auth,
     this.firestore,
     this.storage,
+    this.skipAddParticipant = false,
   });
 
   @override
@@ -93,7 +95,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         .where('expires_at', isGreaterThan: now)
         .orderBy('expires_at', descending: true)
         .snapshots();
-    _addParticipant();
+
+    if (!widget.skipAddParticipant) {
+      _addParticipant();
+    }
 
     _audioPlayer.onPlayerStateChanged.listen((state) {
       if (state == PlayerState.completed) {

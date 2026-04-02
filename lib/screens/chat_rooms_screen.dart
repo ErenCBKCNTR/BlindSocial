@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
@@ -1218,7 +1219,6 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                         // Handle password
                         if (isLocked && !isCreator) {
                           final passwordController = TextEditingController();
-                          final correctPassword = roomData['password'];
 
                           bool? success = await showDialog<bool>(
                             context: context,
@@ -1277,18 +1277,36 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                                         child: const Text('İptal'),
                                       ),
                                       ElevatedButton(
-                                        onPressed: () {
-                                          if (passwordController.text ==
-                                              correctPassword) {
-                                            Navigator.pop(context, true);
-                                          } else {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Hatalı Şifre'),
-                                              ),
-                                            );
+                                        onPressed: () async {
+                                          try {
+                                            final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('verifyRoomPassword');
+                                            final result = await callable.call(<String, dynamic>{
+                                              'roomId': roomId,
+                                              'password': passwordController.text,
+                                            });
+                                            if (result.data['success'] == true) {
+                                              if (context.mounted) Navigator.pop(context, true);
+                                            } else {
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('Hatalı Şifre'),
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Şifre doğrulanırken bir hata oluştu.'),
+                                                ),
+                                              );
+                                            }
                                           }
                                         },
                                         child: const Text('Giriş'),
@@ -1310,6 +1328,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                               builder: (context) => ChatScreen(
                                 roomId: roomId,
                                 roomName: roomName,
+                                skipAddParticipant: isLocked && !isCreator,
                               ),
                             ),
                           );
