@@ -21,4 +21,15 @@ class AudioProgressManager {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('$_prefix$id');
   }
+
+  // Load the saved playback position for multiple items efficiently
+  static Future<Map<String, Duration>> getMultipleProgress(List<String> ids) async {
+    final prefs = await SharedPreferences.getInstance();
+    final Map<String, Duration> results = {};
+    for (final id in ids) {
+      final millis = prefs.getInt('$_prefix$id');
+      results[id] = millis != null ? Duration(milliseconds: millis) : Duration.zero;
+    }
+    return results;
+  }
 }

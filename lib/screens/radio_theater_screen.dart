@@ -69,14 +69,20 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
   Future<void> _loadAllProgress(List<QueryDocumentSnapshot> docs) async {
     // Only fetch progress if we haven't loaded it or if we specifically request a refresh.
     // If we're on the Devam Edilen tab, we want to know progress for everything.
+    final urlsToFetch = <String>[];
     for (var doc in docs) {
       final data = doc.data() as Map<String, dynamic>;
       final url = data['url'] ?? '';
-      if (!_cachedProgress.containsKey(url)) {
-        final progress = await AudioProgressManager.getProgress(url);
-        _cachedProgress[url] = progress;
+      if (!_cachedProgress.containsKey(url) && url.isNotEmpty) {
+        urlsToFetch.add(url);
       }
     }
+
+    if (urlsToFetch.isNotEmpty) {
+      final multipleProgress = await AudioProgressManager.getMultipleProgress(urlsToFetch);
+      _cachedProgress.addAll(multipleProgress);
+    }
+
     if (mounted && _isLoadingProgress) {
       setState(() {
         _isLoadingProgress = false;
