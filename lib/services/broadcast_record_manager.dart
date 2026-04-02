@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:just_audio/just_audio.dart';
 
 class BroadcastRecordManager {
   static const String _prefsKey = 'saved_broadcasts';
@@ -60,8 +61,7 @@ class BroadcastRecordManager {
     if (!_isRecording) return null;
     await _streamSubscription?.cancel();
     _streamSubscription = null;
-    _httpClient?.close();
-    _httpClient = null;
+    // Do not close _httpClient here to avoid triggering onError in stream subscription
     return await _finishRecording(stationName);
   }
 
@@ -74,6 +74,10 @@ class BroadcastRecordManager {
     await _fileSink?.close();
     _fileSink = null;
 
+    // Close http client after file stream is fully closed
+    _httpClient?.close();
+    _httpClient = null;
+
     if (failed || _currentFile == null || _startTime == null) {
       if (_currentFile != null && _currentFile!.existsSync()) {
         _currentFile!.deleteSync();
@@ -81,10 +85,20 @@ class BroadcastRecordManager {
       return null;
     }
 
-    final duration = DateTime.now().difference(_startTime!);
+    int actualDurationSeconds = 0;
+
+    try {
+      final player = AudioPlayer();
+      final duration = await player.setFilePath(_currentFile!.path);
+      actualDurationSeconds = duration?.inSeconds ?? 0;
+      await player.dispose();
+    } catch (e) {
+      // Fallback to wall-clock time if audio duration extraction fails
+      actualDurationSeconds = DateTime.now().difference(_startTime!).inSeconds;
+    }
 
     // Only save if duration > 0 (e.g. at least 1 second)
-    if (duration.inSeconds < 1) {
+    if (actualDurationSeconds < 1) {
       if (_currentFile!.existsSync()) {
         _currentFile!.deleteSync();
       }
@@ -95,7 +109,7 @@ class BroadcastRecordManager {
       'stationName': stationName,
       'filePath': _currentFile!.path,
       'timestamp': _startTime!.millisecondsSinceEpoch,
-      'durationInSeconds': duration.inSeconds,
+      'durationInSeconds': actualDurationSeconds,
     };
 
     await _saveRecordMeta(recordMeta);

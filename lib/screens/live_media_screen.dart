@@ -175,7 +175,7 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
         leading: Icon(Icons.mic, size: 40, color: Theme.of(context).colorScheme.primary),
-        title: Text('Kaydedilen Yayınlar', style: TextStyle(fontSize: AppFonts.size(24), fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+        title: Text('Kaydedilen Radyo Yayınları', style: TextStyle(fontSize: AppFonts.size(24), fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
         onExpansionChanged: (expanded) {
           if (expanded) {
             _fetchSavedRecords();
