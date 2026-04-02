@@ -282,38 +282,39 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       await _room!.connect(liveKitUrl, token);
 
       _room!.events.listen((event) {
-        if (event is ParticipantConnectedEvent) {
-          final participant = event.participant;
-          if (mounted) {
-            setState(() {});
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${participant.identity} sesli kanala katıldı.'),
-              ),
-            );
-            SystemSound.play(SystemSoundType.click);
-          }
-        } else if (event is ParticipantDisconnectedEvent) {
-          final participant = event.participant;
-          if (mounted) {
-            setState(() {});
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  '${participant.identity} sesli kanaldan ayrıldı.',
+        switch (event) {
+          case ParticipantConnectedEvent(:final participant):
+            if (mounted) {
+              setState(() {});
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    '${participant.identity} sesli kanala katıldı.',
+                  ),
                 ),
-              ),
-            );
-            SystemSound.play(SystemSoundType.click);
-          }
-        } else if (event is ActiveSpeakersChangedEvent) {
-          if (mounted) {
-            setState(() {});
-          }
-        } else if (event is TrackMutedEvent || event is TrackUnmutedEvent) {
-          if (mounted) {
-            setState(() {});
-          }
+              );
+              SystemSound.play(SystemSoundType.click);
+            }
+          case ParticipantDisconnectedEvent(:final participant):
+            if (mounted) {
+              setState(() {});
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    '${participant.identity} sesli kanaldan ayrıldı.',
+                  ),
+                ),
+              );
+              SystemSound.play(SystemSoundType.click);
+            }
+          case ActiveSpeakersChangedEvent():
+            if (mounted) {
+              setState(() {});
+            }
+          case TrackMutedEvent() || TrackUnmutedEvent():
+            if (mounted) {
+              setState(() {});
+            }
         }
       });
 
@@ -825,10 +826,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               insetPadding: const EdgeInsets.symmetric(horizontal: 16.0),
               content: Text(
                 description,
-                style: TextStyle(
-                  fontSize: AppFonts.size(18),
-                  height: 1.5,
-                ),
+                style: TextStyle(fontSize: AppFonts.size(18), height: 1.5),
               ),
               actions: [
                 if (isCreator)
