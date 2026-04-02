@@ -793,6 +793,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   TextField(
                     controller: controller,
                     maxLines: 3,
+                    maxLength: 240,
                     decoration: const InputDecoration(
                       hintText: 'Oda açıklamasını buraya yazın...',
                     ),

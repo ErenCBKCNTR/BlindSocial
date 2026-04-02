@@ -115,6 +115,10 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     SizedBox(height: 20),
                     TextField(
                       controller: nameController,
+                      maxLength: 25,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                      ],
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
@@ -125,6 +129,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     SizedBox(height: 10),
                     TextField(
                       controller: usernameController,
+                      maxLength: 20,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
@@ -305,6 +310,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   children: [
                     TextField(
                       controller: nameController,
+                      maxLength: 50,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
@@ -333,6 +339,10 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                     TextField(
                       controller: passwordController,
                       obscureText: obscure,
+                      maxLength: 10,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                      ],
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
@@ -442,6 +452,10 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
               children: [
                 TextField(
                   controller: nameController,
+                  maxLength: 25,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                  ],
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 20,
@@ -482,6 +496,10 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 TextField(
                   controller: passwordController,
                   obscureText: obscure,
+                  maxLength: 10,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                  ],
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 20,
@@ -1125,6 +1143,8 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                             ),
                             title: Text(
                               roomName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
