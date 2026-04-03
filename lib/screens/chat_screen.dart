@@ -1351,15 +1351,23 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           // Ayarlar Butonu (Flex: 1)
                           Expanded(
                             flex: 1,
-                            child: ElevatedButton(
-                              onPressed: _showMicrophoneSettingsModal,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[800],
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: const CircleBorder(),
+                            child: Semantics(
+                              label: 'Mikrofon ayarları',
+                              hint: 'Mikrofon modunu ve ses kazancını değiştirmek için iki kez dokunun',
+                              button: true,
+                              child: Tooltip(
+                                message: "Mikrofon ayarları",
+                                child: ElevatedButton(
+                                  onPressed: _showMicrophoneSettingsModal,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.grey[800],
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    shape: const CircleBorder(),
+                                  ),
+                                  child: const Icon(Icons.settings, size: 28),
+                                ),
                               ),
-                              child: const Icon(Icons.settings, size: 28),
                             ),
                           ),
                           const SizedBox(width: 8),

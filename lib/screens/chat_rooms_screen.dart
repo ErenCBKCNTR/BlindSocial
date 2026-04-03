@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' show TextDirection;
+import 'package:flutter/semantics.dart';
 import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -28,10 +30,22 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
   int? _userRole;
 
   late final Stream<QuerySnapshot> _roomsStream;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Şu anda Sesli Odalar sayfasındasınız"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        SemanticsService.announce("Şu anda Sesli Odalar sayfasındasınız", TextDirection.ltr);
+      }
+    });
     _auth = widget.auth ?? FirebaseAuth.instance;
     _firestore = widget.firestore ?? FirebaseFirestore.instance;
     // ⚡ Bolt: Cache Firestore stream in initState rather than build() to prevent
@@ -677,9 +691,14 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        _showExitConfirmation();
+        if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+          _scaffoldKey.currentState?.closeDrawer();
+        } else {
+          _showExitConfirmation();
+        }
       },
       child: Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('Sohbet Odaları'),
@@ -688,7 +707,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
             : Builder(
                 builder: (context) => IconButton(
                   icon: Icon(Icons.menu, size: 30),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
+                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
                   tooltip: 'Menüyü Aç',
                 ),
               ),

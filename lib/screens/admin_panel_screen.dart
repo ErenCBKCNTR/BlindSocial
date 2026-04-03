@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' show TextDirection;
+import 'package:flutter/semantics.dart';
 import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_panel_room_details.dart';
@@ -33,6 +35,17 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Şu anda Yönetici Paneli sayfasındasınız"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        SemanticsService.announce("Şu anda Yönetici Paneli sayfasındasınız", TextDirection.ltr);
+      }
+    });
     _firestore = widget.firestore ?? FirebaseFirestore.instance;
     // ⚡ Bolt: Cache Firestore streams in initState rather than build() to prevent
     // re-subscribing and fetching all historical documents on every widget rebuild

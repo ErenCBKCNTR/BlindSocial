@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' show TextDirection;
+import 'package:flutter/semantics.dart';
 import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,6 +35,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Şu anda Hesabım sayfasındasınız"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        SemanticsService.announce("Şu anda Hesabım sayfasındasınız", TextDirection.ltr);
+      }
+    });
     _loadUserData();
     _loadAppVersion();
   }

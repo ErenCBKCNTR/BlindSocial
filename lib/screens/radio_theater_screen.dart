@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' show TextDirection;
+import 'package:flutter/semantics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'radio_theater_player_screen.dart';
@@ -24,6 +26,17 @@ class _RadioTheaterScreenState extends State<RadioTheaterScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Şu anda Radyo Tiyatrosu sayfasındasınız"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        SemanticsService.announce("Şu anda Radyo Tiyatrosu sayfasındasınız", TextDirection.ltr);
+      }
+    });
     _checkConnectivity();
     _loadFavorites();
   }
