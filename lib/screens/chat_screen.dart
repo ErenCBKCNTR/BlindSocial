@@ -76,6 +76,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   bool _echoCancellation = true;
   bool _noiseSuppression = true;
   bool _autoGain = true;
+  double _voiceGain = 1.0;
+  double _vadSensitivity = 0.5;
 
   // Participant Volumes
   final Map<String, double> _participantVolumes = {};
@@ -125,6 +127,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         _echoCancellation = prefs.getBool('mic_echo_cancellation') ?? true;
         _noiseSuppression = prefs.getBool('mic_noise_suppression') ?? true;
         _autoGain = prefs.getBool('mic_auto_gain') ?? true;
+        _voiceGain = prefs.getDouble('mic_voice_gain') ?? 1.0;
+        _vadSensitivity = prefs.getDouble('mic_vad_sensitivity') ?? 0.5;
       });
     }
   }
@@ -438,11 +442,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         builder: (context, setModalState) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Mikrofon ve Ses Ayarları',
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Mikrofon ve Ses Ayarları',
                   style: TextStyle(
                     fontSize: AppFonts.size(22),
                     fontWeight: FontWeight.bold,
@@ -451,28 +456,55 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 16),
 
-                // Bas Konuş Modu
-                Semantics(
-                  toggled: _isPTTMode,
-                  label: 'Bas Konuş Modu. Sürekli açık mikrofon yerine, sadece butona basılı tuttuğunuzda sesiniz gider.',
-                  child: ExcludeSemantics(
-                    child: SwitchListTile(
-                      title: const Text('Bas Konuş Modu'),
-                      value: _isPTTMode,
-                      activeColor: Colors.amber,
-                      onChanged: (val) async {
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool('mic_ptt_mode', val);
-                        setModalState(() => _isPTTMode = val);
-                        setState(() => _isPTTMode = val);
-                        // Mikrofonu susturarak başlatalım
-                        if (_isJoined) {
-                           _setMicrophoneEnabled(false);
-                        }
-                      },
+                // Bas Konuş & Ses Aktivasyonu Butonları
+                Row(
+                  children: [
+                    Expanded(
+                      child: Semantics(
+                        label: 'Bas-Konuş Modu',
+                        selected: _isPTTMode,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setBool('mic_ptt_mode', true);
+                            setModalState(() => _isPTTMode = true);
+                            setState(() => _isPTTMode = true);
+                            if (_isJoined) _setMicrophoneEnabled(false);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _isPTTMode ? Colors.amber : Theme.of(context).colorScheme.surface,
+                            foregroundColor: _isPTTMode ? Colors.black : Theme.of(context).colorScheme.onSurface,
+                            side: BorderSide(color: _isPTTMode ? Colors.transparent : Colors.grey),
+                          ),
+                          child: const Text('Bas-Konuş'),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Semantics(
+                        label: 'Ses Aktivasyonu Modu',
+                        selected: !_isPTTMode,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setBool('mic_ptt_mode', false);
+                            setModalState(() => _isPTTMode = false);
+                            setState(() => _isPTTMode = false);
+                            if (_isJoined) _setMicrophoneEnabled(true);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: !_isPTTMode ? Colors.amber : Theme.of(context).colorScheme.surface,
+                            foregroundColor: !_isPTTMode ? Colors.black : Theme.of(context).colorScheme.onSurface,
+                            side: BorderSide(color: !_isPTTMode ? Colors.transparent : Colors.grey),
+                          ),
+                          child: const Text('Ses Aktivasyonu'),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 16),
 
                 // Eko İptali
                 Semantics(
@@ -535,17 +567,68 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   ),
                 ),
 
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                const SizedBox(height: 8),
+
+                // Ses Kazancı Slider
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text('Ses Kazancı', style: TextStyle(fontWeight: FontWeight.bold, fontSize: AppFonts.size(16))),
                   ),
-                  child: const Text('Kapat'),
-                )
-              ],
+                ),
+                Slider(
+                  value: _voiceGain,
+                  min: 0.0,
+                  max: 1.0,
+                  activeColor: Colors.amber,
+                  semanticFormatterCallback: (double value) => 'Ses Kazancı: Yüzde ${(value * 100).round()}',
+                  onChanged: (val) {
+                    setModalState(() => _voiceGain = val);
+                  },
+                  onChangeEnd: (val) async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setDouble('mic_voice_gain', val);
+                    setState(() => _voiceGain = val);
+                  },
+                ),
+
+                // VAD Hassasiyeti Slider
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text('VAD Hassasiyeti', style: TextStyle(fontWeight: FontWeight.bold, fontSize: AppFonts.size(16))),
+                  ),
+                ),
+                Slider(
+                  value: _vadSensitivity,
+                  min: 0.0,
+                  max: 1.0,
+                  activeColor: Colors.amber,
+                  semanticFormatterCallback: (double value) => 'VAD Hassasiyeti: Yüzde ${(value * 100).round()}',
+                  onChanged: (val) {
+                    setModalState(() => _vadSensitivity = val);
+                  },
+                  onChangeEnd: (val) async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setDouble('mic_vad_sensitivity', val);
+                    setState(() => _vadSensitivity = val);
+                  },
+                ),
+
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                    child: const Text('Kapat'),
+                  )
+                ],
+              ),
             ),
           );
         },
@@ -1431,26 +1514,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                               value: volume,
                                               min: 0.0,
                                               max: 2.0,
-                                              activeColor: Theme.of(context).colorScheme.primary,
+                                              activeColor: Colors.amber,
                                               semanticFormatterCallback: (double value) => 'Yüzde ${(value * 100).round()}',
                                               onChanged: (val) {
                                                 setState(() {
                                                   _participantVolumes[participant.identity] = val;
                                                 });
                                                 if (participant.audioTrackPublications.isNotEmpty) {
-                                                  final pub = participant.audioTrackPublications.first;
-                                                  final track = pub.track;
-                                                  if (track is RemoteAudioTrack) {
-                                                    // RemoteAudioTrack may not directly expose setVolume on all platforms/versions
-                                                    // Typically LiveKit handles volume at the media stream track level
-                                                    // If setVolume isn't directly exposed by the dart SDK, we need to handle it natively or via platform channels.
-                                                    // However, many SDK versions expose setVolume() directly.
-                                                    // Using a dynamic cast to bypass strict static checking if the method exists at runtime
-                                                    try {
-                                                      (track as dynamic).setVolume(val);
-                                                    } catch (e) {
-                                                      debugPrint('Volume setting not supported directly: $e');
-                                                    }
+                                                  try {
+                                                    (participant.audioTrackPublications.first.track as dynamic)?.setVolume(val);
+                                                  } catch (e) {
+                                                    debugPrint('Volume error: $e');
                                                   }
                                                 }
                                               },
