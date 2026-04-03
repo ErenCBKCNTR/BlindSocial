@@ -85,7 +85,7 @@ class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObse
       ).timeout(const Duration(seconds: 3));
 
       // Debug testleri sırasında token engellemesi yaşamamak için Firebase AppCheck devre dışı bırakıldı.
-      // await FirebaseAppCheck.instance.activate(androidProvider: AndroidProvider.debug);
+      await FirebaseAppCheck.instance.activate(androidProvider: AndroidProvider.debug);
 
       // Set online status initially if logged in
       FirebaseAuth.instance.authStateChanges().listen((user) {
