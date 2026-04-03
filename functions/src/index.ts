@@ -11,7 +11,19 @@ const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "your_livekit_api_s
 
 export const generateLiveKitToken = functions.https.onCall(async (data, context) => {
   // Checking that the user is authenticated.
-  if (!context.auth) {
+  let isAuth = false;
+  if (context.auth) {
+    isAuth = true;
+  } else if (data.authToken) {
+    try {
+      await admin.auth().verifyIdToken(data.authToken);
+      isAuth = true;
+    } catch (e) {
+      console.error("Token verification failed:", e);
+    }
+  }
+
+  if (!isAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
       "Kullanıcı girişi yapılmamış."
