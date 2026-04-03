@@ -33,6 +33,17 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Şu anda Canlı Yayın sayfasındasınız"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        SemanticsService.announce("Şu anda Canlı Yayın sayfasındasınız", Directionality.of(context));
+      }
+    });
     _initAudioSession();
     _fetchRadios();
     _fetchTvs();

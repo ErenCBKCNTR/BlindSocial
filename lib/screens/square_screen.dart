@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' show TextDirection;
 import 'package:flutter/semantics.dart';
 import 'package:blind_social/theme/app_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -118,6 +119,17 @@ class _SquareScreenState extends State<SquareScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Şu anda BS Meydan sayfasındasınız"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        SemanticsService.announce("Şu anda BS Meydan sayfasındasınız", TextDirection.ltr);
+      }
+    });
     _auth = widget.auth ?? FirebaseAuth.instance;
     _firestore = widget.firestore ?? FirebaseFirestore.instance;
 

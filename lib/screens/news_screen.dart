@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'dart:ui' show TextDirection;
+import 'package:flutter/semantics.dart';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
 import 'news_detail_screen.dart';
@@ -19,6 +21,17 @@ class _NewsScreenState extends State<NewsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Şu anda Güncel Haberler sayfasındasınız"),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        SemanticsService.announce("Şu anda Güncel Haberler sayfasındasınız", TextDirection.ltr);
+      }
+    });
     _fetchNews();
   }
 
