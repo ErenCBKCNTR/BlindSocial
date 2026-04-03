@@ -1,18 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:just_audio/just_audio.dart';
+import 'radio_proxy_server.dart';
 
 class BroadcastRecordManager {
   static const String _prefsKey = 'saved_broadcasts';
 
   // State
   bool _isRecording = false;
-  http.Client? _httpClient;
-  StreamSubscription? _streamSubscription;
   File? _currentFile;
   IOSink? _fileSink;
   DateTime? _startTime;
@@ -30,38 +27,24 @@ class BroadcastRecordManager {
       final timestamp = _startTime!.millisecondsSinceEpoch;
       _currentFile = File('${dir.path}/record_${safeName}_$timestamp.mp3');
 
-      _httpClient = http.Client();
-      final request = http.Request('GET', Uri.parse(url));
-      final response = await _httpClient!.send(request);
-
-      // Stream to file using IOSink
       _fileSink = _currentFile!.openWrite();
-      _streamSubscription = response.stream.listen(
-        (chunk) {
-          _fileSink?.add(chunk);
-        },
-        onDone: () => _finishRecording(stationName),
-        onError: (e) {
-          _finishRecording(stationName, failed: true);
-        },
-        cancelOnError: true,
-      );
+
+      // Tell proxy to forward chunks to our file sink
+      radioProxyServer.startRecording(_fileSink!);
+
     } catch (e) {
       _isRecording = false;
-      _fileSink?.close();
+      await _fileSink?.close();
       _fileSink = null;
-      _streamSubscription?.cancel();
-      _streamSubscription = null;
-      _httpClient?.close();
-      _httpClient = null;
     }
   }
 
   Future<Map<String, dynamic>?> stopRecording(String stationName) async {
     if (!_isRecording) return null;
-    await _streamSubscription?.cancel();
-    _streamSubscription = null;
-    // Do not close _httpClient here to avoid triggering onError in stream subscription
+
+    // Stop receiving chunks from proxy instantly
+    radioProxyServer.stopRecording();
+
     return await _finishRecording(stationName);
   }
 
@@ -71,12 +54,11 @@ class BroadcastRecordManager {
   }) async {
     if (!_isRecording) return null;
     _isRecording = false;
+
+    // Anında durdurup veriyi dosyaya yazıp sink'i kapatıyoruz
+    await _fileSink?.flush();
     await _fileSink?.close();
     _fileSink = null;
-
-    // Close http client after file stream is fully closed
-    _httpClient?.close();
-    _httpClient = null;
 
     if (failed || _currentFile == null || _startTime == null) {
       if (_currentFile != null && _currentFile!.existsSync()) {
@@ -86,38 +68,10 @@ class BroadcastRecordManager {
     }
 
     final wallClockDuration = DateTime.now().difference(_startTime!).inSeconds;
-    int audioFileDurationSeconds = 0;
 
-    try {
-      final player = AudioPlayer();
-      final duration = await player.setFilePath(_currentFile!.path);
-      audioFileDurationSeconds = duration?.inSeconds ?? 0;
-      await player.dispose();
-    } catch (e) {
-      audioFileDurationSeconds = wallClockDuration;
-    }
-
-    // If the audio file duration is significantly larger than the wall clock duration,
-    // it implies an initial historical burst buffer was downloaded. We trim it mathematically.
-    if (audioFileDurationSeconds > wallClockDuration && wallClockDuration > 0) {
-      try {
-        final fileSize = await _currentFile!.length();
-        final bytesPerSecond = fileSize / audioFileDurationSeconds;
-        final durationToTrim = audioFileDurationSeconds - wallClockDuration;
-        final bytesToTrim = (bytesPerSecond * durationToTrim).toInt();
-
-        if (bytesToTrim < fileSize && bytesToTrim > 0) {
-          final tempFile = File('${_currentFile!.path}.tmp');
-          final sink = tempFile.openWrite();
-          await _currentFile!.openRead(bytesToTrim).pipe(sink);
-          await sink.close();
-          await tempFile.rename(_currentFile!.path);
-        }
-      } catch (e) {
-        // Ignore trimming errors
-      }
-    }
-
+    // Because the proxy fetches the historical burst BEFORE startRecording is called,
+    // the bytes written to the file are ONLY those received during the wallClockDuration.
+    // Therefore, no mathematical trimming is needed anymore!
     int finalDuration = wallClockDuration;
 
     // Only save if duration > 0 (e.g. at least 1 second)

@@ -1,5 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
+import 'radio_proxy_server.dart';
 
 class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   final _player = AudioPlayer();
@@ -39,7 +40,26 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   AudioPlayer get player => _player;
 
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() async {
+    final currentId = mediaItem.value?.id;
+    if (currentId != null && currentId.startsWith('http') && !currentId.startsWith('http://127.0.0.1')) {
+      // It's a remote URL, start proxy
+      await radioProxyServer.start(currentId);
+      final proxyUrl = 'http://127.0.0.1:${radioProxyServer.port}';
+      // We must only update the player's URL, not the MediaItem's ID
+      // To prevent re-fetching unnecessarily, check if it's already set to proxyUrl
+      if (_player.playing) {
+          // Already playing
+      } else {
+          try {
+             await _player.setUrl(proxyUrl);
+          } catch (e) {
+             // Ignore
+          }
+      }
+    }
+    await _player.play();
+  }
 
   @override
   Future<void> pause() => _player.pause();
@@ -57,7 +77,15 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
     if (mediaItem != null) {
       this.mediaItem.add(mediaItem);
     }
-    await _player.setUrl(url);
+
+    // Check if it's a remote URL to proxy
+    if (url.startsWith('http') && !url.startsWith('http://127.0.0.1')) {
+       await radioProxyServer.start(url);
+       final proxyUrl = 'http://127.0.0.1:${radioProxyServer.port}';
+       await _player.setUrl(proxyUrl);
+    } else {
+       await _player.setUrl(url);
+    }
   }
 
   Future<void> setFilePath(String path, {MediaItem? mediaItem}) async {
