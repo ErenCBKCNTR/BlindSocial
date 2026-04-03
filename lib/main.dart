@@ -3,6 +3,7 @@ import 'package:blind_social/theme/app_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pub_semver/pub_semver.dart' as semver;
@@ -82,6 +83,8 @@ class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObse
           storageBucket: 'blind-social-a718c.firebasestorage.app',
         ),
       ).timeout(const Duration(seconds: 3));
+
+      await FirebaseAppCheck.instance.activate(androidProvider: AndroidProvider.debug);
 
       // Set online status initially if logged in
       FirebaseAuth.instance.authStateChanges().listen((user) {
