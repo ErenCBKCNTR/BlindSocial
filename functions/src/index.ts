@@ -4,29 +4,23 @@ import { AccessToken } from "livekit-server-sdk";
 
 admin.initializeApp();
 
-// You should replace these with your actual LiveKit API Key and Secret
-// Or use Firebase Secret Manager / environment variables
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "your_livekit_api_key";
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "your_livekit_api_secret";
-
 export const generateLiveKitToken = functions.https.onCall(async (data, context) => {
-  // Checking that the user is authenticated.
-  let isAuth = false;
-  if (context.auth) {
-    isAuth = true;
-  } else if (data.authToken) {
-    try {
-      await admin.auth().verifyIdToken(data.authToken);
-      isAuth = true;
-    } catch (e) {
-      console.error("Token verification failed:", e);
-    }
-  }
-
-  if (!isAuth) {
+  // Enforce secure authentication check using Firebase Auth context
+  if (!context.auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
       "Kullanıcı girişi yapılmamış."
+    );
+  }
+
+  const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY;
+  const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET;
+
+  if (!LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
+    console.error("LiveKit API Key or Secret is missing in environment variables.");
+    throw new functions.https.HttpsError(
+      "internal",
+      "Sunucu yapılandırma hatası."
     );
   }
 
