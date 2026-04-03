@@ -97,6 +97,25 @@ class BroadcastRecordManager {
       actualDurationSeconds = DateTime.now().difference(_startTime!).inSeconds;
     }
 
+    final wallClockDuration = DateTime.now().difference(_startTime!).inSeconds;
+
+    // If the file contains a historical burst buffer from the stream, trim it
+    if (actualDurationSeconds > wallClockDuration + 2 && wallClockDuration > 0) {
+      try {
+        final bytes = await _currentFile!.readAsBytes();
+        final bytesPerSecond = bytes.length / actualDurationSeconds;
+        final bytesToKeep = (wallClockDuration * bytesPerSecond).round();
+
+        if (bytesToKeep > 0 && bytesToKeep < bytes.length) {
+          final trimmedBytes = bytes.sublist(bytes.length - bytesToKeep);
+          await _currentFile!.writeAsBytes(trimmedBytes);
+          actualDurationSeconds = wallClockDuration;
+        }
+      } catch (e) {
+        // Fallback if trimming fails
+      }
+    }
+
     // Only save if duration > 0 (e.g. at least 1 second)
     if (actualDurationSeconds < 1) {
       if (_currentFile!.existsSync()) {

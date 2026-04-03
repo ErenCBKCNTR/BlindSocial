@@ -220,6 +220,7 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
                                 ),
                               ),
                               IconButton(
+                                tooltip: isPlaying ? 'Kaydı Durdur' : 'Kaydı Dinle',
                                 icon: Icon(isPlaying ? Icons.stop_circle : Icons.play_circle_fill, size: 36, color: Theme.of(context).colorScheme.secondary),
                                 onPressed: () async {
                                   if (isPlaying) {
@@ -239,12 +240,14 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
                                 },
                               ),
                               IconButton(
+                                tooltip: 'Kaydı Paylaş',
                                 icon: const Icon(Icons.share, size: 30),
                                 onPressed: () {
                                   Share.shareXFiles([XFile(filePath)], subject: '$stationName Radyo Kaydı ($dateStr)');
                                 },
                               ),
                               IconButton(
+                                tooltip: 'Kaydı Sil',
                                 icon: const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () async {
                                   if (isPlaying) {
