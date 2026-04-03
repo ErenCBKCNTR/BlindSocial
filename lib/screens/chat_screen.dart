@@ -248,6 +248,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       }
     }
 
+    // Force a token refresh to ensure the auth context is attached to the cloud function request
+    try {
+      await FirebaseAuth.instance.currentUser?.getIdToken(true);
+    } catch (e) {
+      debugPrint('Token refresh error: $e');
+    }
+
     print('CURRENT UID: ${FirebaseAuth.instance.currentUser?.uid}');
 
     final response = await httpsCallable.call({

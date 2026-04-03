@@ -84,7 +84,12 @@ class _BlindSocialAppState extends State<BlindSocialApp> with WidgetsBindingObse
         ),
       ).timeout(const Duration(seconds: 3));
 
-      await FirebaseAppCheck.instance.activate(androidProvider: AndroidProvider.debug);
+      try {
+        await FirebaseAppCheck.instance.activate(androidProvider: AndroidProvider.debug);
+        debugPrint('FirebaseAppCheck activated successfully.');
+      } catch (e) {
+        debugPrint('FirebaseAppCheck activation error: $e');
+      }
 
       // Set online status initially if logged in
       FirebaseAuth.instance.authStateChanges().listen((user) {
