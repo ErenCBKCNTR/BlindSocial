@@ -202,65 +202,109 @@ class _LiveMediaScreenState extends State<LiveMediaScreen> {
                       final durationStr = "${durationSeconds ~/ 60}:${(durationSeconds % 60).toString().padLeft(2, '0')}";
                       final dateStr = DateFormat('dd.MM.yyyy HH:mm').format(DateTime.fromMillisecondsSinceEpoch(timestamp));
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8.0),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(stationName, style: TextStyle(fontSize: AppFonts.size(18), fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 4),
-                                    Text(dateStr, style: TextStyle(fontSize: AppFonts.size(14), color: Colors.grey)),
-                                    Text("Süre: $durationStr", style: TextStyle(fontSize: AppFonts.size(14), color: Colors.grey)),
-                                  ],
+                      return Semantics(
+                        container: true,
+                        label: '$stationName Radyo Kaydı, Tarih: $dateStr, Süre: $durationStr',
+                        customSemanticsActions: {
+                          CustomSemanticsAction(label: isPlaying ? 'Kaydı Durdur' : 'Kaydı Dinle'): () async {
+                            if (isPlaying) {
+                              await _recordPlayer?.stop();
+                              setState(() {
+                                _playingRecordPath = null;
+                              });
+                            } else {
+                              _stopTv();
+                              audioHandler.stop();
+                              await _recordPlayer?.open(Media('file://$filePath'));
+                              await _recordPlayer?.play();
+                              setState(() {
+                                _playingRecordPath = filePath;
+                              });
+                            }
+                          },
+                          const CustomSemanticsAction(label: 'Kaydı Paylaş'): () {
+                            Share.shareXFiles([XFile(filePath)], subject: '$stationName Radyo Kaydı ($dateStr)');
+                          },
+                          const CustomSemanticsAction(label: 'Kaydı Sil'): () async {
+                            if (isPlaying) {
+                              await _recordPlayer?.stop();
+                              setState(() {
+                                _playingRecordPath = null;
+                              });
+                            }
+                            await broadcastRecordManager.deleteRecord(filePath);
+                            _fetchSavedRecords();
+                          },
+                        },
+                        child: Card(
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: ExcludeSemantics(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(stationName, style: TextStyle(fontSize: AppFonts.size(18), fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 4),
+                                        Text(dateStr, style: TextStyle(fontSize: AppFonts.size(14), color: Colors.grey)),
+                                        Text("Süre: $durationStr", style: TextStyle(fontSize: AppFonts.size(14), color: Colors.grey)),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              IconButton(
-                                tooltip: isPlaying ? 'Kaydı Durdur' : 'Kaydı Dinle',
-                                icon: Icon(isPlaying ? Icons.stop_circle : Icons.play_circle_fill, size: 36, color: Theme.of(context).colorScheme.secondary),
-                                onPressed: () async {
-                                  if (isPlaying) {
-                                    await _recordPlayer?.stop();
-                                    setState(() {
-                                      _playingRecordPath = null;
-                                    });
-                                  } else {
-                                    _stopTv();
-                                    audioHandler.stop();
-                                    await _recordPlayer?.open(Media('file://$filePath'));
-                                    await _recordPlayer?.play();
-                                    setState(() {
-                                      _playingRecordPath = filePath;
-                                    });
-                                  }
-                                },
-                              ),
-                              IconButton(
-                                tooltip: 'Kaydı Paylaş',
-                                icon: const Icon(Icons.share, size: 30),
-                                onPressed: () {
-                                  Share.shareXFiles([XFile(filePath)], subject: '$stationName Radyo Kaydı ($dateStr)');
-                                },
-                              ),
-                              IconButton(
-                                tooltip: 'Kaydı Sil',
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () async {
-                                  if (isPlaying) {
-                                    await _recordPlayer?.stop();
-                                    setState(() {
-                                      _playingRecordPath = null;
-                                    });
-                                  }
-                                  await broadcastRecordManager.deleteRecord(filePath);
-                                  _fetchSavedRecords();
-                                },
-                              ),
-                            ],
+                                ExcludeSemantics(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        tooltip: isPlaying ? 'Kaydı Durdur' : 'Kaydı Dinle',
+                                        icon: Icon(isPlaying ? Icons.stop_circle : Icons.play_circle_fill, size: 36, color: Theme.of(context).colorScheme.secondary),
+                                        onPressed: () async {
+                                          if (isPlaying) {
+                                            await _recordPlayer?.stop();
+                                            setState(() {
+                                              _playingRecordPath = null;
+                                            });
+                                          } else {
+                                            _stopTv();
+                                            audioHandler.stop();
+                                            await _recordPlayer?.open(Media('file://$filePath'));
+                                            await _recordPlayer?.play();
+                                            setState(() {
+                                              _playingRecordPath = filePath;
+                                            });
+                                          }
+                                        },
+                                      ),
+                                      IconButton(
+                                        tooltip: 'Kaydı Paylaş',
+                                        icon: const Icon(Icons.share, size: 30),
+                                        onPressed: () {
+                                          Share.shareXFiles([XFile(filePath)], subject: '$stationName Radyo Kaydı ($dateStr)');
+                                        },
+                                      ),
+                                      IconButton(
+                                        tooltip: 'Kaydı Sil',
+                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        onPressed: () async {
+                                          if (isPlaying) {
+                                            await _recordPlayer?.stop();
+                                            setState(() {
+                                              _playingRecordPath = null;
+                                            });
+                                          }
+                                          await broadcastRecordManager.deleteRecord(filePath);
+                                          _fetchSavedRecords();
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );
