@@ -85,20 +85,43 @@ class BroadcastRecordManager {
       return null;
     }
 
-    int actualDurationSeconds = 0;
+    final wallClockDuration = DateTime.now().difference(_startTime!).inSeconds;
+    int audioFileDurationSeconds = 0;
 
     try {
       final player = AudioPlayer();
       final duration = await player.setFilePath(_currentFile!.path);
-      actualDurationSeconds = duration?.inSeconds ?? 0;
+      audioFileDurationSeconds = duration?.inSeconds ?? 0;
       await player.dispose();
     } catch (e) {
-      // Fallback to wall-clock time if audio duration extraction fails
-      actualDurationSeconds = DateTime.now().difference(_startTime!).inSeconds;
+      audioFileDurationSeconds = wallClockDuration;
     }
 
+    // If the audio file duration is significantly larger than the wall clock duration,
+    // it implies an initial historical burst buffer was downloaded. We trim it mathematically.
+    if (audioFileDurationSeconds > wallClockDuration && wallClockDuration > 0) {
+      try {
+        final fileSize = await _currentFile!.length();
+        final bytesPerSecond = fileSize / audioFileDurationSeconds;
+        final durationToTrim = audioFileDurationSeconds - wallClockDuration;
+        final bytesToTrim = (bytesPerSecond * durationToTrim).toInt();
+
+        if (bytesToTrim < fileSize && bytesToTrim > 0) {
+          final tempFile = File('${_currentFile!.path}.tmp');
+          final sink = tempFile.openWrite();
+          await _currentFile!.openRead(bytesToTrim).pipe(sink);
+          await sink.close();
+          await tempFile.rename(_currentFile!.path);
+        }
+      } catch (e) {
+        // Ignore trimming errors
+      }
+    }
+
+    int finalDuration = wallClockDuration;
+
     // Only save if duration > 0 (e.g. at least 1 second)
-    if (actualDurationSeconds < 1) {
+    if (finalDuration < 1) {
       if (_currentFile!.existsSync()) {
         _currentFile!.deleteSync();
       }
@@ -109,7 +132,7 @@ class BroadcastRecordManager {
       'stationName': stationName,
       'filePath': _currentFile!.path,
       'timestamp': _startTime!.millisecondsSinceEpoch,
-      'durationInSeconds': actualDurationSeconds,
+      'durationInSeconds': finalDuration,
     };
 
     await _saveRecordMeta(recordMeta);
