@@ -241,6 +241,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     final functions = widget.functions ?? FirebaseFunctions.instance;
     final httpsCallable = functions.httpsCallable('generateLiveKitToken');
 
+    if (FirebaseAuth.instance.currentUser == null) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (FirebaseAuth.instance.currentUser == null) {
+        await FirebaseAuth.instance.authStateChanges().firstWhere((user) => user != null);
+      }
+    }
+
+    print('CURRENT UID: ${FirebaseAuth.instance.currentUser?.uid}');
+
     final response = await httpsCallable.call({
       'room': widget.roomId,
       'identity': identity,
