@@ -238,7 +238,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         user?.uid ??
         'anonymous_${DateTime.now().millisecondsSinceEpoch}';
 
-    final functions = widget.functions ?? FirebaseFunctions.instance;
+    final functions = widget.functions ?? FirebaseFunctions.instanceFor(region: 'us-central1');
     final httpsCallable = functions.httpsCallable('generateLiveKitToken');
 
     if (FirebaseAuth.instance.currentUser == null) {
