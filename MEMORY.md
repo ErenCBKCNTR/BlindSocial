@@ -39,9 +39,10 @@ Bugüne kadar projemizde kodlanıp bitirilen temel özellikler şunlardır:
 - Sesli Odalarda 'Eko İptali', 'Gürültü Bastırma', 'Otomatik Ses Kazancı' switch'leri ile 'Ses Kazancı' ve 'VAD Hassasiyeti' sürgülerinin (slider) LiveKit 'AudioCaptureOptions' donanımsal ayarlarına gerçek zamanlı olarak (UI durumunu bozmadan) entegre edilmesi.
 - Sesli Odalarda oynatılan veya paylaşılan medya dosyaları için `_audioPlayer.onPositionChanged` kullanılarak gerçek zamanlı ve doğru süre hesaplamasının yapılması, oynatım bittiğinde kilitlenen mikrofonun `_setMicrophoneEnabled(true)` ile otomatik olarak tekrar açılmasının (Track Conflict) çözülmesi.
 - Adım 1 (Bas-Konuş/PTT Butonu Düzeltmesi): Kullanıcı Bas-Konuş modundayken "Konuş" butonundaki Tooltip'in kaldırılarak `onTapDown` (basılı tut) eyleminin `GestureDetector` tarafından güvenli şekilde algılanıp mikrofonu sorunsuz yönetmesinin sağlanması (Semantics yapısı korunarak).
+- Adım 2 (Alt Bar Yerleşim Sırası): Alt mesajlaşma alanındaki (bottom bar) ses kaydı ve mesaj gönderme butonlarının yerleri değiştirildi (Semantics yapısı korunarak Ses Kaydı Gönder butonu en sağa alındı).
 
 ## Üzerinde Çalışılan Görev
-**Adım 2: Alt bar yerleşim sırasının düzeltilmesi** (Ses Kaydı Gönder butonunun Mesaj Gönder butonunun sağına alınması).
+**Arayüz hataları giderildi, yeni talimat bekleniyor.**
 
 ## ⚠️ TEMEL KURAL (GROUND RULE)
 Bundan sonraki **her** yeni özellik eklemesinde, büyük kod değişikliklerinde veya yeni dosya oluşturulmasında bu iki dosya (`STRUCTURE.md` ve `MEMORY.md`) mutlaka güncellenmelidir. **Bu dosyalar güncellenmeden Pull Request (PR) gönderilmeyecektir.** Herhangi bir asistan bu kuralı kati suretle uygulamalıdır.

@@ -2259,7 +2259,28 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   ),
                   const SizedBox(width: 8),
 
-                  // Kayıt Başlat İkonu (Dairesel, mavi arka plan, mikrofon)
+                  // Mesaj Gönder İkonu (Dairesel, sarı arka plan, ok)
+                  Tooltip(
+                    message: "Mesaj gönder",
+                    child: Semantics(
+                      label: "Mesaj gönder",
+                      button: true,
+                      child: ElevatedButton(
+                        onPressed: () => _sendMessage(),
+                        style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          padding: const EdgeInsets.all(12),
+                          backgroundColor: Colors.amber,
+                          foregroundColor: Colors.black,
+                          minimumSize: Size.zero,
+                        ),
+                        child: const ExcludeSemantics(child: Icon(Icons.send)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Kayıt Başlat İkonu (En sağ, dairesel, mavi arka plan, mikrofon)
                   Tooltip(
                     message: "Kayıt başlatmak için basılı tutun",
                     child: Semantics(
@@ -2278,27 +2299,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             child: Icon(Icons.mic, color: Colors.white),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // Mesaj Gönder İkonu (En sağ, dairesel, sarı arka plan, ok)
-                  Tooltip(
-                    message: "Mesaj gönder",
-                    child: Semantics(
-                      label: "Mesaj gönder",
-                      button: true,
-                      child: ElevatedButton(
-                        onPressed: () => _sendMessage(),
-                        style: ElevatedButton.styleFrom(
-                          shape: const CircleBorder(),
-                          padding: const EdgeInsets.all(12),
-                          backgroundColor: Colors.amber,
-                          foregroundColor: Colors.black,
-                          minimumSize: Size.zero,
-                        ),
-                        child: const ExcludeSemantics(child: Icon(Icons.send)),
                       ),
                     ),
                   ),
