@@ -1358,14 +1358,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           ),
         ),
         actions: [
-          IconButton(
-            icon: Icon(
-              _isScreenSharing ? Icons.screen_share : Icons.stop_screen_share,
-              color: _isScreenSharing ? Colors.green : null,
-              size: 30,
+          Semantics(
+            label: _isScreenSharing
+                ? 'Sistem sesi paylaşılıyor. Yayını durdurmak için çift dokunun'
+                : 'Sistem sesini odaya paylaş',
+            button: true,
+            child: IconButton(
+              icon: ExcludeSemantics(
+                child: Icon(
+                  _isScreenSharing ? Icons.stop_screen_share : Icons.screen_share,
+                  color: _isScreenSharing ? Colors.red : null,
+                  size: 30,
+                ),
+              ),
+              onPressed: _toggleScreenShare,
             ),
-            onPressed: _toggleScreenShare,
-            tooltip: _isScreenSharing ? 'Sistem Sesini Kapat' : 'Sistem Sesini Paylaş',
           ),
           IconButton(
             icon: Icon(Icons.info_outline, size: 30),
