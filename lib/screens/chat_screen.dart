@@ -164,6 +164,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
 
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached || state == AppLifecycleState.paused) {
+      _removeParticipant();
+    }
+  }
+
   Future<void> _addParticipant() async {
     final user = _auth.currentUser;
     if (user == null) return;
@@ -205,6 +212,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         'uid': user.uid,
         'displayName': displayName,
         'joinedAt': FieldValue.serverTimestamp(),
+        'lastSeen': FieldValue.serverTimestamp(),
       });
     });
   }
@@ -218,9 +226,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         .doc(widget.roomId);
 
     try {
-      await roomRef.update({'currentParticipants': FieldValue.increment(-1)});
       final participantRef = roomRef.collection('participants').doc(user.uid);
-      await participantRef.delete();
+      final docSnap = await participantRef.get();
+      if (docSnap.exists) {
+        await roomRef.update({'currentParticipants': FieldValue.increment(-1)});
+        await participantRef.delete();
+      }
     } catch (e) {
       debugPrint('Participant remove error: $e');
     }
@@ -652,14 +663,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         },
       ),
     );
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.detached) {
-      _removeParticipant();
-    }
-    super.didChangeAppLifecycleState(state);
   }
 
   @override
