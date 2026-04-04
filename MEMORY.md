@@ -34,9 +34,11 @@ Bugüne kadar projemizde kodlanıp bitirilen temel özellikler şunlardır:
 - Yönetici paneli (Odaları, kullanıcıları, şikayet edilen içerikleri inceleme ve yönetme).
 - Kapsamlı Semantics (Ekran Okuyucu) destekleri ve "Declutter" tasarım mantığı (Yazı boyutu standardizasyonu).
 - Cihaz bazlı yetkilendirme akışları (Permission Manager ile).
+- Sesli Odalar (Voice Rooms) içinde ekran okuyucu (Semantics) iyileştirmelerinin yapılması, çift okumaların temizlenmesi.
+- Sesli Odalarda "Sustur" (Mute) butonunun PTT (Bas-Konuş) veya Ses Aktivasyonu moduna uygun olarak LiveKit local audio track state ile senkronize çalışmasının sağlanması.
 
 ## Üzerinde Çalışılan Görev
-Yapay zeka asistanları ve insan geliştiriciler arasında halüsinasyonları engellemek, bilgi kaybının önüne geçmek ve projeyi bir standarda oturtmak amacıyla **kalıcı hafıza ve mimari sisteminin (STRUCTURE.md ve MEMORY.md) kurulması.**
+**Adım 2: Donanımsal Ses Ayarlarının LiveKit'e Bağlanması** (Sesli Odalardaki Eko İptali, Gürültü Bastırma, Otomatik Ses Kazancı switch'leri ve sürgülerinin işlevsel hale getirilmesi).
 
 ## ⚠️ TEMEL KURAL (GROUND RULE)
 Bundan sonraki **her** yeni özellik eklemesinde, büyük kod değişikliklerinde veya yeni dosya oluşturulmasında bu iki dosya (`STRUCTURE.md` ve `MEMORY.md`) mutlaka güncellenmelidir. **Bu dosyalar güncellenmeden Pull Request (PR) gönderilmeyecektir.** Herhangi bir asistan bu kuralı kati suretle uygulamalıdır.
