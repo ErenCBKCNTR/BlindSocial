@@ -1499,59 +1499,56 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           // Sustur/Konuş Butonu (Flex: 3)
                           Expanded(
                             flex: 3,
-                            child: Tooltip(
-                              message: "Mikrofonu Sustur/Aç",
-                              child: Semantics(
-                                onTapHint: "Mikrofonu açar veya kapatır",
-                                label: (!_isMuted) ? "Mikrofon açık, susturmak için dokunun" : "Mikrofon kapalı, konuşmak için dokunun",
-                                button: true,
-                                child: GestureDetector(
-                                  onTapDown: _isPTTMode
-                                      ? (_) => _setMicrophoneEnabled(true)
-                                      : null,
-                                  onTapUp: _isPTTMode
-                                      ? (_) => _setMicrophoneEnabled(false)
-                                      : null,
-                                  onTapCancel: _isPTTMode
-                                      ? () => _setMicrophoneEnabled(false)
-                                      : null,
-                                  onTap: !_isPTTMode
-                                      ? () {
-                                          _setMicrophoneEnabled(_isMuted);
-                                        }
-                                      : null,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
+                            child: Semantics(
+                              onTapHint: _isPTTMode ? "Bas-Konuş: Konuşmak için basılı tutun, susturmak için bırakın" : "Mikrofonu açar veya kapatır",
+                              label: (!_isMuted) ? "Mikrofon açık" : "Mikrofon kapalı",
+                              button: true,
+                              child: GestureDetector(
+                                onTapDown: _isPTTMode
+                                    ? (_) => _setMicrophoneEnabled(true)
+                                    : null,
+                                onTapUp: _isPTTMode
+                                    ? (_) => _setMicrophoneEnabled(false)
+                                    : null,
+                                onTapCancel: _isPTTMode
+                                    ? () => _setMicrophoneEnabled(false)
+                                    : null,
+                                onTap: !_isPTTMode
+                                    ? () {
+                                        _setMicrophoneEnabled(_isMuted);
+                                      }
+                                    : null,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: (!_isMuted) ? Colors.amber : Colors.grey[700],
+                                    borderRadius: BorderRadius.circular(
+                                      30,
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: (!_isMuted) ? Colors.amber : Colors.grey[700],
-                                      borderRadius: BorderRadius.circular(
-                                        30,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      ExcludeSemantics(
+                                        child: Icon(
+                                          (!_isMuted) ? Icons.mic : Icons.mic_off,
+                                          size: 30,
+                                          color: (!_isMuted) ? Colors.black : Colors.white,
+                                        ),
                                       ),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        ExcludeSemantics(
-                                          child: Icon(
-                                            (!_isMuted) ? Icons.mic : Icons.mic_off,
-                                            size: 30,
-                                            color: (!_isMuted) ? Colors.black : Colors.white,
-                                          ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        (!_isMuted) ? 'Sustur' : 'Konuş',
+                                        style: TextStyle(
+                                          color: (!_isMuted) ? Colors.black : Colors.white,
+                                          fontSize: AppFonts.size(18),
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          (!_isMuted) ? 'Sustur' : 'Konuş',
-                                          style: TextStyle(
-                                            color: (!_isMuted) ? Colors.black : Colors.white,
-                                            fontSize: AppFonts.size(18),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
