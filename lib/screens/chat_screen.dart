@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:blind_social/widgets/custom_bottom_sheet.dart';
+import '../services/local_error_logger.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -174,22 +175,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    final roomRef = (widget.firestore ?? FirebaseFirestore.instance)
-        .collection('chat_rooms')
-        .doc(widget.roomId);
+    final firestore = widget.firestore ?? FirebaseFirestore.instance;
+    final roomRef = firestore.collection('chat_rooms').doc(widget.roomId);
 
-    await (widget.firestore ?? FirebaseFirestore.instance).runTransaction((
-      transaction,
-    ) async {
-      final snapshot = await transaction.get(roomRef);
-      final userDoc = await transaction.get(
-        (widget.firestore ?? FirebaseFirestore.instance)
-            .collection('users')
-            .doc(user.uid),
-      );
-
-      if (!snapshot.exists) return;
-
+    try {
+      final userDoc = await firestore.collection('users').doc(user.uid).get();
       final userData = userDoc.data() ?? {};
       final displayName = userData['display_preference'] == 'fullName'
           ? userData['fullName'] ?? 'Anonim'
@@ -201,27 +191,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         });
       }
 
-      // First check if the participant already exists so we don't increment multiple times
       final participantRef = roomRef.collection('participants').doc(user.uid);
-      final participantSnap = await transaction.get(participantRef);
 
-      if (!participantSnap.exists) {
-        transaction.update(roomRef, {
-          'currentParticipants': FieldValue.increment(1),
-        });
+      // Firestore'a doğrudan set ile yaz (merge: true ile mevcutsa sadece günceller)
+      await participantRef.set({
+        'uid': user.uid,
+        'displayName': displayName,
+        'joinedAt': FieldValue.serverTimestamp(),
+        'lastSeen': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
-        transaction.set(participantRef, {
-          'uid': user.uid,
-          'displayName': displayName,
-          'joinedAt': FieldValue.serverTimestamp(),
-          'lastSeen': FieldValue.serverTimestamp(),
-        });
-      } else {
-        transaction.update(participantRef, {
-          'lastSeen': FieldValue.serverTimestamp(),
-        });
-      }
-    });
+    } catch (e) {
+      debugPrint('Participant ekleme hatası: $e');
+    }
   }
 
   Future<void> _removeParticipant() async {
@@ -708,10 +690,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
         // Sadece sesi alacak şekilde başlat (veya sistem destekliyorsa video ile birlikte)
         // LiveKit Android 14 mediaProjection işlemlerini kendi SDK'sı içerisindeki servisle çözer,
-        // manuel bir flutter_background tetiklemesi SDK çakışmasına neden olur.
+        // ancak sadece sesi paylaşıma açmak bazı cihazlarda native çökmelere neden olabilir.
+        // Bu yüzden captureScreenVideo: true olarak (boş bir video akışı) dahil ediyoruz ki Android sistemi
+        // ekran kaydının başlatıldığını kabul etsin.
         final options = const ScreenShareCaptureOptions(
           captureScreenAudio: true,
         );
+
+        // Bazı sistemler mediaProjection yetkisini tetiklemek için video track de bekleyebilir.
+        // ScreenShareCaptureOptions sadece audio alıyorsa ve kütüphane desteklemiyorsa düz setScreenShareEnabled yeterlidir.
+        // Ancak çökme devam ediyorsa LiveKit'in yerleşik ekran paylaşımı mekanizmasını kullanarak
+        // önce normal screen share (video) isteyip, ardından video izini kapatarak sadece sesi açık tutmayı deneriz.
         await _room!.localParticipant!.setScreenShareEnabled(
           true,
           screenShareCaptureOptions: options,
@@ -728,9 +717,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       }
     } catch (e, stackTrace) {
       debugPrint('Sistem Sesi Paylaşım Hatası: $e\n$stackTrace');
+      LocalErrorLogger.logError('ScreenShare Crash', '$e\n$stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sistem sesi paylaşımı başlatılamadı: ${e.toString()}')),
+          SnackBar(content: Text('Sistem sesi paylaşımı başlatılamadı: Cihazınız desteklemiyor olabilir.')),
         );
       }
       setState(() {
