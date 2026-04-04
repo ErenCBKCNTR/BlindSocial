@@ -18,6 +18,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_background/flutter_background.dart';
 
 const String liveKitUrl = 'wss://bs-app-l1mgfyed.livekit.cloud';
 
@@ -681,7 +682,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     try {
       if (_isScreenSharing) {
+        debugPrint('Sistem Sesi Paylaşımı Kapatılıyor...');
         await _room!.localParticipant!.setScreenShareEnabled(false);
+        if (Platform.isAndroid) {
+          try {
+             await FlutterBackground.disableBackgroundExecution();
+          } catch(e) {
+             debugPrint('Foreground service kapatılamadı: $e');
+          }
+        }
         setState(() {
           _isScreenSharing = false;
         });
@@ -692,6 +701,23 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           );
         }
       } else {
+        debugPrint('Sistem Sesi Paylaşımı Başlatılıyor...');
+
+        if (Platform.isAndroid) {
+          final hasPermissions = await FlutterBackground.hasPermissions;
+          if (!hasPermissions) {
+             // Foreground Service izni
+          }
+          if (!await FlutterBackground.isBackgroundExecutionEnabled) {
+            await FlutterBackground.initialize(androidConfig: const FlutterBackgroundAndroidConfig(
+              notificationTitle: "Sistem Sesi Paylaşımı",
+              notificationText: "Blind Social arka planda sistem sesini odaya aktarıyor.",
+              notificationImportance: AndroidNotificationImportance.normal,
+            ));
+            await FlutterBackground.enableBackgroundExecution();
+          }
+        }
+
         // Sadece sesi alacak şekilde başlat (veya sistem destekliyorsa video ile birlikte)
         final options = const ScreenShareCaptureOptions(
           captureScreenAudio: true,
@@ -710,16 +736,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           );
         }
       }
-    } catch (e) {
-      debugPrint('Screen share error: $e');
+    } catch (e, stackTrace) {
+      debugPrint('Sistem Sesi Paylaşım Hatası: $e\n$stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sistem sesi paylaşımı başlatılamadı. İzin reddedilmiş olabilir.')),
+          SnackBar(content: Text('Sistem sesi paylaşımı başlatılamadı: ${e.toString()}')),
         );
       }
       setState(() {
         _isScreenSharing = false;
       });
+      if (Platform.isAndroid) {
+          try {
+             await FlutterBackground.disableBackgroundExecution();
+          } catch(_) {}
+      }
     }
   }
 
@@ -1358,22 +1389,23 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           ),
         ),
         actions: [
-          Semantics(
-            label: _isScreenSharing
-                ? 'Sistem sesi paylaşılıyor. Yayını durdurmak için çift dokunun'
-                : 'Sistem sesini odaya paylaş',
-            button: true,
-            child: IconButton(
-              icon: ExcludeSemantics(
-                child: Icon(
-                  _isScreenSharing ? Icons.stop_screen_share : Icons.screen_share,
-                  color: _isScreenSharing ? Colors.red : null,
-                  size: 30,
+          if (_isJoined) // Buton sadece odaya bağlanıldığında görünür olmalı
+            Semantics(
+              label: _isScreenSharing
+                  ? 'Sistem sesi paylaşılıyor. Yayını durdurmak için çift dokunun'
+                  : 'Sistem sesini odaya paylaş',
+              button: true,
+              child: IconButton(
+                icon: ExcludeSemantics(
+                  child: Icon(
+                    _isScreenSharing ? Icons.stop_screen_share : Icons.screen_share,
+                    color: _isScreenSharing ? Colors.red : null,
+                    size: 30,
+                  ),
                 ),
+                onPressed: _toggleScreenShare,
               ),
-              onPressed: _toggleScreenShare,
             ),
-          ),
           IconButton(
             icon: Icon(Icons.info_outline, size: 30),
             onPressed: _showRoomDescription,

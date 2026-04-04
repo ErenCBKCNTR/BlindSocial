@@ -43,9 +43,10 @@ Bugüne kadar projemizde kodlanıp bitirilen temel özellikler şunlardır:
 - Adım 1 (Mikrofon Donanım Restart Mantığı): Sesli Odalar ekranında Eko İptali, Gürültü Bastırma veya Ses Kazancı ayarları değiştirildiğinde `AudioCaptureOptions`'ın dinamik uygulanabilmesi için mevcut LiveKit mikrofon track'inin durdurulup yeni seçeneklerle yeniden başlatılması sağlandı. Atıl ve bozuk MP3 stream (loopback) kodları kaldırıldı.
 - Adım 1 (Sistem Sesi Paylaşım Altyapısı): Sesli Odalarda medya yayını için eski just_audio tabanlı loopback kodları tamamen temizlenerek yerine LiveKit `ScreenShareCaptureOptions` (`captureScreenAudio: true`) kullanılarak sistem sesini paylaşma özelliği entegre edildi.
 - Adım 2 (Sistem Sesi Paylaşımı UI State ve Semantics Güncellemesi): Sistem Sesi Paylaş butonu basıldığında yayını açıp/kapatacak toggle mantığına oturtuldu. Butonun kapalı ve açık durumları için hem görsel (renk/ikon değişikliği) hem de işitsel (TalkBack için dinamik Semantics etiketleri) geri bildirimler eklendi.
+- Adım 1 ve Adım 2 (Bağlantı Durumu ve Foreground Service Çözümü): Android 14+ için `AndroidManifest.xml` dosyasına `FOREGROUND_SERVICE_MEDIA_PROJECTION` izni eklendi. Sistem Sesi paylaşım butonu sadece odaya başarılı bağlanıldığında (joined) görünür yapıldı ve hata tespitini kolaylaştırmak için `_toggleScreenShare` içerisine detaylı hata logları (try-catch, stackTrace) eklendi.
 
 ## Üzerinde Çalışılan Görev
-**Sistem sesi paylaşımı arayüzü tamamlandı, yeni özellik bekleniyor.**
+**Sistem sesi paylaşımı crash ve görünürlük hatası giderildi**
 
 ## ⚠️ TEMEL KURAL (GROUND RULE)
 Bundan sonraki **her** yeni özellik eklemesinde, büyük kod değişikliklerinde veya yeni dosya oluşturulmasında bu iki dosya (`STRUCTURE.md` ve `MEMORY.md`) mutlaka güncellenmelidir. **Bu dosyalar güncellenmeden Pull Request (PR) gönderilmeyecektir.** Herhangi bir asistan bu kuralı kati suretle uygulamalıdır.
