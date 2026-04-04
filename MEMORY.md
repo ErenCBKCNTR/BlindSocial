@@ -44,3 +44,6 @@ Bugüne kadar projemizde kodlanıp bitirilen temel özellikler şunlardır:
 
 ## ⚠️ TEMEL KURAL (GROUND RULE)
 Bundan sonraki **her** yeni özellik eklemesinde, büyük kod değişikliklerinde veya yeni dosya oluşturulmasında bu iki dosya (`STRUCTURE.md` ve `MEMORY.md`) mutlaka güncellenmelidir. **Bu dosyalar güncellenmeden Pull Request (PR) gönderilmeyecektir.** Herhangi bir asistan bu kuralı kati suretle uygulamalıdır.
+
+## ⚠️ DİL KURALI (LANGUAGE RULE)
+Bundan sonra benimle olan tüm iletişimlerin, GitHub commit mesajların, Pull Request başlıkların, PR açıklamaların ve kod içindeki tüm açıklama satırların (yorumlar) KESİNLİKLE ve SADECE Türkçe dilinde olacaktır. İngilizce commit atmak veya İngilizce yanıt vermek kesinlikle yasaktır.
