@@ -701,6 +701,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         if (didPop) return;
         if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
           _scaffoldKey.currentState?.closeDrawer();
+          return;
         } else {
           _showExitConfirmation();
         }
