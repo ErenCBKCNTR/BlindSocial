@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:blind_social/theme/app_fonts.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:blind_social/widgets/custom_bottom_sheet.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -265,13 +266,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         user?.uid ??
         'anonymous_${DateTime.now().millisecondsSinceEpoch}';
 
-    final functions = widget.functions ?? FirebaseFunctions.instanceFor(region: 'us-central1');
+    final functions =
+        widget.functions ??
+        FirebaseFunctions.instanceFor(region: 'us-central1');
     final httpsCallable = functions.httpsCallable('generateLiveKitToken');
 
     if (FirebaseAuth.instance.currentUser == null) {
       await Future.delayed(const Duration(milliseconds: 500));
       if (FirebaseAuth.instance.currentUser == null) {
-        await FirebaseAuth.instance.authStateChanges().firstWhere((user) => user != null);
+        await FirebaseAuth.instance.authStateChanges().firstWhere(
+          (user) => user != null,
+        );
       }
     }
 
@@ -431,14 +436,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   void _showMicrophoneSettingsModal() {
-    showModalBottomSheet(
+    CustomBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => StatefulBuilder(
+      child: StatefulBuilder(
         builder: (context, setModalState) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
@@ -448,174 +448,209 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 children: [
                   Text(
                     'Mikrofon ve Ses Ayarları',
-                  style: TextStyle(
-                    fontSize: AppFonts.size(22),
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
+                    style: TextStyle(
+                      fontSize: AppFonts.size(22),
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // Bas Konuş & Ses Aktivasyonu Butonları
-                Row(
-                  children: [
-                    Expanded(
-                      child: Semantics(
-                        label: 'Bas-Konuş Modu',
-                        selected: _isPTTMode,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            final prefs = await SharedPreferences.getInstance();
-                            await prefs.setBool('mic_ptt_mode', true);
-                            setModalState(() => _isPTTMode = true);
-                            setState(() => _isPTTMode = true);
-                            if (_isJoined) _setMicrophoneEnabled(false);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _isPTTMode ? Colors.amber : Theme.of(context).colorScheme.surface,
-                            foregroundColor: _isPTTMode ? Colors.black : Theme.of(context).colorScheme.onSurface,
-                            side: BorderSide(color: _isPTTMode ? Colors.transparent : Colors.grey),
+                  // Bas Konuş & Ses Aktivasyonu Butonları
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Semantics(
+                          label: 'Bas-Konuş Modu',
+                          selected: _isPTTMode,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              await prefs.setBool('mic_ptt_mode', true);
+                              setModalState(() => _isPTTMode = true);
+                              setState(() => _isPTTMode = true);
+                              if (_isJoined) _setMicrophoneEnabled(false);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _isPTTMode
+                                  ? Colors.amber
+                                  : Theme.of(context).colorScheme.surface,
+                              foregroundColor: _isPTTMode
+                                  ? Colors.black
+                                  : Theme.of(context).colorScheme.onSurface,
+                              side: BorderSide(
+                                color: _isPTTMode
+                                    ? Colors.transparent
+                                    : Colors.grey,
+                              ),
+                            ),
+                            child: const Text('Bas-Konuş'),
                           ),
-                          child: const Text('Bas-Konuş'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Semantics(
+                          label: 'Ses Aktivasyonu Modu',
+                          selected: !_isPTTMode,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              await prefs.setBool('mic_ptt_mode', false);
+                              setModalState(() => _isPTTMode = false);
+                              setState(() => _isPTTMode = false);
+                              if (_isJoined) _setMicrophoneEnabled(true);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: !_isPTTMode
+                                  ? Colors.amber
+                                  : Theme.of(context).colorScheme.surface,
+                              foregroundColor: !_isPTTMode
+                                  ? Colors.black
+                                  : Theme.of(context).colorScheme.onSurface,
+                              side: BorderSide(
+                                color: !_isPTTMode
+                                    ? Colors.transparent
+                                    : Colors.grey,
+                              ),
+                            ),
+                            child: const Text('Ses Aktivasyonu'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Eko İptali
+                  Semantics(
+                    toggled: _echoCancellation,
+                    label: 'Eko İptali. Hoparlör yankısını önler.',
+                    child: ExcludeSemantics(
+                      child: SwitchListTile(
+                        title: const Text('Eko İptali'),
+                        value: _echoCancellation,
+                        activeColor: Colors.amber,
+                        onChanged: (val) async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('mic_echo_cancellation', val);
+                          setModalState(() => _echoCancellation = val);
+                          setState(() => _echoCancellation = val);
+                          // Canlı güncelleme
+                          if (_isJoined && !_isMuted)
+                            _setMicrophoneEnabled(true);
+                        },
+                      ),
+                    ),
+                  ),
+
+                  // Gürültü Bastırma
+                  Semantics(
+                    toggled: _noiseSuppression,
+                    label: 'Gürültü Bastırma. Arka plan seslerini azaltır.',
+                    child: ExcludeSemantics(
+                      child: SwitchListTile(
+                        title: const Text('Gürültü Bastırma'),
+                        value: _noiseSuppression,
+                        activeColor: Colors.amber,
+                        onChanged: (val) async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('mic_noise_suppression', val);
+                          setModalState(() => _noiseSuppression = val);
+                          setState(() => _noiseSuppression = val);
+                          if (_isJoined && !_isMuted)
+                            _setMicrophoneEnabled(true);
+                        },
+                      ),
+                    ),
+                  ),
+
+                  // Otomatik Kazanç
+                  Semantics(
+                    toggled: _autoGain,
+                    label: 'Otomatik Ses Kazancı. Ses seviyesini dengeler.',
+                    child: ExcludeSemantics(
+                      child: SwitchListTile(
+                        title: const Text('Otomatik Ses Kazancı'),
+                        value: _autoGain,
+                        activeColor: Colors.amber,
+                        onChanged: (val) async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('mic_auto_gain', val);
+                          setModalState(() => _autoGain = val);
+                          setState(() => _autoGain = val);
+                          if (_isJoined && !_isMuted)
+                            _setMicrophoneEnabled(true);
+                        },
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Ses Kazancı Slider
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        'Ses Kazancı',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: AppFonts.size(16),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Semantics(
-                        label: 'Ses Aktivasyonu Modu',
-                        selected: !_isPTTMode,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            final prefs = await SharedPreferences.getInstance();
-                            await prefs.setBool('mic_ptt_mode', false);
-                            setModalState(() => _isPTTMode = false);
-                            setState(() => _isPTTMode = false);
-                            if (_isJoined) _setMicrophoneEnabled(true);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: !_isPTTMode ? Colors.amber : Theme.of(context).colorScheme.surface,
-                            foregroundColor: !_isPTTMode ? Colors.black : Theme.of(context).colorScheme.onSurface,
-                            side: BorderSide(color: !_isPTTMode ? Colors.transparent : Colors.grey),
-                          ),
-                          child: const Text('Ses Aktivasyonu'),
+                  ),
+                  Slider(
+                    value: _voiceGain,
+                    min: 0.0,
+                    max: 1.0,
+                    activeColor: Colors.amber,
+                    semanticFormatterCallback: (double value) =>
+                        'Ses Kazancı: Yüzde ${(value * 100).round()}',
+                    onChanged: (val) {
+                      setModalState(() => _voiceGain = val);
+                    },
+                    onChangeEnd: (val) async {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setDouble('mic_voice_gain', val);
+                      setState(() => _voiceGain = val);
+                    },
+                  ),
+
+                  // VAD Hassasiyeti Slider
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        'VAD Hassasiyeti',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: AppFonts.size(16),
                         ),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Eko İptali
-                Semantics(
-                  toggled: _echoCancellation,
-                  label: 'Eko İptali. Hoparlör yankısını önler.',
-                  child: ExcludeSemantics(
-                    child: SwitchListTile(
-                      title: const Text('Eko İptali'),
-                      value: _echoCancellation,
-                      activeColor: Colors.amber,
-                      onChanged: (val) async {
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool('mic_echo_cancellation', val);
-                        setModalState(() => _echoCancellation = val);
-                        setState(() => _echoCancellation = val);
-                        // Canlı güncelleme
-                        if (_isJoined && !_isMuted) _setMicrophoneEnabled(true);
-                      },
-                    ),
                   ),
-                ),
-
-                // Gürültü Bastırma
-                Semantics(
-                  toggled: _noiseSuppression,
-                  label: 'Gürültü Bastırma. Arka plan seslerini azaltır.',
-                  child: ExcludeSemantics(
-                    child: SwitchListTile(
-                      title: const Text('Gürültü Bastırma'),
-                      value: _noiseSuppression,
-                      activeColor: Colors.amber,
-                      onChanged: (val) async {
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool('mic_noise_suppression', val);
-                        setModalState(() => _noiseSuppression = val);
-                        setState(() => _noiseSuppression = val);
-                        if (_isJoined && !_isMuted) _setMicrophoneEnabled(true);
-                      },
-                    ),
+                  Slider(
+                    value: _vadSensitivity,
+                    min: 0.0,
+                    max: 1.0,
+                    activeColor: Colors.amber,
+                    semanticFormatterCallback: (double value) =>
+                        'VAD Hassasiyeti: Yüzde ${(value * 100).round()}',
+                    onChanged: (val) {
+                      setModalState(() => _vadSensitivity = val);
+                    },
+                    onChangeEnd: (val) async {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setDouble('mic_vad_sensitivity', val);
+                      setState(() => _vadSensitivity = val);
+                    },
                   ),
-                ),
-
-                // Otomatik Kazanç
-                Semantics(
-                  toggled: _autoGain,
-                  label: 'Otomatik Ses Kazancı. Ses seviyesini dengeler.',
-                  child: ExcludeSemantics(
-                    child: SwitchListTile(
-                      title: const Text('Otomatik Ses Kazancı'),
-                      value: _autoGain,
-                      activeColor: Colors.amber,
-                      onChanged: (val) async {
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool('mic_auto_gain', val);
-                        setModalState(() => _autoGain = val);
-                        setState(() => _autoGain = val);
-                        if (_isJoined && !_isMuted) _setMicrophoneEnabled(true);
-                      },
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Ses Kazancı Slider
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text('Ses Kazancı', style: TextStyle(fontWeight: FontWeight.bold, fontSize: AppFonts.size(16))),
-                  ),
-                ),
-                Slider(
-                  value: _voiceGain,
-                  min: 0.0,
-                  max: 1.0,
-                  activeColor: Colors.amber,
-                  semanticFormatterCallback: (double value) => 'Ses Kazancı: Yüzde ${(value * 100).round()}',
-                  onChanged: (val) {
-                    setModalState(() => _voiceGain = val);
-                  },
-                  onChangeEnd: (val) async {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setDouble('mic_voice_gain', val);
-                    setState(() => _voiceGain = val);
-                  },
-                ),
-
-                // VAD Hassasiyeti Slider
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text('VAD Hassasiyeti', style: TextStyle(fontWeight: FontWeight.bold, fontSize: AppFonts.size(16))),
-                  ),
-                ),
-                Slider(
-                  value: _vadSensitivity,
-                  min: 0.0,
-                  max: 1.0,
-                  activeColor: Colors.amber,
-                  semanticFormatterCallback: (double value) => 'VAD Hassasiyeti: Yüzde ${(value * 100).round()}',
-                  onChanged: (val) {
-                    setModalState(() => _vadSensitivity = val);
-                  },
-                  onChangeEnd: (val) async {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setDouble('mic_vad_sensitivity', val);
-                    setState(() => _vadSensitivity = val);
-                  },
-                ),
 
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -626,7 +661,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     ),
                     child: const Text('Kapat'),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -922,10 +957,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   void _showParticipantList() {
-    showModalBottomSheet(
+    CustomBottomSheet.show(
       context: context,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      builder: (context) => StreamBuilder<QuerySnapshot>(
+      child: StreamBuilder<QuerySnapshot>(
         stream: (widget.firestore ?? FirebaseFirestore.instance)
             .collection('chat_rooms')
             .doc(widget.roomId)
@@ -1351,21 +1385,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           // Ayarlar Butonu (Flex: 1)
                           Expanded(
                             flex: 1,
-                            child: Semantics(
-                              label: 'Mikrofon ayarları',
-                              hint: 'Mikrofon modunu ve ses kazancını değiştirmek için iki kez dokunun',
-                              button: true,
-                              child: Tooltip(
-                                message: "Mikrofon ayarları",
-                                child: ElevatedButton(
-                                  onPressed: _showMicrophoneSettingsModal,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.grey[800],
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    shape: const CircleBorder(),
+                            child: Tooltip(
+                              message: "Mikrofon ayarları",
+                              child: ElevatedButton(
+                                onPressed: _showMicrophoneSettingsModal,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey[800],
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
                                   ),
-                                  child: const Icon(Icons.settings, size: 28),
+                                  shape: const CircleBorder(),
+                                ),
+                                child: const ExcludeSemantics(
+                                  child: Icon(Icons.settings, size: 28),
                                 ),
                               ),
                             ),
@@ -1378,20 +1411,29 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               onTapHint: "Mikrofonu açar veya kapatır",
                               child: _isPTTMode
                                   ? GestureDetector(
-                                      onTapDown: (_) => _setMicrophoneEnabled(true),
-                                      onTapUp: (_) => _setMicrophoneEnabled(false),
-                                      onTapCancel: () => _setMicrophoneEnabled(false),
+                                      onTapDown: (_) =>
+                                          _setMicrophoneEnabled(true),
+                                      onTapUp: (_) =>
+                                          _setMicrophoneEnabled(false),
+                                      onTapCancel: () =>
+                                          _setMicrophoneEnabled(false),
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 16,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: !_isMuted
                                               ? Colors.green
                                               : Colors.grey[600],
-                                          borderRadius: BorderRadius.circular(30),
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
                                         ),
                                         alignment: Alignment.center,
                                         child: Text(
-                                          !_isMuted ? 'Konuşuluyor' : 'Bas Konuş',
+                                          !_isMuted
+                                              ? 'Konuşuluyor'
+                                              : 'Bas Konuş',
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontSize: AppFonts.size(18),
@@ -1406,15 +1448,25 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                         _isMuted ? Icons.mic_off : Icons.mic,
                                         size: 30,
                                       ),
-                                      label: Text(_isMuted ? 'Sesi Aç' : 'Sustur'),
+                                      label: Text(
+                                        _isMuted ? 'Sesi Aç' : 'Sustur',
+                                      ),
                                       style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 16,
+                                        ),
                                         backgroundColor: _isMuted
-                                            ? Theme.of(context).colorScheme.error
-                                            : Colors.amber, // Active mode yellow/amber
+                                            ? Theme.of(
+                                                context,
+                                              ).colorScheme.error
+                                            : Colors
+                                                  .amber, // Active mode yellow/amber
                                         foregroundColor: _isMuted
-                                            ? Theme.of(context).colorScheme.onPrimary
-                                            : Colors.black, // Dark text on amber
+                                            ? Theme.of(
+                                                context,
+                                              ).colorScheme.onPrimary
+                                            : Colors
+                                                  .black, // Dark text on amber
                                       ),
                                     ),
                             ),
@@ -1428,9 +1480,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               icon: const Icon(Icons.call_end, size: 28),
                               label: const Text('Ayrıl'),
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                backgroundColor: Theme.of(context).colorScheme.error,
-                                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.error,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimary,
                               ),
                             ),
                           ),
@@ -1476,7 +1534,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           ...(_room?.remoteParticipants.values.map((
                                 participant,
                               ) {
-                                final volume = _participantVolumes[participant.identity] ?? 1.0;
+                                final volume =
+                                    _participantVolumes[participant.identity] ??
+                                    1.0;
                                 return Column(
                                   children: [
                                     ListTile(
@@ -1502,7 +1562,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                                 ).colorScheme.onSurface,
                                         ),
                                       ),
-                                      trailing: participant.isMicrophoneEnabled()
+                                      trailing:
+                                          participant.isMicrophoneEnabled()
                                           ? const Icon(
                                               Icons.mic,
                                               color: Colors.yellow,
@@ -1513,26 +1574,44 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                             ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
                                       child: Row(
                                         children: [
-                                          const Icon(Icons.volume_down, size: 20),
+                                          const Icon(
+                                            Icons.volume_down,
+                                            size: 20,
+                                          ),
                                           Expanded(
                                             child: Slider(
                                               value: volume,
                                               min: 0.0,
                                               max: 2.0,
                                               activeColor: Colors.amber,
-                                              semanticFormatterCallback: (double value) => 'Yüzde ${(value * 100).round()}',
+                                              semanticFormatterCallback:
+                                                  (double value) =>
+                                                      'Yüzde ${(value * 100).round()}',
                                               onChanged: (val) {
                                                 setState(() {
-                                                  _participantVolumes[participant.identity] = val;
+                                                  _participantVolumes[participant
+                                                          .identity] =
+                                                      val;
                                                 });
-                                                if (participant.audioTrackPublications.isNotEmpty) {
+                                                if (participant
+                                                    .audioTrackPublications
+                                                    .isNotEmpty) {
                                                   try {
-                                                    (participant.audioTrackPublications.first.track as dynamic)?.setVolume(val);
+                                                    (participant
+                                                                .audioTrackPublications
+                                                                .first
+                                                                .track
+                                                            as dynamic)
+                                                        ?.setVolume(val);
                                                   } catch (e) {
-                                                    debugPrint('Volume error: $e');
+                                                    debugPrint(
+                                                      'Volume error: $e',
+                                                    );
                                                   }
                                                 }
                                               },

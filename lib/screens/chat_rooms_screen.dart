@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blind_social/widgets/custom_bottom_sheet.dart';
 import 'dart:ui' show TextDirection;
 import 'package:flutter/semantics.dart';
 import 'package:blind_social/theme/app_fonts.dart';
@@ -43,7 +44,10 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
             duration: const Duration(seconds: 2),
           ),
         );
-        SemanticsService.announce("Şu anda Sesli Odalar sayfasındasınız", TextDirection.ltr);
+        SemanticsService.announce(
+          "Şu anda Sesli Odalar sayfasındasınız",
+          TextDirection.ltr,
+        );
       }
     });
     _auth = widget.auth ?? FirebaseAuth.instance;
@@ -98,13 +102,11 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
     final yearController = TextEditingController();
     bool isSaving = false;
 
-    showModalBottomSheet(
+    CustomBottomSheet.show(
       context: context,
       isDismissible: false,
-      isScrollControlled: true,
       enableDrag: false,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      builder: (context) => PopScope(
+      child: PopScope(
         canPop: false,
         child: StatefulBuilder(
           builder: (context, setModalState) => SafeArea(
@@ -132,7 +134,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       controller: nameController,
                       maxLength: 25,
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'[a-zA-Z0-9 ]'),
+                        ),
                       ],
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
@@ -356,7 +360,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       obscureText: obscure,
                       maxLength: 10,
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'[a-zA-Z0-9]'),
+                        ),
                       ],
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
@@ -616,7 +622,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   if (mounted) {
                     setModalState(() => isCreating = false);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Oda oluşturulurken bir hata oluştu.')),
+                      SnackBar(
+                        content: Text('Oda oluşturulurken bir hata oluştu.'),
+                      ),
                     );
                   }
                 }
@@ -698,650 +706,735 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         }
       },
       child: Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: Text('Sohbet Odaları'),
-        leading: _isProfileIncomplete
+        key: _scaffoldKey,
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text('Sohbet Odaları'),
+          leading: _isProfileIncomplete
+              ? null
+              : Builder(
+                  builder: (context) => IconButton(
+                    icon: Icon(Icons.menu, size: 30),
+                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                    tooltip: 'Menüyü Aç',
+                  ),
+                ),
+        ),
+        drawer: _isProfileIncomplete
             ? null
-            : Builder(
-                builder: (context) => IconButton(
-                  icon: Icon(Icons.menu, size: 30),
-                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                  tooltip: 'Menüyü Aç',
-                ),
-              ),
-      ),
-      drawer: _isProfileIncomplete
-          ? null
-          : Drawer(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ListView(
-                      padding: EdgeInsets.zero,
-                      children: [
-                        Container(
-                    padding: const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 16.0),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Blind Social Menü',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onPrimary,
-                            fontSize: AppFonts.size(32),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ListTile(
-                    leading: Icon(
-                      Icons.forum,
-                      color: Theme.of(context).colorScheme.secondary,
-                      size: 30,
-                    ),
-                    title: Text(
-                      'Sesli Odalar',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontSize: AppFonts.size(22),
-                      ),
-                    ),
-                    onTap: () => Navigator.pop(context),
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      Icons.public,
-                      color: Colors.cyan,
-                      size: 30,
-                    ),
-                    title: Text(
-                      'BS Meydan',
-                      style: TextStyle(color: Colors.white, fontSize: AppFonts.size(22)),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, '/square');
-                    },
-                  ),
-                  ListTile(
-                    leading: Icon(
-                      Icons.radio,
-                      color: Theme.of(context).colorScheme.secondary,
-                      size: 30,
-                    ),
-                    title: Text(
-                      'Radyo Tiyatrosu',
-                      style: TextStyle(color: Colors.white, fontSize: AppFonts.size(22)),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const RadioTheaterScreen()),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: Icon(
-                      Icons.article,
-                      color: Theme.of(context).colorScheme.secondary,
-                      size: 30,
-                    ),
-                    title: Text(
-                      'Güncel Haberler',
-                      style: TextStyle(color: Colors.white, fontSize: AppFonts.size(22)),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const NewsScreen()),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: Icon(
-                      Icons.live_tv,
-                      color: Theme.of(context).colorScheme.secondary,
-                      size: 30,
-                    ),
-                    title: Text(
-                      'Canlı Yayın',
-                      style: TextStyle(color: Colors.white, fontSize: AppFonts.size(22)),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LiveMediaScreen()),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: Icon(
-                      Icons.sports_esports,
-                      color: Theme.of(context).colorScheme.secondary,
-                      size: 30,
-                    ),
-                    title: Text(
-                      'Oyun Odası',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontSize: AppFonts.size(22),
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Bu özellik yakında aktif edilecektir.'),
-                        ),
-                      );
-                    },
-                  ),
-                  if (_userRole == 1)
-                    ListTile(
-                      leading: Icon(
-                        Icons.build,
-                        color: Theme.of(context).colorScheme.secondary,
-                        size: 30,
-                      ),
-                      title: Text(
-                        'Yetkili Menüsü',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: AppFonts.size(22),
-                        ),
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).scaffoldBackgroundColor,
-                            title: Row(
-                              children: [
-                                Icon(
-                                  Icons.construction,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                SizedBox(width: 10),
-                                Text(
-                                  'Uyarı',
-                                  style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            content: Text(
-                              'Bu bölüm yapım aşamasındadır.',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text(
-                                  'Tamam',
-                                  style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.secondary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                      ],
-                    ),
-                  ),
-                  SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
+            : Drawer(
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: ListView(
+                        padding: EdgeInsets.zero,
                         children: [
-                          Expanded(
-                            child: AspectRatio(
-                              aspectRatio: 1.0,
-                              child: Card(
-                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                clipBehavior: Clip.antiAlias,
-                                child: InkWell(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    Navigator.pushNamed(context, '/profile');
-                                  },
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.person,
-                                        size: 40,
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Hesabım',
-                                        style: TextStyle(
-                                          fontSize: AppFonts.size(16),
-                                          fontWeight: FontWeight.bold,
-                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(
+                              16.0,
+                              48.0,
+                              16.0,
+                              16.0,
                             ),
-                          ),
-                          if (_userRole == 0 || _userRole == 1) ...[
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: AspectRatio(
-                                aspectRatio: 1.0,
-                                child: Card(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  clipBehavior: Clip.antiAlias,
-                                  child: InkWell(
-                                    onTap: () {
-                                      Navigator.pop(context);
-                                      Navigator.pushNamed(context, '/admin_panel');
-                                    },
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.admin_panel_settings,
-                                          size: 40,
-                                          color: Theme.of(context).colorScheme.onPrimary,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'Yönetici\nPaneli',
-                                          style: TextStyle(
-                                            fontSize: AppFonts.size(16),
-                                            fontWeight: FontWeight.bold,
-                                            color: Theme.of(context).colorScheme.onPrimary,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                          if (_userRole != 0) ...[
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: AspectRatio(
-                                aspectRatio: 1.0,
-                                child: Card(
-                                  color: Colors.redAccent,
-                                  clipBehavior: Clip.antiAlias,
-                                  child: InkWell(
-                                    onTap: () async {
-                                      Navigator.pop(context);
-                                      final hasPermissions = await PermissionManager.requestBsBibPermissions(context);
-                                      if (!hasPermissions) return;
-                                      if (!context.mounted) return;
-                                      final roomId = 'BIB_${_auth.currentUser?.uid}_${DateTime.now().millisecondsSinceEpoch}';
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => BSBibCallScreen(roomId: roomId, isAdmin: false),
-                                        ),
-                                      );
-                                    },
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(
-                                          Icons.support_agent,
-                                          size: 40,
-                                          color: Colors.white,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'BS BiB\nÇağrı',
-                                          style: TextStyle(
-                                            fontSize: AppFonts.size(16),
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-      floatingActionButton: _isProfileIncomplete
-          ? null
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                if (_userRole == 2) const SizedBox(height: 16),
-                FloatingActionButton.extended(
-                  heroTag: 'create_room_btn',
-                  onPressed: _showCreateRoomDialog,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  icon: Icon(
-                    Icons.add,
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    size: 30,
-                  ),
-                  label: Text(
-                    'Oda Oluştur',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontSize: AppFonts.size(20),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-      body: _isProfileIncomplete
-          ? Container(
-              color: Theme.of(context).colorScheme.onPrimary,
-              child: Center(
-                child: Text(
-                  'Lütfen profilinizi tamamlayın',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: AppFonts.size(20),
-                  ),
-                ),
-              ),
-            )
-          : StreamBuilder<QuerySnapshot>(
-              stream: _roomsStream,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      'Bir hata oluştu.',
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  );
-                }
-
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: CircularProgressIndicator(strokeWidth: 6),
-                  );
-                }
-
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Column(
-                          children: [
-                            Icon(
-                              Icons.forum,
-                              size: 100,
+                            decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.primary,
                             ),
-                            SizedBox(height: 20),
-                            Text(
-                              'Henüz bir sohbet odası bulunmuyor.',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80),
-                  itemCount: snapshot.data!.docs.length,
-                  itemBuilder: (context, index) {
-                    var room = snapshot.data!.docs[index];
-                    var roomData = room.data() as Map<String, dynamic>;
-                    var roomName = roomData['name'] ?? 'İsimsiz Oda';
-                    var roomId = room.id;
-                    var maxCapacity = roomData['maxCapacity'] ?? 10;
-                    var currentParticipants =
-                        roomData['currentParticipants'] ?? 0;
-                    var isLocked =
-                        roomData['password'] != null &&
-                        roomData['password'] != '';
-                    var isCreator =
-                        roomData['creatorId'] == _auth.currentUser?.uid;
-
-                    return StreamBuilder<QuerySnapshot>(
-                      stream: room.reference.collection('participants').snapshots(),
-                      builder: (context, participantSnapshot) {
-                        int realTimeParticipants = currentParticipants;
-                        if (participantSnapshot.hasData) {
-                          realTimeParticipants = participantSnapshot.data!.docs.length;
-                        }
-
-                        String semanticLabel =
-                            '$roomName sohbet odası. '
-                            'Kapasite: $realTimeParticipants bölü $maxCapacity. '
-                            '${isLocked ? "Şifreli oda." : "Açık oda."} '
-                            'Odaya girmek için iki kez dokunun.';
-
-                        return Semantics(
-                          label: semanticLabel,
-                          button: true,
-                          child: ListTile(
-                            leading: Stack(
-                              alignment: Alignment.bottomRight,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(
-                                  Icons.meeting_room,
-                                  color: Theme.of(context).colorScheme.secondary,
-                                  size: 40,
-                                ),
-                                if (isLocked && !isCreator)
-                                  Icon(
-                                    Icons.lock,
-                                    color: Theme.of(context).colorScheme.primary,
-                                    size: 20,
+                                Text(
+                                  'Blind Social Menü',
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
+                                    fontSize: AppFonts.size(32),
+                                    fontWeight: FontWeight.bold,
                                   ),
+                                ),
                               ],
                             ),
-                            title: Text(
-                              roomName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: AppFonts.size(24),
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                            subtitle: Text(
-                              'Kapasite: $realTimeParticipants / $maxCapacity',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.secondary,
-                                fontSize: AppFonts.size(18),
-                              ),
-                            ),
-                            trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (roomData['creatorId'] == _auth.currentUser?.uid)
-                            Semantics(
-                              label: 'Odayı düzenle',
-                              button: true,
-                              child: IconButton(
-                                tooltip: 'Odayı düzenle',
-                                icon: Icon(
-                                  Icons.edit,
-                                  color: Theme.of(context).colorScheme.secondary,
-                                ),
-                                onPressed: () => _showEditRoomDialog(room),
-                              ),
-                            ),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            color: Theme.of(context).colorScheme.primary,
                           ),
-                        ],
-                      ),
-                      onTap: () async {
-                        // Check capacity
-                        if (currentParticipants >= maxCapacity) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Oda dolu, lütfen başka bir odayı deneyin.',
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
+                          ListTile(
+                            leading: Icon(
+                              Icons.forum,
+                              color: Theme.of(context).colorScheme.secondary,
+                              size: 30,
                             ),
-                          );
-                          return;
-                        }
-
-                        // Handle password
-                        if (isLocked && !isCreator) {
-                          final passwordController = TextEditingController();
-                          final correctPassword = roomData['password'];
-
-                          bool? success = await showDialog<bool>(
-                            context: context,
-                            builder: (context) {
-                              bool obscure = true;
-                              return StatefulBuilder(
-                                builder: (context, setDialogState) {
-                                  return AlertDialog(
+                            title: Text(
+                              'Sesli Odalar',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: AppFonts.size(22),
+                              ),
+                            ),
+                            onTap: () => Navigator.pop(context),
+                          ),
+                          ListTile(
+                            leading: const Icon(
+                              Icons.public,
+                              color: Colors.cyan,
+                              size: 30,
+                            ),
+                            title: Text(
+                              'BS Meydan',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: AppFonts.size(22),
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.pushNamed(context, '/square');
+                            },
+                          ),
+                          ListTile(
+                            leading: Icon(
+                              Icons.radio,
+                              color: Theme.of(context).colorScheme.secondary,
+                              size: 30,
+                            ),
+                            title: Text(
+                              'Radyo Tiyatrosu',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: AppFonts.size(22),
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const RadioTheaterScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          ListTile(
+                            leading: Icon(
+                              Icons.article,
+                              color: Theme.of(context).colorScheme.secondary,
+                              size: 30,
+                            ),
+                            title: Text(
+                              'Güncel Haberler',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: AppFonts.size(22),
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const NewsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          ListTile(
+                            leading: Icon(
+                              Icons.live_tv,
+                              color: Theme.of(context).colorScheme.secondary,
+                              size: 30,
+                            ),
+                            title: Text(
+                              'Canlı Yayın',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: AppFonts.size(22),
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LiveMediaScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          ListTile(
+                            leading: Icon(
+                              Icons.sports_esports,
+                              color: Theme.of(context).colorScheme.secondary,
+                              size: 30,
+                            ),
+                            title: Text(
+                              'Oyun Odası',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: AppFonts.size(22),
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Bu özellik yakında aktif edilecektir.',
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          if (_userRole == 1)
+                            ListTile(
+                              leading: Icon(
+                                Icons.build,
+                                color: Theme.of(context).colorScheme.secondary,
+                                size: 30,
+                              ),
+                              title: Text(
+                                'Yetkili Menüsü',
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                  fontSize: AppFonts.size(22),
+                                ),
+                              ),
+                              onTap: () {
+                                Navigator.pop(context);
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
                                     backgroundColor: Theme.of(
                                       context,
                                     ).scaffoldBackgroundColor,
-                                    title: Text(
-                                      'Şifre Gerekli',
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                      ),
+                                    title: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.construction,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          'Uyarı',
+                                          style: TextStyle(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    content: TextField(
-                                      controller: passwordController,
-                                      obscureText: obscure,
+                                    content: Text(
+                                      'Bu bölüm yapım aşamasındadır.',
                                       style: TextStyle(
                                         color: Theme.of(
                                           context,
                                         ).colorScheme.onSurface,
                                       ),
-                                      decoration: InputDecoration(
-                                        labelText: 'Oda Şifresi',
-                                        labelStyle: TextStyle(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.secondary,
-                                        ),
-                                        suffixIcon: IconButton(
-                                          icon: Icon(
-                                            obscure
-                                                ? Icons.visibility
-                                                : Icons.visibility_off,
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: Text(
+                                          'Tamam',
+                                          style: TextStyle(
                                             color: Theme.of(
                                               context,
                                             ).colorScheme.secondary,
                                           ),
-                                          onPressed: () {
-                                            setDialogState(() {
-                                              obscure = !obscure;
-                                            });
-                                          },
                                         ),
                                       ),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context, false),
-                                        child: const Text('İptal'),
-                                      ),
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          if (passwordController.text ==
-                                              correctPassword) {
-                                            Navigator.pop(context, true);
-                                          } else {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Hatalı Şifre'),
-                                              ),
-                                            );
-                                          }
-                                        },
-                                        child: const Text('Giriş'),
-                                      ),
                                     ],
-                                  );
-                                },
-                              );
-                            },
-                          );
-
-                          if (success != true) return;
-                        }
-
-                        if (context.mounted) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ChatScreen(
-                                roomId: roomId,
-                                roomName: roomName,
+                                  ),
+                                );
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: AspectRatio(
+                                aspectRatio: 1.0,
+                                child: Card(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHighest,
+                                  clipBehavior: Clip.antiAlias,
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      Navigator.pushNamed(context, '/profile');
+                                    },
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.person,
+                                          size: 40,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Hesabım',
+                                          style: TextStyle(
+                                            fontSize: AppFonts.size(16),
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                          );
-                        }
-                      },
-                          ),
-                        );
-                      },
+                            if (_userRole == 0 || _userRole == 1) ...[
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: Card(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    clipBehavior: Clip.antiAlias,
+                                    child: InkWell(
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/admin_panel',
+                                        );
+                                      },
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.admin_panel_settings,
+                                            size: 40,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimary,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Yönetici\nPaneli',
+                                            style: TextStyle(
+                                              fontSize: AppFonts.size(16),
+                                              fontWeight: FontWeight.bold,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onPrimary,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            if (_userRole != 0) ...[
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: Card(
+                                    color: Colors.redAccent,
+                                    clipBehavior: Clip.antiAlias,
+                                    child: InkWell(
+                                      onTap: () async {
+                                        Navigator.pop(context);
+                                        final hasPermissions =
+                                            await PermissionManager.requestBsBibPermissions(
+                                              context,
+                                            );
+                                        if (!hasPermissions) return;
+                                        if (!context.mounted) return;
+                                        final roomId =
+                                            'BIB_${_auth.currentUser?.uid}_${DateTime.now().millisecondsSinceEpoch}';
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                BSBibCallScreen(
+                                                  roomId: roomId,
+                                                  isAdmin: false,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.support_agent,
+                                            size: 40,
+                                            color: Colors.white,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'BS BiB\nÇağrı',
+                                            style: TextStyle(
+                                              fontSize: AppFonts.size(16),
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+        floatingActionButton: _isProfileIncomplete
+            ? null
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (_userRole == 2) const SizedBox(height: 16),
+                  FloatingActionButton.extended(
+                    heroTag: 'create_room_btn',
+                    onPressed: _showCreateRoomDialog,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    icon: Icon(
+                      Icons.add,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      size: 30,
+                    ),
+                    label: Text(
+                      'Oda Oluştur',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontSize: AppFonts.size(20),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+        body: _isProfileIncomplete
+            ? Container(
+                color: Theme.of(context).colorScheme.onPrimary,
+                child: Center(
+                  child: Text(
+                    'Lütfen profilinizi tamamlayın',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: AppFonts.size(20),
+                    ),
+                  ),
+                ),
+              )
+            : StreamBuilder<QuerySnapshot>(
+                stream: _roomsStream,
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Bir hata oluştu.',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
                     );
-                  },
-                );
-              },
-            ),
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: CircularProgressIndicator(strokeWidth: 6),
+                    );
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Column(
+                            children: [
+                              Icon(
+                                Icons.forum,
+                                size: 100,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              SizedBox(height: 20),
+                              Text(
+                                'Henüz bir sohbet odası bulunmuyor.',
+                                style: Theme.of(context).textTheme.bodyLarge,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 80),
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (context, index) {
+                      var room = snapshot.data!.docs[index];
+                      var roomData = room.data() as Map<String, dynamic>;
+                      var roomName = roomData['name'] ?? 'İsimsiz Oda';
+                      var roomId = room.id;
+                      var maxCapacity = roomData['maxCapacity'] ?? 10;
+                      var currentParticipants =
+                          roomData['currentParticipants'] ?? 0;
+                      var isLocked =
+                          roomData['password'] != null &&
+                          roomData['password'] != '';
+                      var isCreator =
+                          roomData['creatorId'] == _auth.currentUser?.uid;
+
+                      return StreamBuilder<QuerySnapshot>(
+                        stream: room.reference
+                            .collection('participants')
+                            .snapshots(),
+                        builder: (context, participantSnapshot) {
+                          int realTimeParticipants = currentParticipants;
+                          if (participantSnapshot.hasData) {
+                            realTimeParticipants =
+                                participantSnapshot.data!.docs.length;
+                          }
+
+                          String semanticLabel =
+                              '$roomName sohbet odası. '
+                              'Kapasite: $realTimeParticipants bölü $maxCapacity. '
+                              '${isLocked ? "Şifreli oda." : "Açık oda."} '
+                              'Odaya girmek için iki kez dokunun.';
+
+                          return Semantics(
+                            label: semanticLabel,
+                            button: true,
+                            child: ListTile(
+                              leading: Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  Icon(
+                                    Icons.meeting_room,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                    size: 40,
+                                  ),
+                                  if (isLocked && !isCreator)
+                                    Icon(
+                                      Icons.lock,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
+                              title: Text(
+                                roomName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: AppFonts.size(24),
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'Kapasite: $realTimeParticipants / $maxCapacity',
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.secondary,
+                                  fontSize: AppFonts.size(18),
+                                ),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (roomData['creatorId'] ==
+                                      _auth.currentUser?.uid)
+                                    Semantics(
+                                      label: 'Odayı düzenle',
+                                      button: true,
+                                      child: IconButton(
+                                        tooltip: 'Odayı düzenle',
+                                        icon: Icon(
+                                          Icons.edit,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.secondary,
+                                        ),
+                                        onPressed: () =>
+                                            _showEditRoomDialog(room),
+                                      ),
+                                    ),
+                                  Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                ],
+                              ),
+                              onTap: () async {
+                                // Check capacity
+                                if (currentParticipants >= maxCapacity) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Oda dolu, lütfen başka bir odayı deneyin.',
+                                      ),
+                                      backgroundColor: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                // Handle password
+                                if (isLocked && !isCreator) {
+                                  final passwordController =
+                                      TextEditingController();
+                                  final correctPassword = roomData['password'];
+
+                                  bool? success = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) {
+                                      bool obscure = true;
+                                      return StatefulBuilder(
+                                        builder: (context, setDialogState) {
+                                          return AlertDialog(
+                                            backgroundColor: Theme.of(
+                                              context,
+                                            ).scaffoldBackgroundColor,
+                                            title: Text(
+                                              'Şifre Gerekli',
+                                              style: TextStyle(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                              ),
+                                            ),
+                                            content: TextField(
+                                              controller: passwordController,
+                                              obscureText: obscure,
+                                              style: TextStyle(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
+                                              ),
+                                              decoration: InputDecoration(
+                                                labelText: 'Oda Şifresi',
+                                                labelStyle: TextStyle(
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.secondary,
+                                                ),
+                                                suffixIcon: IconButton(
+                                                  icon: Icon(
+                                                    obscure
+                                                        ? Icons.visibility
+                                                        : Icons.visibility_off,
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.secondary,
+                                                  ),
+                                                  onPressed: () {
+                                                    setDialogState(() {
+                                                      obscure = !obscure;
+                                                    });
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(
+                                                  context,
+                                                  false,
+                                                ),
+                                                child: const Text('İptal'),
+                                              ),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  if (passwordController.text ==
+                                                      correctPassword) {
+                                                    Navigator.pop(
+                                                      context,
+                                                      true,
+                                                    );
+                                                  } else {
+                                                    ScaffoldMessenger.of(
+                                                      context,
+                                                    ).showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text(
+                                                          'Hatalı Şifre',
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                                child: const Text('Giriş'),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                  );
+
+                                  if (success != true) return;
+                                }
+
+                                if (context.mounted) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ChatScreen(
+                                        roomId: roomId,
+                                        roomName: roomName,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
       ),
     );
   }
