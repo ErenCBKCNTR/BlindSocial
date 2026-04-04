@@ -24,9 +24,30 @@ import 'widgets/global_background_wrapper.dart';
 import 'widgets/global_call_overlay.dart';
 import 'services/audio_handler.dart';
 import 'package:media_kit/media_kit.dart';
+import 'dart:ui';
+import 'services/local_error_logger.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Flutter framework hatalarını yakala
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    LocalErrorLogger.logError(
+      details.exceptionAsString(),
+      details.stack?.toString() ?? 'Stack trace mevcut değil',
+    );
+  };
+
+  // Platform/Asenkron (Dart) hatalarını yakala
+  PlatformDispatcher.instance.onError = (error, stack) {
+    LocalErrorLogger.logError(
+      error.toString(),
+      stack.toString(),
+    );
+    return true; // Hatanın uygulamanın tamamını çökertmesini bir nebze engellemek için
+  };
+
   MediaKit.ensureInitialized();
   audioHandler = await initAudioService();
   runApp(const BlindSocialApp());

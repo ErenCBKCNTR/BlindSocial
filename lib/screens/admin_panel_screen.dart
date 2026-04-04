@@ -9,6 +9,7 @@ import 'reported_posts_screen.dart';
 import 'bs_bib_call_screen.dart';
 import 'release_notes_screen.dart';
 import 'online_users_screen.dart';
+import 'local_error_logs_screen.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   final FirebaseFirestore? firestore;
@@ -691,6 +692,21 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               minimumSize: const Size(double.infinity, 60),
             ),
             child: Text('Son Sürüm Notları', style: TextStyle(fontSize: AppFonts.size(20))),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LocalErrorLogsScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepOrange,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 60),
+            ),
+            child: Text('Yerel Hata Kayıtları', style: TextStyle(fontSize: AppFonts.size(20))),
           ),
         ],
       ),
