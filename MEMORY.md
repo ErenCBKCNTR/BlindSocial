@@ -44,9 +44,10 @@ Bugüne kadar projemizde kodlanıp bitirilen temel özellikler şunlardır:
 - Adım 1 (Sistem Sesi Paylaşım Altyapısı): Sesli Odalarda medya yayını için eski just_audio tabanlı loopback kodları tamamen temizlenerek yerine LiveKit `ScreenShareCaptureOptions` (`captureScreenAudio: true`) kullanılarak sistem sesini paylaşma özelliği entegre edildi.
 - Adım 2 (Sistem Sesi Paylaşımı UI State ve Semantics Güncellemesi): Sistem Sesi Paylaş butonu basıldığında yayını açıp/kapatacak toggle mantığına oturtuldu. Butonun kapalı ve açık durumları için hem görsel (renk/ikon değişikliği) hem de işitsel (TalkBack için dinamik Semantics etiketleri) geri bildirimler eklendi.
 - Adım 1 ve Adım 2 (Bağlantı Durumu ve Foreground Service Çözümü): Android 14+ için `AndroidManifest.xml` dosyasına `FOREGROUND_SERVICE_MEDIA_PROJECTION` izni eklendi. Sistem Sesi paylaşım butonu sadece odaya başarılı bağlanıldığında (joined) görünür yapıldı ve hata tespitini kolaylaştırmak için `_toggleScreenShare` içerisine detaylı hata logları (try-catch, stackTrace) eklendi.
+- Adım 1 (Anlık Katılımcı Listesi Veri Kaynağının Düzeltilmesi): "Sesli Kanal Kullanıcıları" listesi, odaya sadece metin olarak (yazılı) katılan kullanıcıları da gösterecek şekilde güncellendi. Liste veri kaynağı olarak artık LiveKit bağlantıları yerine Firestore `participants` (Presence) koleksiyonundan besleniyor. Sesli kanala katılanların mikrofon durumları ise bu ana listeyle harmanlanarak gösteriliyor.
 
 ## Üzerinde Çalışılan Görev
-**Sistem sesi paylaşımı crash ve görünürlük hatası giderildi**
+**Anlık katılımcı listesi (Presence) veri kaynağı düzeltildi**
 
 ## ⚠️ TEMEL KURAL (GROUND RULE)
 Bundan sonraki **her** yeni özellik eklemesinde, büyük kod değişikliklerinde veya yeni dosya oluşturulmasında bu iki dosya (`STRUCTURE.md` ve `MEMORY.md`) mutlaka güncellenmelidir. **Bu dosyalar güncellenmeden Pull Request (PR) gönderilmeyecektir.** Herhangi bir asistan bu kuralı kati suretle uygulamalıdır.

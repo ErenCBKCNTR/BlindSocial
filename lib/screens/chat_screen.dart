@@ -1580,180 +1580,142 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      ExpansionTile(
-                        title: Text(
-                          'Sesli Kanal Kullanıcıları (${(_room?.remoteParticipants.length ?? 0) + (_room?.localParticipant != null ? 1 : 0)})',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        collapsedBackgroundColor: Colors.grey[800],
-                        backgroundColor: Colors.grey[900],
-                        children: [
-                          if (_room?.localParticipant != null)
-                            Semantics(
-                              container: true,
-                              label: '${_room!.localParticipant!.identity.isNotEmpty ? _room!.localParticipant!.identity : 'Kullanıcı'} (Sen), ${_room!.localParticipant!.isSpeaking ? 'Konuşuyor' : 'Konuşmuyor'}, Mikrofon ${_room!.localParticipant!.isMicrophoneEnabled() ? 'Açık' : 'Kapalı'}',
-                              child: ExcludeSemantics(
-                                child: ListTile(
-                                  leading: Icon(
-                                    _room!.localParticipant!.isSpeaking
-                                        ? Icons.volume_up
-                                        : Icons.person,
-                                    color: _room!.localParticipant!.isSpeaking
-                                        ? Colors.green
-                                        : Theme.of(context).colorScheme.secondary,
-                                  ),
-                                  title: Text(
-                                    '${_room!.localParticipant!.identity.isNotEmpty ? _room!.localParticipant!.identity : 'Kullanıcı'} (Sen)',
-                                    style: TextStyle(
-                                      color: _room!.localParticipant!.isSpeaking
-                                          ? Colors.green
-                                          : Theme.of(context).colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  trailing:
-                                      _room!.localParticipant!.isMicrophoneEnabled()
-                                      ? const Icon(Icons.mic, color: Colors.yellow)
-                                      : const Icon(
-                                          Icons.mic_off,
-                                          color: Colors.red,
-                                        ),
-                                ),
+                      StreamBuilder<QuerySnapshot>(
+                        stream: (widget.firestore ?? FirebaseFirestore.instance)
+                            .collection('chat_rooms')
+                            .doc(widget.roomId)
+                            .collection('participants')
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          final participants = snapshot.data?.docs ?? [];
+                          return ExpansionTile(
+                            title: Text(
+                              'Katılımcılar (${participants.length})',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
-                          ...(_room?.remoteParticipants.values.map((
-                                participant,
-                              ) {
-                                final volume =
-                                    _participantVolumes[participant.identity] ??
-                                    1.35;
-                                return Column(
-                                  children: [
-                                    Semantics(
-                                      container: true,
-                                      label: '${participant.identity.isNotEmpty ? participant.identity : 'Kullanıcı'}, ${participant.isSpeaking ? 'Konuşuyor' : 'Konuşmuyor'}, Mikrofon ${participant.isMicrophoneEnabled() ? 'Açık' : 'Kapalı'}',
-                                      child: ExcludeSemantics(
-                                        child: ListTile(
-                                          leading: Icon(
-                                            participant.isSpeaking
-                                                ? Icons.volume_up
-                                                : Icons.person,
-                                            color: participant.isSpeaking
+                            collapsedBackgroundColor: Colors.grey[800],
+                            backgroundColor: Colors.grey[900],
+                            children: participants.map((pDoc) {
+                              final pData = pDoc.data() as Map<String, dynamic>;
+                              final name = pData['displayName'] ?? 'Anonim';
+                              final uid = pDoc.id;
+                              final isMe = uid == _auth.currentUser?.uid;
+
+                              // LiveKit eşleşmesi (Sesli kanalda mı?)
+                              // identity olarak name veya uid kullanıldığını varsayıyoruz.
+                              // (Genelde uid, ancak identity uyuşmasını hem name hem uid ile kontrol edebiliriz)
+                              bool isJoinedVoice = false;
+                              bool isSpeaking = false;
+                              bool isMicEnabled = false;
+                              Participant? livekitParticipant;
+
+                              if (isMe && _room?.localParticipant != null) {
+                                isJoinedVoice = true;
+                                isSpeaking = _room!.localParticipant!.isSpeaking;
+                                isMicEnabled = _room!.localParticipant!.isMicrophoneEnabled();
+                                livekitParticipant = _room!.localParticipant;
+                              } else {
+                                for (var rp in _room?.remoteParticipants.values ?? <RemoteParticipant>[]) {
+                                  if (rp.identity == name || rp.identity == uid) {
+                                    isJoinedVoice = true;
+                                    isSpeaking = rp.isSpeaking;
+                                    isMicEnabled = rp.isMicrophoneEnabled();
+                                    livekitParticipant = rp;
+                                    break;
+                                  }
+                                }
+                              }
+
+                              final titleText = name + (isMe ? ' (Sen)' : '');
+                              final semanticsLabel = '$titleText, Odada. ' +
+                                  (isJoinedVoice
+                                    ? 'Sesli kanalda. ${isSpeaking ? "Konuşuyor" : "Konuşmuyor"}. Mikrofon ${isMicEnabled ? "Açık" : "Kapalı"}.'
+                                    : 'Sadece metin kanalında.');
+
+                              return Column(
+                                children: [
+                                  Semantics(
+                                    container: true,
+                                    label: semanticsLabel,
+                                    child: ExcludeSemantics(
+                                      child: ListTile(
+                                        leading: Icon(
+                                          isJoinedVoice
+                                              ? (isSpeaking ? Icons.volume_up : Icons.headset_mic)
+                                              : Icons.person,
+                                          color: isSpeaking
+                                              ? Colors.green
+                                              : (isJoinedVoice ? Colors.amber : Theme.of(context).colorScheme.secondary),
+                                        ),
+                                        title: Text(
+                                          titleText,
+                                          style: TextStyle(
+                                            color: isSpeaking
                                                 ? Colors.green
-                                                : Theme.of(
-                                                    context,
-                                                  ).colorScheme.secondary,
-                                          ),
-                                          title: Text(
-                                            participant.identity.isNotEmpty
-                                                ? participant.identity
-                                                : 'Kullanıcı',
-                                            style: TextStyle(
-                                              color: participant.isSpeaking
-                                                  ? Colors.green
-                                                  : Theme.of(
-                                                      context,
-                                                    ).colorScheme.onSurface,
-                                            ),
-                                          ),
-                                          trailing: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              // TeamTalk tarzı dikey ses seviyesi çubukları
-                                              if (participant.isSpeaking)
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                                  children: List.generate(5, (barIndex) {
-                                                    // Calculate simulated volume based on time (for animation effect)
-                                                    // Real volume simulation using random or time since it's hard to get real audio level quickly here without a stream
-                                                    final timeBased = (DateTime.now().millisecondsSinceEpoch ~/ 100) % 5;
-                                                    final isFilled = barIndex <= timeBased;
-                                                    Color barColor = Colors.green;
-                                                    if (barIndex == 3) barColor = Colors.orange;
-                                                    if (barIndex == 4) barColor = Colors.red;
-                                                    return Container(
-                                                      margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                                                      width: 4,
-                                                      height: 6.0 + (barIndex * 3.0),
-                                                      decoration: BoxDecoration(
-                                                        color: isFilled ? barColor : Colors.grey[700],
-                                                        borderRadius: BorderRadius.circular(1),
-                                                      ),
-                                                    );
-                                                  }),
-                                                )
-                                              else
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                                  children: List.generate(5, (barIndex) {
-                                                    return Container(
-                                                      margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                                                      width: 4,
-                                                      height: 6.0 + (barIndex * 3.0),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.grey[700],
-                                                        borderRadius: BorderRadius.circular(1),
-                                                      ),
-                                                    );
-                                                  }),
-                                                ),
-                                              const SizedBox(width: 8),
-                                              participant.isMicrophoneEnabled()
-                                              ? const Icon(
-                                                  Icons.mic,
-                                                  color: Colors.yellow,
-                                                )
-                                              : const Icon(
-                                                  Icons.mic_off,
-                                                  color: Colors.red,
-                                                ),
-                                            ],
+                                                : Theme.of(context).colorScheme.onSurface,
                                           ),
                                         ),
+                                        trailing: isJoinedVoice
+                                          ? Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                if (isSpeaking)
+                                                  Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                                    children: List.generate(5, (barIndex) {
+                                                      final timeBased = (DateTime.now().millisecondsSinceEpoch ~/ 100) % 5;
+                                                      final isFilled = barIndex <= timeBased;
+                                                      Color barColor = Colors.green;
+                                                      if (barIndex == 3) barColor = Colors.orange;
+                                                      if (barIndex == 4) barColor = Colors.red;
+                                                      return Container(
+                                                        margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                                                        width: 4,
+                                                        height: 6.0 + (barIndex * 3.0),
+                                                        decoration: BoxDecoration(
+                                                          color: isFilled ? barColor : Colors.grey[700],
+                                                          borderRadius: BorderRadius.circular(1),
+                                                        ),
+                                                      );
+                                                    }),
+                                                  ),
+                                                const SizedBox(width: 8),
+                                                Icon(
+                                                  isMicEnabled ? Icons.mic : Icons.mic_off,
+                                                  color: isMicEnabled ? Colors.yellow : Colors.red,
+                                                )
+                                              ],
+                                            )
+                                          : null,
                                       ),
                                     ),
+                                  ),
+                                  // Ses seviyesi kontrolü (sadece uzaktaki sesli katılımcılar için)
+                                  if (isJoinedVoice && !isMe && livekitParticipant != null)
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16.0,
-                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                       child: Row(
                                         children: [
-                                          const Icon(
-                                            Icons.volume_down,
-                                            size: 20,
-                                          ),
+                                          const Icon(Icons.volume_down, size: 20),
                                           Expanded(
                                             child: Slider(
-                                              value: volume,
+                                              value: _participantVolumes[livekitParticipant.identity] ?? 1.35,
                                               min: 0.0,
                                               max: 2.0,
                                               activeColor: Colors.amber,
-                                              semanticFormatterCallback:
-                                                  (double value) =>
-                                                      'Yüzde ${(value * 100).round()}',
+                                              semanticFormatterCallback: (double value) => 'Yüzde ${(value * 100).round()}',
                                               onChanged: (val) {
                                                 setState(() {
-                                                  _participantVolumes[participant
-                                                          .identity] =
-                                                      val;
+                                                  _participantVolumes[livekitParticipant!.identity] = val;
                                                 });
-                                                if (participant
-                                                    .audioTrackPublications
-                                                    .isNotEmpty) {
+                                                if (livekitParticipant?.audioTrackPublications.isNotEmpty ?? false) {
                                                   try {
-                                                    (participant
-                                                                .audioTrackPublications
-                                                                .first
-                                                                .track
-                                                            as dynamic)
-                                                        ?.setVolume(val);
+                                                    (livekitParticipant!.audioTrackPublications.first.track as dynamic)?.setVolume(val);
                                                   } catch (e) {
-                                                    debugPrint(
-                                                      'Volume error: $e',
-                                                    );
+                                                    debugPrint('Volume error: $e');
                                                   }
                                                 }
                                               },
@@ -1763,11 +1725,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                         ],
                                       ),
                                     ),
-                                  ],
-                                );
-                              }).toList() ??
-                              []),
-                        ],
+                                ],
+                              );
+                            }).toList(),
+                          );
+                        }
                       ),
                     ],
                   ),
