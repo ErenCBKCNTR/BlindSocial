@@ -120,13 +120,27 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         .snapshots();
     _addParticipant();
 
-    _audioPlayer.onPlayerStateChanged.listen((state) {
+    _audioPlayer.onPlayerStateChanged.listen((state) async {
       if (state == PlayerState.completed) {
         if (mounted) {
           setState(() {
             _currentlyPlayingMessageId = null;
+            _isMediaPlaying = false;
+            _mediaProgress = 0.0;
           });
         }
+        if (_isJoined && !_isPTTMode) {
+          await _setMicrophoneEnabled(true);
+        }
+      }
+    });
+
+    _audioPlayer.onPositionChanged.listen((position) async {
+      final duration = await _audioPlayer.getDuration();
+      if (duration != null && duration.inMilliseconds > 0 && mounted) {
+        setState(() {
+          _mediaProgress = position.inMilliseconds / duration.inMilliseconds;
+        });
       }
     });
   }
@@ -699,8 +713,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       final file = File(_selectedMediaFilePath!);
       if (!file.existsSync()) return;
 
-      // Mock streaming duration setup
-      const chunkSize = 1024 * 16; // 16 KB chunks
+      // Play locally so the sender can hear it and track progress
+      await _audioPlayer.play(DeviceFileSource(file.path));
+
+      // Calculate chunk size based on standard audio bitrates to stream at ~ realtime
+      // E.g., assuming 128kbps -> ~16KB/s. We send 8KB chunks every ~500ms
+      const chunkSize = 1024 * 8;
       final bytes = await file.readAsBytes();
 
       // We process streaming in a separate async flow to not block UI
@@ -728,13 +746,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       }
 
       offset = end;
-      if (mounted) {
-        setState(() {
-          _mediaProgress = offset / bytes.length;
-        });
-      }
-      // Simple delay to simulate streaming rate
-      await Future.delayed(const Duration(milliseconds: 100));
+      // Delay to simulate realtime streaming rate.
+      // 8KB chunk of typical M4A/AAC is around 500ms of audio.
+      await Future.delayed(const Duration(milliseconds: 500));
     }
 
     if (offset >= bytes.length) {
@@ -746,6 +760,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     setState(() {
       _isMediaPlaying = false;
     });
+    await _audioPlayer.pause();
   }
 
   Future<void> _stopMediaFile() async {
