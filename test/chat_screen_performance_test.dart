@@ -64,7 +64,9 @@ void main() {
     final textField = find.byType(TextField);
     expect(textField, findsOneWidget);
 
-    final sendButton = find.byTooltip('Mesajı Gönder');
+    // Instead of find.byTooltip, we'll find the send button by Icon(Icons.send) or wait for it.
+    // Specifically looking for the GestureDetector/Container that holds the send icon.
+    final sendButton = find.byIcon(Icons.send);
     expect(sendButton, findsOneWidget);
 
     final stopwatch = Stopwatch()..start();
