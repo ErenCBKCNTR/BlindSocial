@@ -36,9 +36,10 @@ Bugüne kadar projemizde kodlanıp bitirilen temel özellikler şunlardır:
 - Cihaz bazlı yetkilendirme akışları (Permission Manager ile).
 - Sesli Odalar (Voice Rooms) içinde ekran okuyucu (Semantics) iyileştirmelerinin yapılması, çift okumaların temizlenmesi.
 - Sesli Odalarda "Sustur" (Mute) butonunun PTT (Bas-Konuş) veya Ses Aktivasyonu moduna uygun olarak LiveKit local audio track state ile senkronize çalışmasının sağlanması.
+- Sesli Odalarda 'Eko İptali', 'Gürültü Bastırma', 'Otomatik Ses Kazancı' switch'leri ile 'Ses Kazancı' ve 'VAD Hassasiyeti' sürgülerinin (slider) LiveKit 'AudioCaptureOptions' donanımsal ayarlarına gerçek zamanlı olarak (UI durumunu bozmadan) entegre edilmesi.
 
 ## Üzerinde Çalışılan Görev
-**Adım 2: Donanımsal Ses Ayarlarının LiveKit'e Bağlanması** (Sesli Odalardaki Eko İptali, Gürültü Bastırma, Otomatik Ses Kazancı switch'leri ve sürgülerinin işlevsel hale getirilmesi).
+**Adım 3: Medya Süresi ve Mikrofon Kilidinin Çözülmesi** (Odada paylaşılan ses dosyalarındaki süre çubuğu hesaplama hatasının düzeltilmesi ve medya oynatımı bittikten sonra kullanıcının mikrofonunun sessizde kilitli kalması sorununun çözülmesi).
 
 ## ⚠️ TEMEL KURAL (GROUND RULE)
 Bundan sonraki **her** yeni özellik eklemesinde, büyük kod değişikliklerinde veya yeni dosya oluşturulmasında bu iki dosya (`STRUCTURE.md` ve `MEMORY.md`) mutlaka güncellenmelidir. **Bu dosyalar güncellenmeden Pull Request (PR) gönderilmeyecektir.** Herhangi bir asistan bu kuralı kati suretle uygulamalıdır.

@@ -496,8 +496,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           setModalState(() => _echoCancellation = val);
                           setState(() => _echoCancellation = val);
                           // Canlı güncelleme
-                          if (_isJoined && !_isMuted)
-                            _setMicrophoneEnabled(true);
+                          if (_isJoined && !_isMuted) {
+                            await _setMicrophoneEnabled(true);
+                          }
                         },
                       ),
                     ),
@@ -517,8 +518,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           await prefs.setBool('mic_noise_suppression', val);
                           setModalState(() => _noiseSuppression = val);
                           setState(() => _noiseSuppression = val);
-                          if (_isJoined && !_isMuted)
-                            _setMicrophoneEnabled(true);
+                          if (_isJoined && !_isMuted) {
+                            await _setMicrophoneEnabled(true);
+                          }
                         },
                       ),
                     ),
@@ -538,8 +540,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           await prefs.setBool('mic_auto_gain', val);
                           setModalState(() => _autoGain = val);
                           setState(() => _autoGain = val);
-                          if (_isJoined && !_isMuted)
-                            _setMicrophoneEnabled(true);
+                          if (_isJoined && !_isMuted) {
+                            await _setMicrophoneEnabled(true);
+                          }
                         },
                       ),
                     ),
@@ -575,6 +578,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.setDouble('mic_voice_gain', val);
                       setState(() => _voiceGain = val);
+                      if (_isJoined && !_isMuted) {
+                        await _setMicrophoneEnabled(true);
+                      }
                     },
                   ),
 
@@ -606,6 +612,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.setDouble('mic_vad_sensitivity', val);
                       setState(() => _vadSensitivity = val);
+                      if (_isJoined && !_isMuted) {
+                        await _setMicrophoneEnabled(true);
+                      }
                     },
                   ),
 
