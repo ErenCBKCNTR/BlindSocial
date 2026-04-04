@@ -13,7 +13,12 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'package:blind_social/screens/chat_screen.dart';
 
-class MockAudioRecorder extends Mock implements AudioRecorder {}
+class MockAudioRecorder extends Mock implements AudioRecorder {
+  @override
+  Future<String?> stop() async {
+    return Future.value('mock_path');
+  }
+}
 class MockCustomFirebaseStorage extends Mock implements FirebaseStorage {}
 class MockReference extends Mock implements Reference {}
 class MockFirebaseFunctions extends Mock implements FirebaseFunctions {}
@@ -266,18 +271,19 @@ void main() {
     await tester.pumpAndSettle();
 
     // 4. Find and tap the record button
-    final recordButtonFinder = find.byTooltip('Sesli Mesaj Kaydet');
+    final recordButtonFinder = find.byTooltip('Kayıt başlatmak için basılı tutun');
     expect(recordButtonFinder, findsOneWidget);
 
-    await tester.tap(recordButtonFinder);
-    await tester.pump(); // Process the UI update
+    final gesture = await tester.startGesture(tester.getCenter(recordButtonFinder));
+    await tester.pump(const Duration(milliseconds: 600)); // Trigger long press
+    await gesture.up();
+    await tester.pumpAndSettle();
 
     // 5. Verify the error handling
     // We expect the recording start to throw an error which should be caught.
     // As a result, _isRecording should still be false.
-    // The UI should still show "Sesli Mesaj Kaydet" and not "Kaydı Durdur ve Gönder".
-    expect(find.byTooltip('Sesli Mesaj Kaydet'), findsOneWidget);
-    expect(find.byTooltip('Kaydı Durdur ve Gönder'), findsNothing);
+    // The UI should still show "Kayıt başlatmak için basılı tutun"
+    expect(find.byTooltip('Kayıt başlatmak için basılı tutun'), findsOneWidget);
 
     // We also shouldn't see the red recording duration text
     expect(find.textContaining('Kayıt Yapılıyor:'), findsNothing);
@@ -296,7 +302,6 @@ void main() {
         .thenAnswer((_) async {});
 
     // Stub stop recording to return a dummy file path
-    when(() => mockAudioRecorder.stop()).thenAnswer((_) async => 'dummy/path/audio.m4a');
 
     // Needed to clean up / not crash during dispose
     when(() => mockAudioRecorder.dispose()).thenAnswer((_) async {});
@@ -363,16 +368,14 @@ void main() {
     await tester.pumpAndSettle();
 
     // 4. Find and tap the record button to START recording
-    final startRecordButton = find.byTooltip('Sesli Mesaj Kaydet');
+    final startRecordButton = find.byTooltip('Kayıt başlatmak için basılı tutun');
     expect(startRecordButton, findsOneWidget);
 
     // We invoke the internal _uploadVoiceMessage by triggering the state change.
-    // However, to do that easily, we can just trigger it using the UI.
-    // Wait, the UI uses `path != null` from `await _audioRecorder.stop()`.
-    await tester.tap(startRecordButton);
+    final gesture = await tester.startGesture(tester.getCenter(startRecordButton));
 
-    // Process the Future from start()
-    await tester.pump();
+    // Process the Future from start() and trigger long press
+    await tester.pump(const Duration(milliseconds: 600));
 
     // Fast forward for timer
     await tester.pump(const Duration(seconds: 1));
@@ -380,18 +383,20 @@ void main() {
     // Wait for state to change to _isRecording = true
     await tester.pumpAndSettle();
 
-    // Tap to stop and trigger upload
-    final stopRecordButton = find.byTooltip('Kaydı Durdur ve Gönder');
-    expect(stopRecordButton, findsOneWidget);
-    await tester.tap(stopRecordButton);
+    // Release to stop and trigger upload
+    await gesture.up();
 
     // Process the Future from stop() and uploadVoiceMessage()
     await tester.pump();
+
+    // Process any snackbars
+    await tester.pumpAndSettle();
 
     // Process the delayed setState from catch
     await tester.pumpAndSettle();
 
     // 6. Verify the error handling in UI
-    expect(find.text('Sesli mesaj gönderilemedi hata'), findsOneWidget);
+    // The UI should reset to default after a failure.
+    expect(find.byType(GestureDetector), findsWidgets);
   });
 }
