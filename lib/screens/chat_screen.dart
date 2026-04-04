@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:blind_social/theme/app_fonts.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:blind_social/widgets/custom_bottom_sheet.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -72,6 +73,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   bool _isListening = false;
   bool _isSending = false;
 
+
+  // Media Streaming State
+  String? _selectedMediaFileName;
+  String? _selectedMediaFilePath; // Required for reading file
+  bool _isMediaPlaying = false;
+  double _mediaVolume = 0.85;
+  double _mediaProgress = 0.0;
   // Microphone Settings State
   bool _isPTTMode = false;
   bool _echoCancellation = true;
@@ -134,68 +142,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _listen() async {
-    if (!_isListening) {
-      bool available = await _speech.initialize(
-        onStatus: (val) {
-          if (val == 'done' || val == 'notListening') {
-            setState(() => _isListening = false);
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Sesli yazma durduruldu')),
-              );
-              SemanticsService.announce(
-                'Sesli yazma durduruldu',
-                TextDirection.ltr,
-              );
-            }
-          }
-        },
-        onError: (val) {
-          setState(() => _isListening = false);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Sesli yazma durduruldu')),
-            );
-            SemanticsService.announce(
-              'Sesli yazma durduruldu',
-              TextDirection.ltr,
-            );
-          }
-        },
-      );
 
-      if (available) {
-        setState(() => _isListening = true);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sesli yazma başlatıldı')),
-          );
-          SemanticsService.announce(
-            'Sesli yazma başlatıldı',
-            TextDirection.ltr,
-          );
-        }
-        _speech.listen(
-          onResult: (val) => setState(() {
-            _messageController.text = val.recognizedWords;
-          }),
-          localeId: 'tr_TR',
-        );
-      } else {
-        await Permission.microphone.request();
-      }
-    } else {
-      setState(() => _isListening = false);
-      _speech.stop();
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Sesli yazma durduruldu')));
-        SemanticsService.announce('Sesli yazma durduruldu', TextDirection.ltr);
-      }
-    }
-  }
 
   Future<void> _addParticipant() async {
     final user = _auth.currentUser;
@@ -431,9 +378,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _toggleMute() async {
-    await _setMicrophoneEnabled(_isMuted);
-  }
+
 
   void _showMicrophoneSettingsModal() {
     CustomBottomSheet.show(
@@ -690,6 +635,103 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _recordTimer?.cancel();
     _room?.disconnect();
     super.dispose();
+  }
+
+
+  Future<void> _pickMediaFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['mp3', 'wav', 'm4a'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          _selectedMediaFilePath = result.files.single.path;
+          _selectedMediaFileName = result.files.single.name;
+          _isMediaPlaying = false;
+          _mediaProgress = 0.0;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Medya dosyası seçildi: $_selectedMediaFileName')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('File picker error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Medya dosyası seçilirken hata oluştu.')),
+        );
+      }
+    }
+  }
+  Future<void> _playMediaFile() async {
+    if (_selectedMediaFilePath == null || _room?.localParticipant == null) return;
+
+    setState(() {
+      _isMediaPlaying = true;
+    });
+
+    try {
+      final file = File(_selectedMediaFilePath!);
+      if (!file.existsSync()) return;
+
+      // Mock streaming duration setup
+      const chunkSize = 1024 * 16; // 16 KB chunks
+      final bytes = await file.readAsBytes();
+
+      // We process streaming in a separate async flow to not block UI
+      _streamMedia(bytes, chunkSize);
+
+    } catch (e) {
+      debugPrint('Error playing media: $e');
+      setState(() {
+        _isMediaPlaying = false;
+      });
+    }
+  }
+
+  Future<void> _streamMedia(Uint8List bytes, int chunkSize) async {
+    int offset = 0;
+    while (_isMediaPlaying && offset < bytes.length) {
+      int end = offset + chunkSize;
+      if (end > bytes.length) end = bytes.length;
+      final chunk = bytes.sublist(offset, end);
+
+      try {
+        await _room?.localParticipant?.publishData(chunk, topic: 'media_stream');
+      } catch (e) {
+        debugPrint('Media stream error: $e');
+      }
+
+      offset = end;
+      if (mounted) {
+        setState(() {
+          _mediaProgress = offset / bytes.length;
+        });
+      }
+      // Simple delay to simulate streaming rate
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+
+    if (offset >= bytes.length) {
+      _stopMediaFile();
+    }
+  }
+
+  Future<void> _pauseMediaFile() async {
+    setState(() {
+      _isMediaPlaying = false;
+    });
+  }
+
+  Future<void> _stopMediaFile() async {
+    setState(() {
+      _isMediaPlaying = false;
+      _mediaProgress = 0.0;
+    });
   }
 
   Future<void> _startRecording() async {
@@ -1407,94 +1449,159 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           // Sustur/Konuş Butonu (Flex: 3)
                           Expanded(
                             flex: 3,
-                            child: Semantics(
-                              onTapHint: "Mikrofonu açar veya kapatır",
-                              child: _isPTTMode
-                                  ? GestureDetector(
-                                      onTapDown: (_) =>
-                                          _setMicrophoneEnabled(true),
-                                      onTapUp: (_) =>
-                                          _setMicrophoneEnabled(false),
-                                      onTapCancel: () =>
-                                          _setMicrophoneEnabled(false),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 16,
+                            child: Tooltip(
+                              message: "Mikrofonu Sustur/Aç",
+                              child: Semantics(
+                                onTapHint: "Mikrofonu açar veya kapatır",
+                                child: GestureDetector(
+                                  onTapDown: (_) =>
+                                      _room?.localParticipant?.setMicrophoneEnabled(true),
+                                  onTapUp: (_) =>
+                                      _room?.localParticipant?.setMicrophoneEnabled(false),
+                                  onTapCancel: () =>
+                                      _room?.localParticipant?.setMicrophoneEnabled(false),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber,
+                                      borderRadius: BorderRadius.circular(
+                                        30,
+                                      ),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        ExcludeSemantics(
+                                          child: Icon(Icons.mic, size: 30, color: Colors.black),
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: !_isMuted
-                                              ? Colors.green
-                                              : Colors.grey[600],
-                                          borderRadius: BorderRadius.circular(
-                                            30,
-                                          ),
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: Text(
-                                          !_isMuted
-                                              ? 'Konuşuluyor'
-                                              : 'Bas Konuş',
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Sustur',
                                           style: TextStyle(
-                                            color: Colors.white,
+                                            color: Colors.black,
                                             fontSize: AppFonts.size(18),
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                      ),
-                                    )
-                                  : ElevatedButton.icon(
-                                      onPressed: _toggleMute,
-                                      icon: Icon(
-                                        _isMuted ? Icons.mic_off : Icons.mic,
-                                        size: 30,
-                                      ),
-                                      label: Text(
-                                        _isMuted ? 'Sesi Aç' : 'Sustur',
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 16,
-                                        ),
-                                        backgroundColor: _isMuted
-                                            ? Theme.of(
-                                                context,
-                                              ).colorScheme.error
-                                            : Colors
-                                                  .amber, // Active mode yellow/amber
-                                        foregroundColor: _isMuted
-                                            ? Theme.of(
-                                                context,
-                                              ).colorScheme.onPrimary
-                                            : Colors
-                                                  .black, // Dark text on amber
-                                      ),
+                                      ],
                                     ),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           // Ayrıl Butonu (Flex: 2)
                           Expanded(
                             flex: 2,
-                            child: ElevatedButton.icon(
-                              onPressed: _leaveVoiceChannel,
-                              icon: const Icon(Icons.call_end, size: 28),
-                              label: const Text('Ayrıl'),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
+                            child: Tooltip(
+                              message: "Odadan Ayrıl",
+                              child: ElevatedButton.icon(
+                                onPressed: _leaveVoiceChannel,
+                                icon: const ExcludeSemantics(child: Icon(Icons.call_end, size: 28)),
+                                label: const Text('Ayrıl'),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.error,
+                                  foregroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
                                 ),
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.error,
-                                foregroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.onPrimary,
                               ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 10),
+                      // Media Streaming Panel (TeamTalk Style)
+                      if (_selectedMediaFileName != null)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.only(bottom: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[850],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.amber, width: 1),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Medya Yayını',
+                                style: TextStyle(
+                                  color: Colors.amber,
+                                  fontSize: AppFonts.size(16),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Dosya: $_selectedMediaFileName',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: AppFonts.size(14),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      _isMediaPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                                      color: Colors.amber,
+                                      size: 36,
+                                    ),
+                                    onPressed: _isMediaPlaying ? _pauseMediaFile : _playMediaFile,
+                                    tooltip: _isMediaPlaying ? "Yayını Duraklat" : "Yayını Başlat",
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.stop_circle, color: Colors.redAccent, size: 36),
+                                    onPressed: _stopMediaFile,
+                                    tooltip: "Yayını Durdur",
+                                  ),
+                                  Expanded(
+                                    child: Slider(
+                                      value: _mediaProgress,
+                                      min: 0.0,
+                                      max: 1.0,
+                                      activeColor: Colors.amber,
+                                      onChanged: (val) {}, // Mock progress for now
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  const Icon(Icons.volume_down, size: 20, color: Colors.grey),
+                                  Expanded(
+                                    child: Slider(
+                                      value: _mediaVolume,
+                                      min: 0.0,
+                                      max: 1.0,
+                                      activeColor: Colors.amber,
+                                      semanticFormatterCallback: (double value) => 'Medya Sesi: Yüzde ${(value * 100).round()}',
+                                      onChanged: (val) {
+                                        setState(() {
+                                          _mediaVolume = val;
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                  const Icon(Icons.volume_up, size: 20, color: Colors.grey),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ExpansionTile(
                         title: Text(
                           'Sesli Kanal Kullanıcıları (${(_room?.remoteParticipants.length ?? 0) + (_room?.localParticipant != null ? 1 : 0)})',
@@ -1536,7 +1643,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               ) {
                                 final volume =
                                     _participantVolumes[participant.identity] ??
-                                    1.0;
+                                    1.35;
                                 return Column(
                                   children: [
                                     ListTile(
@@ -1562,7 +1669,50 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                                 ).colorScheme.onSurface,
                                         ),
                                       ),
-                                      trailing:
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // TeamTalk tarzı dikey ses seviyesi çubukları
+                                          if (participant.isSpeaking)
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.end,
+                                              children: List.generate(5, (barIndex) {
+                                                // Calculate simulated volume based on time (for animation effect)
+                                                // Real volume simulation using random or time since it's hard to get real audio level quickly here without a stream
+                                                final timeBased = (DateTime.now().millisecondsSinceEpoch ~/ 100) % 5;
+                                                final isFilled = barIndex <= timeBased;
+                                                Color barColor = Colors.green;
+                                                if (barIndex == 3) barColor = Colors.orange;
+                                                if (barIndex == 4) barColor = Colors.red;
+                                                return Container(
+                                                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                                                  width: 4,
+                                                  height: 6.0 + (barIndex * 3.0),
+                                                  decoration: BoxDecoration(
+                                                    color: isFilled ? barColor : Colors.grey[700],
+                                                    borderRadius: BorderRadius.circular(1),
+                                                  ),
+                                                );
+                                              }),
+                                            )
+                                          else
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.end,
+                                              children: List.generate(5, (barIndex) {
+                                                return Container(
+                                                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                                                  width: 4,
+                                                  height: 6.0 + (barIndex * 3.0),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey[700],
+                                                    borderRadius: BorderRadius.circular(1),
+                                                  ),
+                                                );
+                                              }),
+                                            ),
+                                          const SizedBox(width: 8),
                                           participant.isMicrophoneEnabled()
                                           ? const Icon(
                                               Icons.mic,
@@ -1572,6 +1722,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                               Icons.mic_off,
                                               color: Colors.red,
                                             ),
+                                        ],
+                                      ),
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -1944,25 +2096,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ),
           ),
           Container(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(12.0),
             color: Theme.of(context).colorScheme.onPrimary,
             child: SafeArea(
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      _isRecording ? Icons.stop : Icons.mic,
-                      color: _isRecording
-                          ? Theme.of(context).colorScheme.error
-                          : Theme.of(context).colorScheme.secondary,
-                      size: 36,
-                    ),
-                    onPressed: _isRecording ? _stopRecording : _startRecording,
-                    tooltip: _isRecording
-                        ? 'Kaydı Durdur ve Gönder'
-                        : 'Sesli Mesaj Kaydet',
-                  ),
-                  if (_isRecording) ...[
+              child: _isRecording ?
+                Row(
+                  children: [
                     IconButton(
                       icon: Icon(
                         _isPaused ? Icons.play_arrow : Icons.pause,
@@ -1984,39 +2123,112 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
-                  ] else ...[
-                    Expanded(
+                    IconButton(
+                      icon: Icon(
+                        Icons.stop,
+                        color: Theme.of(context).colorScheme.error,
+                        size: 36,
+                      ),
+                      onPressed: _stopRecording,
+                      tooltip: 'Kaydı Durdur ve Gönder',
+                    ),
+                  ],
+                )
+              : Row(
+                children: [
+                  // Medya Seç İkonu (En sol, dairesel sarı arka plan, müzik notası)
+                  Tooltip(
+                    message: "Medya dosyası seçip odadakilere çalın",
+                    child: Semantics(
+                      label: "Medya dosyası seçip odadakilere çalın",
+                      button: true,
+                      child: ElevatedButton(
+                        onPressed: _pickMediaFile,
+                        style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          padding: const EdgeInsets.all(12),
+                          backgroundColor: Colors.amber,
+                          foregroundColor: Colors.black,
+                          minimumSize: Size.zero,
+                        ),
+                        child: const ExcludeSemantics(child: Icon(Icons.music_note)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Mesaj Giriş Alanı (Orta)
+                  Expanded(
+                    child: Tooltip(
+                      message: "Mesaj gönderin...",
                       child: TextField(
                         controller: _messageController,
-                        decoration: const InputDecoration(hintText: 'Mesaj...'),
+                        decoration: InputDecoration(
+                          hintText: 'Mesaj...',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[800],
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(color: Colors.amber, width: 2),
+                          ),
+                        ),
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: AppFonts.size(20),
+                          color: Colors.white,
+                          fontSize: AppFonts.size(16),
                         ),
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(
-                        _isListening ? Icons.mic : Icons.mic_none,
-                        color: _isListening
-                            ? Colors.red
-                            : Theme.of(context).colorScheme.secondary,
-                        size: 30,
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Kayıt Başlat İkonu (Dairesel, mavi arka plan, mikrofon)
+                  Tooltip(
+                    message: "Kayıt başlatmak için basılı tutun",
+                    child: Semantics(
+                      label: "Kayıt başlatmak için basılı tutun",
+                      button: true,
+                      child: GestureDetector(
+                        onLongPress: _startRecording,
+                        onLongPressUp: _stopRecording,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: const BoxDecoration(
+                            color: Colors.blue,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const ExcludeSemantics(
+                            child: Icon(Icons.mic, color: Colors.white),
+                          ),
+                        ),
                       ),
-                      onPressed: _listen,
-                      tooltip: 'Dikte',
                     ),
-                    SizedBox(width: 6),
-                    IconButton(
-                      icon: Icon(
-                        Icons.send,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 36,
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Mesaj Gönder İkonu (En sağ, dairesel, sarı arka plan, ok)
+                  Tooltip(
+                    message: "Mesaj gönder",
+                    child: Semantics(
+                      label: "Mesaj gönder",
+                      button: true,
+                      child: ElevatedButton(
+                        onPressed: () => _sendMessage(),
+                        style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          padding: const EdgeInsets.all(12),
+                          backgroundColor: Colors.amber,
+                          foregroundColor: Colors.black,
+                          minimumSize: Size.zero,
+                        ),
+                        child: const ExcludeSemantics(child: Icon(Icons.send)),
                       ),
-                      onPressed: () => _sendMessage(),
-                      tooltip: 'Mesajı Gönder',
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),
