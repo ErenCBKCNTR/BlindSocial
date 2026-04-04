@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:blind_social/theme/app_fonts.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:blind_social/widgets/custom_bottom_sheet.dart';
@@ -57,6 +58,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   bool _isRecording = false;
   bool _isPaused = false;
   int _recordDuration = 0;
+
+  final List<int> _receivedMediaBytes = [];
   Timer? _recordTimer;
 
   Room? _room;
@@ -364,6 +367,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       noiseSuppression: _noiseSuppression,
       autoGainControl: _autoGain,
     );
+
+    // According to memory: "To dynamically apply changes to audio filters like echo cancellation,
+    // noise suppression, or gain in LiveKit, pass an updated AudioCaptureOptions object directly
+    // to localParticipant.setMicrophoneEnabled(enabled, audioCaptureOptions: ...)".
+    // If the mic is ALREADY enabled and we are just updating settings, we might need to
+    // disable and re-enable it quickly to force the hardware parameters to apply.
+    if (_room!.localParticipant!.isMicrophoneEnabled() && enabled) {
+      await _room!.localParticipant!.setMicrophoneEnabled(false);
+    }
 
     await _room!.localParticipant!.setMicrophoneEnabled(
       enabled,
@@ -732,6 +744,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       _isMediaPlaying = false;
       _mediaProgress = 0.0;
     });
+    await _audioPlayer.stop();
+    await _room?.localParticipant?.publishData(utf8.encode('media_stream_stop'), topic: 'media_control');
+  }
+
+  Future<void> _playReceivedMedia() async {
+    if (_receivedMediaBytes.isEmpty) return;
+    try {
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/received_media_${DateTime.now().millisecondsSinceEpoch}.m4a');
+      await file.writeAsBytes(_receivedMediaBytes);
+      await _audioPlayer.play(DeviceFileSource(file.path));
+    } catch (e) {
+      debugPrint('Error playing received media: $e');
+    }
   }
 
   Future<void> _startRecording() async {
