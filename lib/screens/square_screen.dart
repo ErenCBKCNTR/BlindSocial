@@ -412,6 +412,7 @@ class _SquareScreenState extends State<SquareScreen> {
           child: StatefulBuilder(
             builder: (context, setStateDialog) {
               return AlertDialog(
+                semanticLabel: 'Blind Social gönderisi oluşturma penceresi',
                 backgroundColor: Colors.black,
                 title: const Text(
                   'Yeni Gönderi',
@@ -441,10 +442,13 @@ class _SquareScreenState extends State<SquareScreen> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         IconButton(
-                          icon: Icon(
-                            _isListening ? Icons.mic : Icons.mic_none,
-                            color: _isListening ? Colors.red : Colors.yellow,
-                            size: 32,
+                          tooltip: 'sesle yazma dikte',
+                          icon: ExcludeSemantics(
+                            child: Icon(
+                              _isListening ? Icons.mic : Icons.mic_none,
+                              color: _isListening ? Colors.red : Colors.yellow,
+                              size: 32,
+                            ),
                           ),
                           onPressed: () async {
                             if (!_isListening) {
