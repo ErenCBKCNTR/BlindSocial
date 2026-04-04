@@ -73,6 +73,11 @@
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
 
+        <service
+            android:name="com.livekit.foregroundservice.LiveKitForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
         <receiver android:name="com.ryanheise.audioservice.MediaButtonReceiver"
             android:exported="true" tools:ignore="Instantiatable">
           <intent-filter>

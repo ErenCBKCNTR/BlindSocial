@@ -709,16 +709,29 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         if (Platform.isAndroid) {
           final hasPermissions = await FlutterBackground.hasPermissions;
           if (!hasPermissions) {
-             // Foreground Service izni
+            debugPrint('Uyarı: Arka plan çalışma izni yok. Devam ediliyor ancak çökme yaşanabilir.');
           }
           if (!await FlutterBackground.isBackgroundExecutionEnabled) {
             await FlutterBackground.initialize(androidConfig: const FlutterBackgroundAndroidConfig(
               notificationTitle: "Sistem Sesi Paylaşımı",
               notificationText: "Blind Social arka planda sistem sesini odaya aktarıyor.",
               notificationImportance: AndroidNotificationImportance.normal,
+              enableWifiLock: true,
             ));
-            await FlutterBackground.enableBackgroundExecution();
+            final enabled = await FlutterBackground.enableBackgroundExecution();
+            if (!enabled) {
+              debugPrint('Hata: Foreground service başlatılamadı!');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Hata: Arka plan servisi başlatılamadı.')),
+                );
+              }
+              return;
+            }
           }
+          // Foreground Service'in aktifleşmesi için kısa bir bekleme süresi tanıyoruz
+          // 'ForegroundServiceDidNotStartInTimeException' hatasını engellemek için.
+          await Future.delayed(const Duration(milliseconds: 500));
         }
 
         // Sadece sesi alacak şekilde başlat (veya sistem destekliyorsa video ile birlikte)
