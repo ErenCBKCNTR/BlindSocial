@@ -40,6 +40,7 @@ Bugüne kadar projemizde kodlanıp bitirilen temel özellikler şunlardır:
 - Sesli Odalarda oynatılan veya paylaşılan medya dosyaları için `_audioPlayer.onPositionChanged` kullanılarak gerçek zamanlı ve doğru süre hesaplamasının yapılması, oynatım bittiğinde kilitlenen mikrofonun `_setMicrophoneEnabled(true)` ile otomatik olarak tekrar açılmasının (Track Conflict) çözülmesi.
 - Adım 1 (Bas-Konuş/PTT Butonu Düzeltmesi): Kullanıcı Bas-Konuş modundayken "Konuş" butonundaki Tooltip'in kaldırılarak `onTapDown` (basılı tut) eyleminin `GestureDetector` tarafından güvenli şekilde algılanıp mikrofonu sorunsuz yönetmesinin sağlanması (Semantics yapısı korunarak).
 - Adım 2 (Alt Bar Yerleşim Sırası): Alt mesajlaşma alanındaki (bottom bar) ses kaydı ve mesaj gönderme butonlarının yerleri değiştirildi (Semantics yapısı korunarak Ses Kaydı Gönder butonu en sağa alındı).
+- Adım 1 (Mikrofon Donanım Restart Mantığı): Sesli Odalar ekranında Eko İptali, Gürültü Bastırma veya Ses Kazancı ayarları değiştirildiğinde `AudioCaptureOptions`'ın dinamik uygulanabilmesi için mevcut LiveKit mikrofon track'inin durdurulup yeni seçeneklerle yeniden başlatılması sağlandı. Atıl ve bozuk MP3 stream (loopback) kodları kaldırıldı.
 
 ## Üzerinde Çalışılan Görev
 **Arayüz hataları giderildi, yeni talimat bekleniyor.**
