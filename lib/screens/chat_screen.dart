@@ -76,8 +76,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   bool _isListening = false;
   bool _isSending = false;
 
+  // Sistem Sesi Paylaşım Durumu
+  bool _isScreenSharing = false;
 
-  // Media Streaming State
+  // Medya Akışı Durumu (Kullanılmayan değişkenler güvenlik amacıyla tutuluyor)
   String? _selectedMediaFileName;
   String? _selectedMediaFilePath; // Required for reading file
   bool _isMediaPlaying = false;
@@ -673,6 +675,53 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
 
+
+  Future<void> _toggleScreenShare() async {
+    if (_room?.localParticipant == null) return;
+
+    try {
+      if (_isScreenSharing) {
+        await _room!.localParticipant!.setScreenShareEnabled(false);
+        setState(() {
+          _isScreenSharing = false;
+        });
+        if (mounted) {
+          SemanticsService.announce('Sistem sesi paylaşımı durduruldu', Directionality.of(context));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Sistem sesi paylaşımı durduruldu.')),
+          );
+        }
+      } else {
+        // Sadece sesi alacak şekilde başlat (veya sistem destekliyorsa video ile birlikte)
+        final options = const ScreenShareCaptureOptions(
+          captureScreenAudio: true,
+        );
+        await _room!.localParticipant!.setScreenShareEnabled(
+          true,
+          screenShareCaptureOptions: options,
+        );
+        setState(() {
+          _isScreenSharing = true;
+        });
+        if (mounted) {
+          SemanticsService.announce('Sistem sesi paylaşımı başlatıldı', Directionality.of(context));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Sistem sesi paylaşımı başlatıldı.')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Screen share error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sistem sesi paylaşımı başlatılamadı. İzin reddedilmiş olabilir.')),
+        );
+      }
+      setState(() {
+        _isScreenSharing = false;
+      });
+    }
+  }
 
   Future<void> _playReceivedMedia() async {
     if (_receivedMediaBytes.isEmpty) return;
@@ -1309,6 +1358,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(
+              _isScreenSharing ? Icons.screen_share : Icons.stop_screen_share,
+              color: _isScreenSharing ? Colors.green : null,
+              size: 30,
+            ),
+            onPressed: _toggleScreenShare,
+            tooltip: _isScreenSharing ? 'Sistem Sesini Kapat' : 'Sistem Sesini Paylaş',
+          ),
           IconButton(
             icon: Icon(Icons.info_outline, size: 30),
             onPressed: _showRoomDescription,

@@ -41,9 +41,10 @@ Bugüne kadar projemizde kodlanıp bitirilen temel özellikler şunlardır:
 - Adım 1 (Bas-Konuş/PTT Butonu Düzeltmesi): Kullanıcı Bas-Konuş modundayken "Konuş" butonundaki Tooltip'in kaldırılarak `onTapDown` (basılı tut) eyleminin `GestureDetector` tarafından güvenli şekilde algılanıp mikrofonu sorunsuz yönetmesinin sağlanması (Semantics yapısı korunarak).
 - Adım 2 (Alt Bar Yerleşim Sırası): Alt mesajlaşma alanındaki (bottom bar) ses kaydı ve mesaj gönderme butonlarının yerleri değiştirildi (Semantics yapısı korunarak Ses Kaydı Gönder butonu en sağa alındı).
 - Adım 1 (Mikrofon Donanım Restart Mantığı): Sesli Odalar ekranında Eko İptali, Gürültü Bastırma veya Ses Kazancı ayarları değiştirildiğinde `AudioCaptureOptions`'ın dinamik uygulanabilmesi için mevcut LiveKit mikrofon track'inin durdurulup yeni seçeneklerle yeniden başlatılması sağlandı. Atıl ve bozuk MP3 stream (loopback) kodları kaldırıldı.
+- Adım 1 (Sistem Sesi Paylaşım Altyapısı): Sesli Odalarda medya yayını için eski just_audio tabanlı loopback kodları tamamen temizlenerek yerine LiveKit `ScreenShareCaptureOptions` (`captureScreenAudio: true`) kullanılarak sistem sesini paylaşma özelliği entegre edildi.
 
 ## Üzerinde Çalışılan Görev
-**Arayüz hataları giderildi, yeni talimat bekleniyor.**
+**Sistem sesi paylaşımı altyapısının test edilmesi**
 
 ## ⚠️ TEMEL KURAL (GROUND RULE)
 Bundan sonraki **her** yeni özellik eklemesinde, büyük kod değişikliklerinde veya yeni dosya oluşturulmasında bu iki dosya (`STRUCTURE.md` ve `MEMORY.md`) mutlaka güncellenmelidir. **Bu dosyalar güncellenmeden Pull Request (PR) gönderilmeyecektir.** Herhangi bir asistan bu kuralı kati suretle uygulamalıdır.
