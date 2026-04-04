@@ -68,11 +68,8 @@
         </service>
 
         <!-- LiveKit Foreground Service for Screen Sharing -->
-        <service
-            android:name="de.julianassmann.flutter_background.BackgroundService"
-            android:exported="false"
-            android:foregroundServiceType="mediaProjection" />
-
+        <!-- Note: We rely entirely on flutter_webrtc / livekit internal services for mediaProjection
+             to prevent duplicate service initialization crashes. -->
         <service
             android:name="com.livekit.foregroundservice.LiveKitForegroundService"
             android:exported="false"

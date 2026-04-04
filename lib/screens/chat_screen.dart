@@ -18,7 +18,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_background/flutter_background.dart';
 
 const String liveKitUrl = 'wss://bs-app-l1mgfyed.livekit.cloud';
 
@@ -202,18 +201,26 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         });
       }
 
-      transaction.update(roomRef, {
-        'currentParticipants': FieldValue.increment(1),
-      });
-
+      // First check if the participant already exists so we don't increment multiple times
       final participantRef = roomRef.collection('participants').doc(user.uid);
+      final participantSnap = await transaction.get(participantRef);
 
-      transaction.set(participantRef, {
-        'uid': user.uid,
-        'displayName': displayName,
-        'joinedAt': FieldValue.serverTimestamp(),
-        'lastSeen': FieldValue.serverTimestamp(),
-      });
+      if (!participantSnap.exists) {
+        transaction.update(roomRef, {
+          'currentParticipants': FieldValue.increment(1),
+        });
+
+        transaction.set(participantRef, {
+          'uid': user.uid,
+          'displayName': displayName,
+          'joinedAt': FieldValue.serverTimestamp(),
+          'lastSeen': FieldValue.serverTimestamp(),
+        });
+      } else {
+        transaction.update(participantRef, {
+          'lastSeen': FieldValue.serverTimestamp(),
+        });
+      }
     });
   }
 
@@ -687,13 +694,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       if (_isScreenSharing) {
         debugPrint('Sistem Sesi Paylaşımı Kapatılıyor...');
         await _room!.localParticipant!.setScreenShareEnabled(false);
-        if (Platform.isAndroid) {
-          try {
-             await FlutterBackground.disableBackgroundExecution();
-          } catch(e) {
-             debugPrint('Foreground service kapatılamadı: $e');
-          }
-        }
         setState(() {
           _isScreenSharing = false;
         });
@@ -706,35 +706,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       } else {
         debugPrint('Sistem Sesi Paylaşımı Başlatılıyor...');
 
-        if (Platform.isAndroid) {
-          final hasPermissions = await FlutterBackground.hasPermissions;
-          if (!hasPermissions) {
-            debugPrint('Uyarı: Arka plan çalışma izni yok. Devam ediliyor ancak çökme yaşanabilir.');
-          }
-          if (!await FlutterBackground.isBackgroundExecutionEnabled) {
-            await FlutterBackground.initialize(androidConfig: const FlutterBackgroundAndroidConfig(
-              notificationTitle: "Sistem Sesi Paylaşımı",
-              notificationText: "Blind Social arka planda sistem sesini odaya aktarıyor.",
-              notificationImportance: AndroidNotificationImportance.normal,
-              enableWifiLock: true,
-            ));
-            final enabled = await FlutterBackground.enableBackgroundExecution();
-            if (!enabled) {
-              debugPrint('Hata: Foreground service başlatılamadı!');
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Hata: Arka plan servisi başlatılamadı.')),
-                );
-              }
-              return;
-            }
-          }
-          // Foreground Service'in aktifleşmesi için kısa bir bekleme süresi tanıyoruz
-          // 'ForegroundServiceDidNotStartInTimeException' hatasını engellemek için.
-          await Future.delayed(const Duration(milliseconds: 500));
-        }
-
         // Sadece sesi alacak şekilde başlat (veya sistem destekliyorsa video ile birlikte)
+        // LiveKit Android 14 mediaProjection işlemlerini kendi SDK'sı içerisindeki servisle çözer,
+        // manuel bir flutter_background tetiklemesi SDK çakışmasına neden olur.
         final options = const ScreenShareCaptureOptions(
           captureScreenAudio: true,
         );
@@ -762,11 +736,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() {
         _isScreenSharing = false;
       });
-      if (Platform.isAndroid) {
-          try {
-             await FlutterBackground.disableBackgroundExecution();
-          } catch(_) {}
-      }
     }
   }
 

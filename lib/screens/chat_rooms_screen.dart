@@ -1305,8 +1305,12 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                                 ],
                               ),
                               onTap: () async {
+                                // Kapasiteyi StreamBuilder dışında onTap anında Firestore'dan anlık sorgulayarak kontrol et
+                                final participantSnapshot = await room.reference.collection('participants').get();
+                                final realTimeParticipantsOnTap = participantSnapshot.docs.length;
+
                                 // Check capacity
-                                if (currentParticipants >= maxCapacity) {
+                                if (realTimeParticipantsOnTap >= maxCapacity && roomData['creatorId'] != _auth.currentUser?.uid) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
