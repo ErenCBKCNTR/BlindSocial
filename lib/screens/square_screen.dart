@@ -510,11 +510,12 @@ class _SquareScreenState extends State<SquareScreen> {
                             }
                           },
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-                actions: [
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
                   Semantics(
                     button: true,
                     child: TextButton(
@@ -659,9 +660,9 @@ class _SquareScreenState extends State<SquareScreen> {
                                         ? 'Gönderiyi beğen. Bu gönderiyi $likeCount kişi beğendi.'
                                         : 'Gönderiyi beğen',
                                     button: true,
-                                    child: IconButton(
-                                      icon: ExcludeSemantics(
-                                        child: Icon(
+                                    child: ExcludeSemantics(
+                                      child: IconButton(
+                                        icon: Icon(
                                           isLiked
                                               ? Icons.favorite
                                               : Icons.favorite_border,
@@ -669,9 +670,9 @@ class _SquareScreenState extends State<SquareScreen> {
                                               ? Colors.red
                                               : Colors.grey,
                                         ),
+                                        onPressed: () =>
+                                            _toggleLike(doc.id, likes),
                                       ),
-                                      onPressed: () =>
-                                          _toggleLike(doc.id, likes),
                                     ),
                                   ),
                                   ExcludeSemantics(
@@ -693,27 +694,24 @@ class _SquareScreenState extends State<SquareScreen> {
                                           ? '$commentCount yorum. Yorumlara git.'
                                           : 'Yorumlar',
                                       button: true,
-                                      child: IconButton(
-                                        icon: const ExcludeSemantics(
-                                          child: Icon(
+                                      child: ExcludeSemantics(
+                                        child: IconButton(
+                                          icon: const Icon(
                                             Icons.comment,
                                             color: Colors.grey,
                                           ),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    PostCommentsScreen(
+                                                      postId: doc.id,
+                                                    ),
+                                              ),
+                                            );
+                                          },
                                         ),
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  PostCommentsScreen(
-                                                    postId: doc.id,
-                                                  ),
-                                            ),
-                                          );
-                                        },
-                                        tooltip: commentCount > 0
-                                            ? '$commentCount yorum. Yorumlara git.'
-                                            : 'Yorumlar',
                                       ),
                                     ),
                                   ],
@@ -724,29 +722,29 @@ class _SquareScreenState extends State<SquareScreen> {
                                       Semantics(
                                         label: 'Düzenle',
                                         button: true,
-                                        child: IconButton(
-                                          icon: const ExcludeSemantics(
-                                            child: Icon(
+                                        child: ExcludeSemantics(
+                                          child: IconButton(
+                                            icon: const Icon(
                                               Icons.edit,
                                               color: Colors.blue,
                                             ),
+                                            onPressed: () =>
+                                                _editPost(doc.id, content),
                                           ),
-                                          onPressed: () =>
-                                              _editPost(doc.id, content),
                                         ),
                                       ),
                                   if (currentUserUid == authorId || _userRole == 1)
                                     Semantics(
                                       label: 'Sil',
                                       button: true,
-                                      child: IconButton(
-                                        icon: const ExcludeSemantics(
-                                          child: Icon(
+                                      child: ExcludeSemantics(
+                                        child: IconButton(
+                                          icon: const Icon(
                                             Icons.delete,
                                             color: Colors.red,
                                           ),
+                                          onPressed: () => _deletePost(doc.id),
                                         ),
-                                        onPressed: () => _deletePost(doc.id),
                                       ),
                                     ),
                                   ],
@@ -755,15 +753,15 @@ class _SquareScreenState extends State<SquareScreen> {
                                     Semantics(
                                       label: 'Şikayet Et',
                                       button: true,
-                                      child: IconButton(
-                                        icon: const ExcludeSemantics(
-                                          child: Icon(
+                                      child: ExcludeSemantics(
+                                        child: IconButton(
+                                          icon: const Icon(
                                             Icons.report,
                                             color: Colors.grey,
                                           ),
+                                          onPressed: () =>
+                                              _reportPost(doc.id, reportedBy),
                                         ),
-                                        onPressed: () =>
-                                            _reportPost(doc.id, reportedBy),
                                       ),
                                     ),
                                   ],
