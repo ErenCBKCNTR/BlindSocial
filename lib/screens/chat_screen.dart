@@ -78,9 +78,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   bool _isListening = false;
   bool _isSending = false;
 
-  // Sistem Sesi Paylaşım Durumu
-  bool _isScreenSharing = false;
-
   // Medya Akışı Durumu (Kullanılmayan değişkenler güvenlik amacıyla tutuluyor)
   String? _selectedMediaFileName;
   String? _selectedMediaFilePath; // Required for reading file
@@ -699,97 +696,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
 
 
-  static const MethodChannel _nativeChannel = MethodChannel('com.blindsocial.app/foreground');
-
-  Future<void> _toggleScreenShare() async {
-    if (_room?.localParticipant == null) return;
-
-    try {
-      if (_isScreenSharing) {
-        debugPrint('Sistem Sesi Paylaşımı Kapatılıyor...');
-        await _room!.localParticipant!.setScreenShareEnabled(false);
-
-        if (Platform.isAndroid) {
-          try {
-            await _nativeChannel.invokeMethod('stopNativeService');
-          } catch (_) {}
-        }
-
-        setState(() {
-          _isScreenSharing = false;
-        });
-        if (mounted) {
-          SemanticsService.announce('Sistem sesi paylaşımı durduruldu', Directionality.of(context));
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sistem sesi paylaşımı durduruldu.')),
-          );
-        }
-      } else {
-        debugPrint('Sistem Sesi Paylaşımı Başlatılıyor...');
-
-        // Android 14+ cihazlarda MediaProjection'ın anında (SecurityException ile)
-        // çökmesini engellemek için, ekran izin penceresi açılmadan ve LiveKit
-        // paylaşımı başlatmadan hemen önce SAF KOTLIN servisimizle kalıcı (ongoing)
-        // bir bildirim (foreground service) ayağa kaldırıyoruz.
-        if (Platform.isAndroid) {
-           // 1. Android 13+ için bildirim iznini (POST_NOTIFICATIONS) runtime'da KESİN almalıyız,
-           // aksi halde `startForeground` anında çöker.
-           final status = await Permission.notification.request();
-           if (status.isDenied || status.isPermanentlyDenied) {
-             if (mounted) {
-               ScaffoldMessenger.of(context).showSnackBar(
-                 const SnackBar(content: Text('Sistem Sesi paylaşımı için bildirim izni zorunludur.')),
-               );
-             }
-             return;
-           }
-
-           try {
-             await _nativeChannel.invokeMethod('startNativeService');
-             // OS'in servisi tam olarak başlatması için çok kısa bir delay
-             await Future.delayed(const Duration(milliseconds: 300));
-           } catch (e) {
-             debugPrint('Native servis başlatılamadı: $e');
-             LocalErrorLogger.logError('Native Service Error', e.toString());
-           }
-        }
-
-        final options = const ScreenShareCaptureOptions(captureScreenAudio: true);
-        await _room!.localParticipant!.setScreenShareEnabled(true, screenShareCaptureOptions: options);
-
-        setState(() {
-          _isScreenSharing = true;
-        });
-        if (mounted) {
-          SemanticsService.announce('Sistem sesi paylaşımı başlatıldı', Directionality.of(context));
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sistem sesi paylaşımı başlatıldı.')),
-          );
-        }
-      }
-    } catch (e, stackTrace) {
-      if (Platform.isAndroid) {
-        try {
-          await _nativeChannel.invokeMethod('stopNativeService');
-        } catch (_) {}
-      }
-      debugPrint('Sistem Sesi Paylaşım Hatası: $e\n$stackTrace');
-      // Not: Eğer Android uygulamanız izin/Foreground Service eksikliği yüzünden anında çöküyorsa (SecurityException),
-      // bu Native (Java/Kotlin) bir Exception'dır. Native çökmeler Flutter'ın Dart motorunu komple öldürdüğü için
-      // FlutterError, PlatformDispatcher veya bu try-catch blokları çalışmaya fırsat bulamadan uygulama kapanır.
-      // Bu yüzden LocalErrorLogger bu tür hataları catch edip cihaz hafızasına YAZAMAZ.
-      // Tek çözüm, AndroidManifest.xml dosyasındaki Native servis tanımlamalarını eksiksiz yapmaktır.
-      LocalErrorLogger.logError('ScreenShare Dart Error', '$e\n$stackTrace');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sistem sesi paylaşımı başlatılamadı: Cihazınız desteklemiyor olabilir.')),
-        );
-      }
-      setState(() {
-        _isScreenSharing = false;
-      });
-    }
-  }
 
   Future<void> _playReceivedMedia() async {
     if (_receivedMediaBytes.isEmpty) return;
@@ -1436,23 +1342,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           ),
         ),
         actions: [
-          if (_isJoined) // Buton sadece odaya bağlanıldığında görünür olmalı
-            Semantics(
-              label: _isScreenSharing
-                  ? 'Sistem sesi paylaşılıyor. Yayını durdurmak için çift dokunun'
-                  : 'Sistem sesini odaya paylaş',
-              button: true,
-              child: IconButton(
-                icon: ExcludeSemantics(
-                  child: Icon(
-                    _isScreenSharing ? Icons.stop_screen_share : Icons.screen_share,
-                    color: _isScreenSharing ? Colors.red : null,
-                    size: 30,
-                  ),
-                ),
-                onPressed: _toggleScreenShare,
-              ),
-            ),
           IconButton(
             icon: Icon(Icons.info_outline, size: 30),
             onPressed: _showRoomDescription,
@@ -1523,8 +1412,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           // Ayarlar Butonu (Flex: 1)
                           Expanded(
                             flex: 1,
-                            child: Tooltip(
-                              message: "Mikrofon ayarları",
+                            child: Semantics(
+                              label: "Mikrofon Ayarları",
+                              button: true,
                               child: ElevatedButton(
                                 onPressed: _showMicrophoneSettingsModal,
                                 style: ElevatedButton.styleFrom(

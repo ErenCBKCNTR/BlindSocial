@@ -23,10 +23,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
 
-    <!-- Permissions for Screen Sharing / Media Projection -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
-
     <application
         android:label="Blind Social"
         android:name="${applicationName}"
@@ -67,20 +63,6 @@
             <action android:name="android.media.browse.MediaBrowserService" />
           </intent-filter>
         </service>
-
-        <!-- Foreground Service for Screen Sharing / Media Projection -->
-        <!-- Android 14+ requires an explicit foreground service declaration before initiating MediaProjection.
-             We use a custom native Kotlin service (.NativeScreenShareService) to properly
-             display the notification and satisfy OS constraints, alongside WebRTC's default service. -->
-        <service
-            android:name="com.cloudwebrtc.webrtc.record.ScreenCaptureService"
-            android:exported="false"
-            android:foregroundServiceType="mediaProjection" />
-
-        <service
-            android:name=".NativeScreenShareService"
-            android:exported="false"
-            android:foregroundServiceType="mediaProjection" />
 
         <receiver android:name="com.ryanheise.audioservice.MediaButtonReceiver"
             android:exported="true" tools:ignore="Instantiatable">
