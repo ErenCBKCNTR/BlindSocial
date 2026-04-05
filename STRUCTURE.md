@@ -31,6 +31,7 @@ Uygulamanın dış dünyayla olan bağlantılarını, iş mantığını ve arkap
 Uygulama genelinde tekrar kullanılabilir UI bileşenleri (widget'lar).
 - `custom_bottom_sheet.dart`: Tüm bottom sheet'lerin global ve tek tip görünmesi için kullanılan (isScrollControlled destekli) sarıcı widget.
 - `global_background_wrapper.dart` & `global_call_overlay.dart`: Canlı aramalar ve global arka plan dinlemeleri/bildirimleri için uygulamanın her yerinde üstte duran katmanlar.
+- `accessible_icon_button.dart`: Uygulama genelinde TalkBack/VoiceOver uyumlu (etiketsiz ve çift okuma hatalarından arındırılmış) dairesel ikon butonlar yaratmak için evrensel araç.
 
 #### 4. `lib/theme/`
 Görsel kimlik, tipografi ve tema yönetimi bileşenleri.

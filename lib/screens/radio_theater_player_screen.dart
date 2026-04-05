@@ -36,16 +36,21 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
     _initAudio();
   }
 
-  // Converts a standard Google Drive view link to a direct download link
+  // Converts a standard Google Drive view link to a direct streaming/download link
   // e.g., https://drive.google.com/file/d/FILE_ID/view?usp=sharing
-  // -> https://drive.google.com/uc?export=download&id=FILE_ID
   String _convertToDirectLink(String driveLink) {
+    // Drive linki olup olmadığını kontrol et
+    if (!driveLink.contains('drive.google.com')) return driveLink;
+
     // Linkin içinden ID kısmını ayıklar
     RegExp regExp = RegExp(r"id=([a-zA-Z0-9_-]+)|/d/([a-zA-Z0-9_-]+)");
     Match? match = regExp.firstMatch(driveLink);
 
     if (match != null) {
       String fileId = match.group(1) ?? match.group(2)!;
+      // Google Drive API proxy formatı modern audio player'lar için (redirect hatası vermemesi için) daha stabildir:
+      // u?export=download yerine uc?id=ID veya drive.google.com/uc?export=download&id=...
+      // Bazı paketler uc?export=download redirect limitlerine takılabilir. O yüzden:
       return "https://drive.google.com/uc?export=download&id=$fileId";
     }
     return driveLink;
@@ -120,7 +125,7 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = "Ses dosyası oynatılamadı. Lütfen Google Drive bağlantısının 'Herkese Açık' (Bağlantıya sahip olan herkes) olarak ayarlandığından emin olun.";
+          _errorMessage = "Ses dosyası oynatılamadı. (Hata: $e) Lütfen bağlantının kırık olmadığından emin olun veya tekrar deneyin.";
         });
       }
     }

@@ -271,7 +271,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // 4. Find and tap the record button
-    final recordButtonFinder = find.byTooltip('Kayıt başlatmak için basılı tutun');
+    // The tooltip was replaced by Semantics label during refactoring. We find it by Icon.
+    final recordButtonFinder = find.byIcon(Icons.mic);
     expect(recordButtonFinder, findsOneWidget);
 
     final gesture = await tester.startGesture(tester.getCenter(recordButtonFinder));
@@ -282,8 +283,8 @@ void main() {
     // 5. Verify the error handling
     // We expect the recording start to throw an error which should be caught.
     // As a result, _isRecording should still be false.
-    // The UI should still show "Kayıt başlatmak için basılı tutun"
-    expect(find.byTooltip('Kayıt başlatmak için basılı tutun'), findsOneWidget);
+    // The UI should still show the icon
+    expect(find.byIcon(Icons.mic), findsOneWidget);
 
     // We also shouldn't see the red recording duration text
     expect(find.textContaining('Kayıt Yapılıyor:'), findsNothing);
@@ -368,7 +369,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // 4. Find and tap the record button to START recording
-    final startRecordButton = find.byTooltip('Kayıt başlatmak için basılı tutun');
+    final startRecordButton = find.byIcon(Icons.mic);
     expect(startRecordButton, findsOneWidget);
 
     // We invoke the internal _uploadVoiceMessage by triggering the state change.

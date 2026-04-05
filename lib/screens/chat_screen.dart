@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:blind_social/widgets/custom_bottom_sheet.dart';
+import 'package:blind_social/widgets/accessible_icon_button.dart';
 import '../services/local_error_logger.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -1412,23 +1413,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           // Ayarlar Butonu (Flex: 1)
                           Expanded(
                             flex: 1,
-                            child: Semantics(
+                            child: AccessibleIconButton(
                               label: "Mikrofon Ayarları",
-                              button: true,
-                              child: ElevatedButton(
-                                onPressed: _showMicrophoneSettingsModal,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.grey[800],
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  shape: const CircleBorder(),
-                                ),
-                                child: const ExcludeSemantics(
-                                  child: Icon(Icons.settings, size: 28),
-                                ),
-                              ),
+                              onPressed: _showMicrophoneSettingsModal,
+                              icon: const Icon(Icons.settings, size: 28),
+                              backgroundColor: Colors.grey[800],
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -2055,32 +2044,22 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   const SizedBox(width: 8),
 
                   // Mesaj Gönder İkonu (Dairesel, sarı arka plan, ok)
-                  Tooltip(
-                    message: "Mesaj gönder",
-                    child: Semantics(
-                      label: "Mesaj gönder",
-                      button: true,
-                      child: ElevatedButton(
-                        onPressed: () => _sendMessage(),
-                        style: ElevatedButton.styleFrom(
-                          shape: const CircleBorder(),
-                          padding: const EdgeInsets.all(12),
-                          backgroundColor: Colors.amber,
-                          foregroundColor: Colors.black,
-                          minimumSize: Size.zero,
-                        ),
-                        child: const ExcludeSemantics(child: Icon(Icons.send)),
-                      ),
-                    ),
+                  AccessibleIconButton(
+                    label: "Mesaj gönder",
+                    onPressed: () => _sendMessage(),
+                    icon: const Icon(Icons.send),
+                    backgroundColor: Colors.amber,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.all(12),
                   ),
                   const SizedBox(width: 8),
 
                   // Kayıt Başlat İkonu (En sağ, dairesel, mavi arka plan, mikrofon)
-                  Tooltip(
-                    message: "Kayıt başlatmak için basılı tutun",
-                    child: Semantics(
-                      label: "Kayıt başlatmak için basılı tutun",
-                      button: true,
+                  Semantics(
+                    label: "Ses kaydı gönder",
+                    hint: "Kayıt başlatmak için çift dokunup basılı tutun, göndermek için bırakın.",
+                    button: true,
+                    child: ExcludeSemantics(
                       child: GestureDetector(
                         onLongPress: _startRecording,
                         onLongPressUp: _stopRecording,
@@ -2090,9 +2069,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             color: Colors.blue,
                             shape: BoxShape.circle,
                           ),
-                          child: const ExcludeSemantics(
-                            child: Icon(Icons.mic, color: Colors.white),
-                          ),
+                          child: const Icon(Icons.mic, color: Colors.white),
                         ),
                       ),
                     ),
