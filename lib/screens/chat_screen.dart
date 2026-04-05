@@ -698,6 +698,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
 
 
+  static const MethodChannel _nativeChannel = MethodChannel('com.blindsocial.app/foreground');
+
   Future<void> _toggleScreenShare() async {
     if (_room?.localParticipant == null) return;
 
@@ -705,6 +707,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       if (_isScreenSharing) {
         debugPrint('Sistem Sesi Paylaşımı Kapatılıyor...');
         await _room!.localParticipant!.setScreenShareEnabled(false);
+
+        if (Platform.isAndroid) {
+          try {
+            await _nativeChannel.invokeMethod('stopNativeService');
+          } catch (_) {}
+        }
+
         setState(() {
           _isScreenSharing = false;
         });
@@ -717,10 +726,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       } else {
         debugPrint('Sistem Sesi Paylaşımı Başlatılıyor...');
 
-        // System Audio / Screen share starts here. Android 14 requires a foreground service.
-        // We rely entirely on the native implementation provided by livekit_client / flutter_webrtc.
-        // We MUST ensure NO other competing foreground service plugins (like flutter_background)
-        // conflict with it, otherwise the app will crash instantly without entering this catch block.
+        // Android 14+ cihazlarda MediaProjection'ın anında (SecurityException ile)
+        // çökmesini engellemek için, ekran izin penceresi açılmadan ve LiveKit
+        // paylaşımı başlatmadan hemen önce SAF KOTLIN servisimizle kalıcı (ongoing)
+        // bir bildirim (foreground service) ayağa kaldırıyoruz.
+        if (Platform.isAndroid) {
+           try {
+             await _nativeChannel.invokeMethod('startNativeService');
+             // OS'in servisi tam olarak başlatması için çok kısa bir delay
+             await Future.delayed(const Duration(milliseconds: 300));
+           } catch (e) {
+             debugPrint('Native servis başlatılamadı: $e');
+             LocalErrorLogger.logError('Native Service Error', e.toString());
+           }
+        }
+
         final options = const ScreenShareCaptureOptions(captureScreenAudio: true);
         await _room!.localParticipant!.setScreenShareEnabled(true, screenShareCaptureOptions: options);
 
@@ -735,6 +755,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         }
       }
     } catch (e, stackTrace) {
+      if (Platform.isAndroid) {
+        try {
+          await _nativeChannel.invokeMethod('stopNativeService');
+        } catch (_) {}
+      }
       debugPrint('Sistem Sesi Paylaşım Hatası: $e\n$stackTrace');
       // Not: Eğer Android uygulamanız izin/Foreground Service eksikliği yüzünden anında çöküyorsa (SecurityException),
       // bu Native (Java/Kotlin) bir Exception'dır. Native çökmeler Flutter'ın Dart motorunu komple öldürdüğü için

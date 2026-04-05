@@ -69,10 +69,15 @@
 
         <!-- Foreground Service for Screen Sharing / Media Projection -->
         <!-- Android 14+ requires an explicit foreground service declaration before initiating MediaProjection.
-             We rely entirely on livekit_client / flutter_webrtc's internal ScreenCaptureService
-             for the actual screen share functionality without introducing external conflicts. -->
+             We use a custom native Kotlin service (.NativeScreenShareService) to properly
+             display the notification and satisfy OS constraints, alongside WebRTC's default service. -->
         <service
             android:name="com.cloudwebrtc.webrtc.record.ScreenCaptureService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
+        <service
+            android:name=".NativeScreenShareService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
 

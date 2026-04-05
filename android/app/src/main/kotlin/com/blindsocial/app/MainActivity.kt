@@ -16,4 +16,31 @@ class MainActivity : AudioServiceActivity() {
         // but if we need to pass the result to the service, the plugin usually does it automatically
         // as long as the service is correctly registered in AndroidManifest.xml
     }
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.blindsocial.app/foreground")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "startNativeService" -> {
+                        val serviceIntent = Intent(this, NativeScreenShareService::class.java)
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                            startForegroundService(serviceIntent)
+                        } else {
+                            startService(serviceIntent)
+                        }
+                        result.success(true)
+                    }
+                    "stopNativeService" -> {
+                        val serviceIntent = Intent(this, NativeScreenShareService::class.java)
+                        stopService(serviceIntent)
+                        result.success(true)
+                    }
+                    else -> {
+                        result.notImplemented()
+                    }
+                }
+            }
+    }
 }
