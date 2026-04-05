@@ -95,7 +95,9 @@ class _LocalErrorLogsScreenState extends State<LocalErrorLogsScreen> {
                     final dateStr = log['timestamp'] as String? ?? '';
                     DateTime? date;
                     if (dateStr.isNotEmpty) {
-                      date = DateTime.tryParse(dateStr);
+                      try {
+                        date = DateTime.parse(dateStr);
+                      } catch (_) {}
                     }
 
                     return Card(

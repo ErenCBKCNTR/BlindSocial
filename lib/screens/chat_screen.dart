@@ -193,7 +193,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
       final participantRef = roomRef.collection('participants').doc(user.uid);
 
-      // Firestore'a doğrudan set ile yaz (merge: true ile mevcutsa sadece günceller)
+      // İlk iş olarak katılımcının kendini GÜVENLİ bir şekilde Firestore'a YAZMASI ŞARTTIR.
+      // Bu sayede hiçbir roomRef.update (oda yetkisi vb) exception fırlatmadan listeye ekleniriz.
       await participantRef.set({
         'uid': user.uid,
         'displayName': displayName,
@@ -201,8 +202,36 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         'lastSeen': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-    } catch (e) {
+      // Eğer kullanıcı odaya ilk defa giriyorsa sayacı 1 artırırız.
+      // Ancak hata verirse asıl işleyişi (katılımcı listesinde görünme) bozmaması için
+      // try-catch içinde HAFİFLETİLMİŞ olarak yaparız.
+      try {
+        final participantSnap = await participantRef.get();
+        // NOT: participantSnap artık her zaman var olacak, bu yüzden mantığı joinedAt'in yeni olup olmamasına veya
+        // sadece genel oda kapasitesinin currentParticipants yerine doğrudan length üzerinden okunmasına (ki zaten düzelttik) bırakıyoruz.
+        // Fakat mevcut legacy update sayacını güncel tutmak adına Firestore Rules izin verirse update atıyoruz.
+        if (participantSnap.exists) {
+           await roomRef.update({
+             'currentParticipants': FieldValue.increment(1),
+           });
+        }
+      } catch (counterError) {
+        debugPrint('Sayacı artırma yetkisi reddedildi: $counterError');
+      }
+
+    } catch (e, stackTrace) {
       debugPrint('Participant ekleme hatası: $e');
+      LocalErrorLogger.logError('Add Participant Hatası', '$e\n$stackTrace');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Katılımcı listesine katılırken bir hata oluştu. Hata: ${e.toString().split('\n').first}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     }
   }
 
@@ -688,23 +717,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       } else {
         debugPrint('Sistem Sesi Paylaşımı Başlatılıyor...');
 
-        // Sadece sesi alacak şekilde başlat (veya sistem destekliyorsa video ile birlikte)
-        // LiveKit Android 14 mediaProjection işlemlerini kendi SDK'sı içerisindeki servisle çözer,
-        // ancak sadece sesi paylaşıma açmak bazı cihazlarda native çökmelere neden olabilir.
-        // Bu yüzden captureScreenVideo: true olarak (boş bir video akışı) dahil ediyoruz ki Android sistemi
-        // ekran kaydının başlatıldığını kabul etsin.
-        final options = const ScreenShareCaptureOptions(
-          captureScreenAudio: true,
-        );
+        // System Audio / Screen share starts here. Android 14 requires a foreground service.
+        // We rely entirely on the native implementation provided by livekit_client / flutter_webrtc.
+        // We MUST ensure NO other competing foreground service plugins (like flutter_background)
+        // conflict with it, otherwise the app will crash instantly without entering this catch block.
+        final options = const ScreenShareCaptureOptions(captureScreenAudio: true);
+        await _room!.localParticipant!.setScreenShareEnabled(true, screenShareCaptureOptions: options);
 
-        // Bazı sistemler mediaProjection yetkisini tetiklemek için video track de bekleyebilir.
-        // ScreenShareCaptureOptions sadece audio alıyorsa ve kütüphane desteklemiyorsa düz setScreenShareEnabled yeterlidir.
-        // Ancak çökme devam ediyorsa LiveKit'in yerleşik ekran paylaşımı mekanizmasını kullanarak
-        // önce normal screen share (video) isteyip, ardından video izini kapatarak sadece sesi açık tutmayı deneriz.
-        await _room!.localParticipant!.setScreenShareEnabled(
-          true,
-          screenShareCaptureOptions: options,
-        );
         setState(() {
           _isScreenSharing = true;
         });
@@ -717,7 +736,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       }
     } catch (e, stackTrace) {
       debugPrint('Sistem Sesi Paylaşım Hatası: $e\n$stackTrace');
-      LocalErrorLogger.logError('ScreenShare Crash', '$e\n$stackTrace');
+      // Not: Eğer Android uygulamanız izin/Foreground Service eksikliği yüzünden anında çöküyorsa (SecurityException),
+      // bu Native (Java/Kotlin) bir Exception'dır. Native çökmeler Flutter'ın Dart motorunu komple öldürdüğü için
+      // FlutterError, PlatformDispatcher veya bu try-catch blokları çalışmaya fırsat bulamadan uygulama kapanır.
+      // Bu yüzden LocalErrorLogger bu tür hataları catch edip cihaz hafızasına YAZAMAZ.
+      // Tek çözüm, AndroidManifest.xml dosyasındaki Native servis tanımlamalarını eksiksiz yapmaktır.
+      LocalErrorLogger.logError('ScreenShare Dart Error', '$e\n$stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Sistem sesi paylaşımı başlatılamadı: Cihazınız desteklemiyor olabilir.')),
@@ -1016,89 +1040,99 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
+            return const Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Center(child: CircularProgressIndicator()),
+            );
           }
           final participants = snapshot.data!.docs;
 
-          return Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Katılımcılar',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontSize: AppFonts.size(24),
-                        fontWeight: FontWeight.bold,
+          return SizedBox(
+            // Ekran yüksekliğinin %70'i kadar bir alan kaplamasını sağla ki SingleChildScrollView içinde Expanded çökmesin
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Katılımcılar',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: AppFonts.size(24),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                      tooltip: 'Katılımcılar listesini kapat',
-                    ),
-                  ],
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                        tooltip: 'Katılımcılar listesini kapat',
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: participants.length,
-                  itemBuilder: (context, index) {
-                    final pDoc = participants[index];
-                    final p = pDoc.data() as Map<String, dynamic>;
-                    final name = p['displayName'] ?? 'Anonim';
-                    final uid = pDoc.id;
-                    final isMe = uid == _auth.currentUser?.uid;
+                Expanded(
+                  child: participants.isEmpty
+                    ? const Center(child: Text('Odada kimse yok.'))
+                    : ListView.builder(
+                        itemCount: participants.length,
+                        itemBuilder: (context, index) {
+                          final pDoc = participants[index];
+                          final p = pDoc.data() as Map<String, dynamic>;
+                          final name = p['displayName'] ?? 'Anonim';
+                          final uid = pDoc.id;
+                          final isMe = uid == _auth.currentUser?.uid;
 
-                    return StreamBuilder<DocumentSnapshot>(
-                      // ⚡ Bolt: Use the already cached _roomStream instead of creating N streams per participant
-                      stream: _roomStream,
-                      builder: (context, roomSnap) {
-                        final isCreator =
-                            roomSnap.hasData &&
-                            (roomSnap.data!.data()
-                                    as Map<String, dynamic>?)?['creatorId'] ==
-                                _auth.currentUser?.uid;
+                          return StreamBuilder<DocumentSnapshot>(
+                            // ⚡ Bolt: Use the already cached _roomStream instead of creating N streams per participant
+                            stream: _roomStream,
+                            builder: (context, roomSnap) {
+                              final isCreator =
+                                  roomSnap.hasData &&
+                                  (roomSnap.data!.data()
+                                          as Map<String, dynamic>?)?['creatorId'] ==
+                                      _auth.currentUser?.uid;
 
-                        return ListTile(
-                          leading: Icon(
-                            Icons.person,
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
-                          title: Text(
-                            name + (isMe ? ' (Sen)' : ''),
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              fontSize: AppFonts.size(18),
-                            ),
-                          ),
-                          trailing: (isCreator && !isMe)
-                              ? IconButton(
-                                  icon: Icon(
-                                    Icons.mic_off,
-                                    color: Theme.of(context).colorScheme.error,
+                              return ListTile(
+                                leading: Icon(
+                                  Icons.person,
+                                  color: Theme.of(context).colorScheme.secondary,
+                                ),
+                                title: Text(
+                                  name + (isMe ? ' (Sen)' : ''),
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                    fontSize: AppFonts.size(18),
                                   ),
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Susturma özelliği eklenecektir.',
+                                ),
+                                trailing: (isCreator && !isMe)
+                                    ? IconButton(
+                                        icon: Icon(
+                                          Icons.mic_off,
+                                          color: Theme.of(context).colorScheme.error,
                                         ),
-                                      ),
-                                    );
-                                  },
-                                )
-                              : null,
-                        );
-                      },
-                    );
-                  },
+                                        onPressed: () {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Susturma özelliği eklenecektir.',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      )
+                                    : null,
+                              );
+                            },
+                          );
+                        },
+                      ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),

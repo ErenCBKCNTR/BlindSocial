@@ -9,6 +9,10 @@ class LocalErrorLogger {
   /// even before an unexpected crash completely kills the app.
   static Future<void> logError(String message, String stackTrace) async {
     try {
+      // Note: Native Android/iOS OS-level crashes (e.g. SecurityException from MediaProjection)
+      // instantly kill the Dart VM before any asynchronous operations can complete.
+      // Thus, SharedPreferences may not catch the very last log if the crash is severe enough.
+      // We process this asynchronously, but acknowledge this limitation for OS-level fatal signals.
       final prefs = await SharedPreferences.getInstance();
 
       final currentLogsStr = prefs.getStringList(_logKey) ?? [];

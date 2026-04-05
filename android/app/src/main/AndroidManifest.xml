@@ -67,11 +67,12 @@
           </intent-filter>
         </service>
 
-        <!-- LiveKit Foreground Service for Screen Sharing -->
-        <!-- Note: We rely entirely on flutter_webrtc / livekit internal services for mediaProjection
-             to prevent duplicate service initialization crashes. -->
+        <!-- Foreground Service for Screen Sharing / Media Projection -->
+        <!-- Android 14+ requires an explicit foreground service declaration before initiating MediaProjection.
+             We rely entirely on livekit_client / flutter_webrtc's internal ScreenCaptureService
+             for the actual screen share functionality without introducing external conflicts. -->
         <service
-            android:name="com.livekit.foregroundservice.LiveKitForegroundService"
+            android:name="com.cloudwebrtc.webrtc.record.ScreenCaptureService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
 
