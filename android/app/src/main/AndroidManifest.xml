@@ -25,6 +25,7 @@
 
     <!-- Permissions for Screen Sharing / Media Projection -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
 
     <application
         android:label="Blind Social"

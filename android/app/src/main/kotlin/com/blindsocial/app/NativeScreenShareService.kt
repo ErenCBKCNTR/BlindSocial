@@ -23,6 +23,8 @@ class NativeScreenShareService : Service() {
             .setOngoing(true)
             .build()
 
+        // NOT: Kullanıcı isteği doğrultusunda Android 14 MediaProjection hizmeti Foreground Service olarak
+        // native Kotlin üzerinden yönetilecektir.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
         } else {

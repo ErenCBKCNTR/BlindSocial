@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:blind_social/widgets/custom_bottom_sheet.dart';
 import '../services/local_error_logger.dart';
 import 'package:flutter/services.dart';
@@ -731,6 +732,18 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         // paylaşımı başlatmadan hemen önce SAF KOTLIN servisimizle kalıcı (ongoing)
         // bir bildirim (foreground service) ayağa kaldırıyoruz.
         if (Platform.isAndroid) {
+           // 1. Android 13+ için bildirim iznini (POST_NOTIFICATIONS) runtime'da KESİN almalıyız,
+           // aksi halde `startForeground` anında çöker.
+           final status = await Permission.notification.request();
+           if (status.isDenied || status.isPermanentlyDenied) {
+             if (mounted) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                 const SnackBar(content: Text('Sistem Sesi paylaşımı için bildirim izni zorunludur.')),
+               );
+             }
+             return;
+           }
+
            try {
              await _nativeChannel.invokeMethod('startNativeService');
              // OS'in servisi tam olarak başlatması için çok kısa bir delay
