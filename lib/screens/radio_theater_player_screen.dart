@@ -48,10 +48,10 @@ class _RadioTheaterPlayerScreenState extends State<RadioTheaterPlayerScreen> {
 
     if (match != null) {
       String fileId = match.group(1) ?? match.group(2)!;
-      // Google Drive API proxy formatı modern audio player'lar için (redirect hatası vermemesi için) daha stabildir:
-      // u?export=download yerine uc?id=ID veya drive.google.com/uc?export=download&id=...
-      // Bazı paketler uc?export=download redirect limitlerine takılabilir. O yüzden:
-      return "https://drive.google.com/uc?export=download&id=$fileId";
+      // Google Drive'ın yeni kısıtlamalarına takılmamak ve MediaKit'in doğru Content-Type okuyabilmesi için
+      // uc?export=download kalıbı yerine doğrudan media stream destekli drive yönlendirme linki:
+      // `drive.google.com/uc?id=$fileId`
+      return "https://drive.google.com/uc?id=$fileId";
     }
     return driveLink;
   }

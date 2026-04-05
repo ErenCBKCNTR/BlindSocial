@@ -319,6 +319,12 @@ class _SquareScreenState extends State<SquareScreen> {
     final user = _auth.currentUser;
     if (user == null) return;
     await _firestore.collection('meydan_posts').doc(postId).delete();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gönderi başarıyla silindi.')),
+      );
+    }
   }
 
   String _formatTimestamp(Timestamp timestamp) {
@@ -441,16 +447,18 @@ class _SquareScreenState extends State<SquareScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        IconButton(
-                          tooltip: 'sesle yazma dikte',
-                          icon: ExcludeSemantics(
-                            child: Icon(
-                              _isListening ? Icons.mic : Icons.mic_none,
-                              color: _isListening ? Colors.red : Colors.yellow,
-                              size: 32,
+                        Semantics(
+                          label: 'sesle yazma dikte',
+                          button: true,
+                          child: IconButton(
+                            icon: ExcludeSemantics(
+                              child: Icon(
+                                _isListening ? Icons.mic : Icons.mic_none,
+                                color: _isListening ? Colors.red : Colors.yellow,
+                                size: 32,
+                              ),
                             ),
-                          ),
-                          onPressed: () async {
+                            onPressed: () async {
                             if (!_isListening) {
                               bool available = await _speech.initialize(
                                 onStatus: (val) {
@@ -507,30 +515,36 @@ class _SquareScreenState extends State<SquareScreen> {
                   ],
                 ),
                 actions: [
-                  TextButton(
-                    onPressed: () {
-                      _speech.stop();
-                      _isListening = false;
-                      Navigator.pop(context);
-                    },
-                    child: const Text(
-                      'İptal',
-                      style: TextStyle(color: Colors.red),
+                  Semantics(
+                    button: true,
+                    child: TextButton(
+                      onPressed: () {
+                        _speech.stop();
+                        _isListening = false;
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        'İptal',
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      _speech.stop();
-                      _isListening = false;
-                      Navigator.pop(context);
-                      _submitPost();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellow,
-                    ),
-                    child: const Text(
-                      'Paylaş',
-                      style: TextStyle(color: Colors.black),
+                  Semantics(
+                    button: true,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _speech.stop();
+                        _isListening = false;
+                        Navigator.pop(context);
+                        _submitPost();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.yellow,
+                      ),
+                      child: const Text(
+                        'Paylaş',
+                        style: TextStyle(color: Colors.black),
+                      ),
                     ),
                   ),
                 ],
@@ -551,7 +565,9 @@ class _SquareScreenState extends State<SquareScreen> {
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         itemCount: docs.length,
-        padding: const EdgeInsets.only(bottom: 80),
+        // Ekranın en altındaki gönderinin gizlenmesini önlemek için
+        // padding artırıldı ve bottom boşluğu garanti altına alındı.
+        padding: const EdgeInsets.only(bottom: 250),
         itemBuilder: (context, index) {
           final doc = docs[index];
           final data = doc.data() as Map<String, dynamic>;
@@ -638,20 +654,25 @@ class _SquareScreenState extends State<SquareScreen> {
                             children: [
                               Row(
                                 children: [
-                                  IconButton(
-                                    tooltip: likeCount > 0
+                                  Semantics(
+                                    label: likeCount > 0
                                         ? 'Gönderiyi beğen. Bu gönderiyi $likeCount kişi beğendi.'
                                         : 'Gönderiyi beğen',
-                                    icon: Icon(
-                                      isLiked
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      color: isLiked
-                                          ? Colors.red
-                                          : Colors.grey,
+                                    button: true,
+                                    child: IconButton(
+                                      icon: ExcludeSemantics(
+                                        child: Icon(
+                                          isLiked
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color: isLiked
+                                              ? Colors.red
+                                              : Colors.grey,
+                                        ),
+                                      ),
+                                      onPressed: () =>
+                                          _toggleLike(doc.id, likes),
                                     ),
-                                    onPressed: () =>
-                                        _toggleLike(doc.id, likes),
                                   ),
                                   ExcludeSemantics(
                                     child: Text(
@@ -700,34 +721,50 @@ class _SquareScreenState extends State<SquareScreen> {
                                       _userRole == 0 ||
                                       _userRole == 1) ...[
                                     if (currentUserUid == authorId)
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.edit,
-                                          color: Colors.blue,
+                                      Semantics(
+                                        label: 'Düzenle',
+                                        button: true,
+                                        child: IconButton(
+                                          icon: const ExcludeSemantics(
+                                            child: Icon(
+                                              Icons.edit,
+                                              color: Colors.blue,
+                                            ),
+                                          ),
+                                          onPressed: () =>
+                                              _editPost(doc.id, content),
                                         ),
-                                        onPressed: () =>
-                                            _editPost(doc.id, content),
-                                        tooltip: 'Düzenle',
                                       ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        color: Colors.red,
+                                  if (currentUserUid == authorId || _userRole == 1)
+                                    Semantics(
+                                      label: 'Sil',
+                                      button: true,
+                                      child: IconButton(
+                                        icon: const ExcludeSemantics(
+                                          child: Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                          ),
+                                        ),
+                                        onPressed: () => _deletePost(doc.id),
                                       ),
-                                      onPressed: () => _deletePost(doc.id),
-                                      tooltip: 'Sil',
                                     ),
                                   ],
                                   if (currentUserUid != null &&
                                       currentUserUid != authorId) ...[
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.report,
-                                        color: Colors.grey,
+                                    Semantics(
+                                      label: 'Şikayet Et',
+                                      button: true,
+                                      child: IconButton(
+                                        icon: const ExcludeSemantics(
+                                          child: Icon(
+                                            Icons.report,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        onPressed: () =>
+                                            _reportPost(doc.id, reportedBy),
                                       ),
-                                      onPressed: () =>
-                                          _reportPost(doc.id, reportedBy),
-                                      tooltip: 'Şikayet Et',
                                     ),
                                   ],
                                 ],
