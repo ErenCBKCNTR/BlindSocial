@@ -13,6 +13,9 @@ export const generateLiveKitToken = functions.https.onCall(async (data, context)
     );
   }
 
+  // Güvenlik uyarısı: Üretim (Production) ortamında bu değerleri her zaman
+  // Firebase Secret Manager veya çevresel değişkenler üzerinden yönetin.
+  // Not: Yeni Hetzner sunucusu anahtarları yapılandırılmalıdır.
   const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY;
   const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET;
 

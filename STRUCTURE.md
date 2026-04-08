@@ -57,7 +57,9 @@ Kullanıcıya gösterilen ekranların (sayfaların) bulunduğu klasör.
   Tüm ekranlar (`screens/`) verileri Firebase'den okur/yazar. Özellikle `chat_screen.dart` ve `chat_rooms_screen.dart` ekranları `cloud_firestore` paketini kullanarak gerçek zamanlı verileri dinler (Snapshot listener). Şifreli odalara giriş yaparken `functions/` altındaki Firebase Cloud Functions ile doğrulama yapılır, istemciden sadece sonuç beklenir.
 
 - **LiveKit / WebRTC Görüşmeleri:**
-  Arama ve oda içi sesli/görüntülü iletişim özellikleri `livekit_client` kullanır. İstemci tarafında `bs_bib_call_screen.dart` vb. ekranlardan bağlanılırken güvenlik amacıyla gerekli token `functions/` altındaki Firebase Functions üzerinden çekilir.
+  Arama ve oda içi sesli iletişim özellikleri `livekit_client` kullanır.
+  - **Sesli Odalar (Voice Rooms):** `chat_screen.dart` vb. ekranlardan yönetilir ve bağlantı için yeni kendi Hetzner sunucumuz (`wss://live.cabukcan.com`) kullanılır. Gerekli LiveKit token'ları güvenli bir şekilde (`process.env` kullanılarak) Firebase Functions üzerinden çekilir.
+  - **P2P Aramalar (BS Bip):** `bs_bib_call_screen.dart` üzerinden yönetilir ve tamamen bağımsız/eski bir bağlantı mantığı kullanmaya devam eder.
 
 - **Global Sahiplik (App-Level Wrappers):**
   `main.dart` içinde uygulamanın temel `MaterialApp` widget'ı, `global_call_overlay.dart` ve `global_background_wrapper.dart` ile sarmalanır. Bu sayede kullanıcı ekranlar arasında (örneğin sohbetten meydana) geçiş yapsa bile arkaplandaki aramalar (Call) ve medya yayınları kesintiye uğramaz.

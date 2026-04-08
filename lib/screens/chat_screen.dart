@@ -22,7 +22,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:shared_preferences/shared_preferences.dart';
 
-const String liveKitUrl = 'wss://bs-app-l1mgfyed.livekit.cloud';
+const String liveKitUrl = 'wss://live.cabukcan.com';
 
 class ChatScreen extends StatefulWidget {
   final String roomId;
