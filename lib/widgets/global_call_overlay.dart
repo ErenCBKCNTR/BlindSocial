@@ -39,6 +39,7 @@ class _GlobalCallOverlayState extends State<GlobalCallOverlay> {
       }
     } catch (e) {
       // Ignore errors if Firebase is not initialized (e.g. during testing)
+      debugPrint('GlobalCallOverlay - _checkRoleAndListen hatası: $e');
     }
   }
 
