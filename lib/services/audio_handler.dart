@@ -125,7 +125,7 @@ Future<MyAudioHandler> initAudioService() async {
   return await AudioService.init(
     builder: () => MyAudioHandler(),
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.blindsocial.app.audio',
+      androidNotificationChannelId: 'com.cabukcan.blindsocial.audio',
       androidNotificationChannelName: 'Audio Playback',
       androidNotificationOngoing: true,
       androidStopForegroundOnPause: true,

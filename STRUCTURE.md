@@ -21,7 +21,7 @@ Uygulamanın giriş noktasıdır. `main` fonksiyonunu barındırır, uygulamanı
 Uygulamanın dış dünyayla olan bağlantılarını, iş mantığını ve arkaplan görevlerini yöneten servis sınıfları burada yer alır.
 - `audio_cache_manager.dart`: Ses dosyalarının bellekte önbelleğe alınmasını (cache) yönetir.
 - `audio_favorites_manager.dart`: Kullanıcının favori ses içeriklerini kaydetmesi ve yönetmesi için SharedPreferences destekli servis.
-- `audio_handler.dart`: Arka planda ses oynatımı için cihaz ile iletişim kuran (bildirim menüsündeki durdur/başlat butonları) AudioService implementasyonu.
+- `audio_handler.dart`: Arka planda ses oynatımı için cihaz ile iletişim kuran (bildirim menüsündeki durdur/başlat butonları) AudioService implementasyonu. Bildirim kanalı `com.cabukcan.blindsocial.audio` kimliğini kullanır.
 - `audio_progress_manager.dart`: Ses oynatılırken geçerli sürenin ve pozisyonun takip edilmesini sağlar.
 - `broadcast_record_manager.dart`: Radyo/medya yayınlarının arka planda kaydedilmesiyle ilgilenir.
 - `permission_manager.dart`: Uygulamanın mikrofon, depolama ve bildirim gibi izinlerini platform bağımsız (Android/iOS) yönetir. Cihaz başlangıcında zorunlu izinlerin istenmesini sağlar.

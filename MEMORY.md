@@ -36,6 +36,7 @@ Bugüne kadar projemizde kodlanıp bitirilen temel özellikler şunlardır:
 - Cihaz bazlı yetkilendirme akışları (Permission Manager ile).
 - Sesli Odalar (Voice Rooms) içinde ekran okuyucu (Semantics) iyileştirmelerinin yapılması, çift okumaların temizlenmesi.
 - Sesli Odalarda "Sustur" (Mute) butonunun PTT (Bas-Konuş) veya Ses Aktivasyonu moduna uygun olarak LiveKit local audio track state ile senkronize çalışmasının sağlanması.
+- Uygulama paket adı (Application ID) `com.cabukcan.blindsocial` olarak güncellendi ve tüm Android yapılandırmaları buna göre refaktör edildi.
 
 ## Üzerinde Çalışılan Görev
 **Adım 2: Donanımsal Ses Ayarlarının LiveKit'e Bağlanması** (Sesli Odalardaki Eko İptali, Gürültü Bastırma, Otomatik Ses Kazancı switch'leri ve sürgülerinin işlevsel hale getirilmesi).

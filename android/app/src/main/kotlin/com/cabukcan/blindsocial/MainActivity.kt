@@ -1,4 +1,4 @@
-package com.blindsocial.app
+package com.cabukcan.blindsocial
 
 import com.ryanheise.audioservice.AudioServiceActivity
 
